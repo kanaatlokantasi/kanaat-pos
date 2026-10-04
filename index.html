@@ -204,7 +204,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>POS · Sürüm 30</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 31</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -328,7 +328,8 @@ async function pinHash(pin){const t='kanaat-pos:'+pin;
   catch(e){let h=5381;for(const ch of t)h=((h*33)^ch.charCodeAt(0))>>>0;return 'x'+h.toString(16)}}
 function unlockAdmin(){ADM.until=Date.now()+ADMIN_MIN*60000;renderAdmChip()}
 function lockAdmin(){ADM.until=0;renderAdmChip();if(['report','menu'].includes(ui.view))ui.view='tables';closeLayer();render()}
-function renderAdmChip(){const c=document.getElementById('admChip');if(c)c.hidden=!isAdmin()}
+function renderWaiterTag(){const e=document.getElementById('wtag');if(e)e.textContent=S.settings.waiter?S.settings.waiter+' · ':''}
+function renderAdmChip(){renderWaiterTag();const c=document.getElementById('admChip');if(c)c.hidden=!isAdmin()}
 function requireAdmin(fn,forceNew){
   if(isAdmin()&&!forceNew){touchAdmin();fn();return}
   const hasPin=!!S.settings.adminPin&&!forceNew;
@@ -435,7 +436,8 @@ function summary(day){
   valid.forEach(s=>{let hasP=false;s.lines.forEach(l=>{const m=l.pkg?pitems:items,k=l.name;m[k]=m[k]||{q:0,t:0};m[k].q+=l.qty;m[k].t+=l.qty*l.price;if(l.pkg){pkgTotal+=l.qty*l.price;hasP=true}});if(hasP)pkgSales++});
   const tsum=f=>valid.filter(f).reduce((a,s)=>a+(s.tip||0),0);
   return{list,valid,total:sum(()=>1),cash:sum(s=>s.pay==='Nakit'),card:sum(s=>s.pay==='Kart'),tip:tsum(()=>1),tipCash:tsum(s=>s.pay==='Nakit'),tipCard:tsum(s=>s.pay==='Kart'),
-    items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),pitems:Object.entries(pitems).sort((a,b)=>b[1].t-a[1].t),pkgTotal,pkgSales,voids:list.length-valid.length}
+    items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),pitems:Object.entries(pitems).sort((a,b)=>b[1].t-a[1].t),pkgTotal,pkgSales,voids:list.length-valid.length,
+    waiters:Object.entries(valid.reduce((m,s)=>{const w=s.waiter||'(adsız)';m[w]=m[w]||{n:0,t:0,tip:0,tc:0,tk:0};m[w].n++;m[w].t+=s.total;m[w].tip+=s.tip||0;if(s.pay==='Nakit')m[w].tc+=s.tip||0;else m[w].tk+=s.tip||0;return m},{})).sort((a,b)=>b[1].tip-a[1].tip)}
 }
 function vReport(){
   const r=summary(ui.reportDay);
@@ -454,6 +456,9 @@ function vReport(){
    </div>
    <div class="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
      <button class="btn pri" data-act="printZ">Gün sonu yazdır</button><button class="btn" data-act="csv">Excel'e aktar (CSV)</button></div>
+   <div class="card"><h3>Garsonlara göre</h3>${r.waiters.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Garson</th><th class="r">Adisyon</th><th class="r">Satış</th><th class="r">Bahşiş</th></tr>
+     ${r.waiters.map(([w,v])=>`<tr><td>${esc(w)}</td><td class="r">${v.n}</td><td class="r">${fmt(v.t)}</td><td class="r"><b>${fmt(v.tip)}</b>${v.tip?`<br><small class="muted">N ${money(v.tc)} · K ${money(v.tk)}</small>`:''}</td></tr>`).join('')}</table></div>
+     <p class="muted" style="margin:8px 0 0;font-size:12px">N: nakit bahşiş, K: kartla bırakılan bahşiş.</p>`:'<p class="muted">Bu gün satış yok.</p>'}</div>
    <div class="card"><h3>Satılan ürünler · masada</h3>${r.items.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
      ${r.items.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Masada satış yok.</p>'}</div>
    <div class="card"><h3>Satılan ürünler · paket</h3>${r.pitems.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
@@ -529,6 +534,11 @@ function vSettings(){
      <label class="f">Alt not<textarea id="ftr" style="min-height:70px">${esc(s.footer)}</textarea></label>
    </div>
    <div class="card stack">
+     <h3 style="margin:0">Bu telefonun garsonu</h3>
+     <p class="muted" style="margin:0;font-size:13px">Bu telefondan alınan ödemeler bu ada yazılır. Raporda garsona göre satış ve bahşiş görünür. Garson değişirse buradan değiştirin.</p>
+     <label class="f">Garson adı<input id="waiter" value="${esc(s.waiter||'')}" placeholder="Örn. Ahmet" autocomplete="off"></label>
+   </div>
+   <div class="card stack">
      <h3 style="margin:0">Masalar</h3>
      <label class="f">Masa sayısı<input id="tcount" type="number" min="1" max="99" inputmode="numeric" value="${s.tableCount}"></label>
      <label class="f">Ek masalar (virgülle)<input id="extras" value="${esc(s.extras)}" placeholder="Paket, Gel-Al, Bahçe 1"></label>
@@ -557,6 +567,7 @@ function vSettings(){
   bind('ftr',e=>S.settings.footer=e.value);
   bind('tcount',e=>S.settings.tableCount=Math.max(1,Math.min(99,parseInt(e.value)||1)));
   bind('extras',e=>S.settings.extras=e.value);
+  bind('waiter',e=>{S.settings.waiter=e.value.trim();renderWaiterTag()});
 }
 
 /* ============ katmanlar ============ */
@@ -584,7 +595,7 @@ function footerRows(){return S.settings.footer.split('\n').filter(x=>x.trim()).m
 function billDoc(tableName,lines,total,opts={}){
   const at=opts.at||Date.now();
   return [...headerRows(),{k:'gap'},
-    {k:'lr',l:dmy(at),r:hm(at)},{k:'lr',l:tableName,r:opts.no?('No: '+opts.no):'',b:true},{k:'hr'},
+    {k:'lr',l:dmy(at),r:hm(at)},{k:'lr',l:tableName,r:opts.no?('No: '+opts.no):'',b:true},...((opts.waiter??S.settings.waiter)?[{k:'l',text:'Garson: '+(opts.waiter??S.settings.waiter),small:true}]:[]),{k:'hr'},
     ...[...lines.filter(l=>!l.pkg),...(lines.some(l=>l.pkg)?[{sec:1}]:[]),...lines.filter(l=>l.pkg)].flatMap(l=>l.sec?[{k:'gap'},{k:'l',text:'— PAKET —',b:true}]:[{k:'lr',l:`${l.qty} x ${l.name}`,r:money(l.qty*l.price)},...(l.qty>1?[{k:'l',text:`   ${l.qty} x ${money(l.price)}`,small:true}]:[])]),
     {k:'hr'},...(opts.tip>0?[{k:'lr',l:'Ara toplam',r:fmt(total)},{k:'lr',l:'Gönüllü bahşiş',r:fmt(opts.tip)},{k:'big',l:'TOPLAM',r:fmt(total+opts.tip)}]:[{k:'big',l:'TOPLAM',r:fmt(total)}]),
     ...(opts.pay?[{k:'lr',l:'Ödeme',r:opts.pay}]:[{k:'c',text:'— Ödenmedi —'}]),
@@ -601,6 +612,7 @@ function zDoc(day){
     {k:'lr',l:'Adisyon',r:String(r.valid.length)},{k:'lr',l:'Nakit',r:fmt(r.cash)},{k:'lr',l:'Kart',r:fmt(r.card)},
     ...(r.voids?[{k:'lr',l:'İptal edilen',r:String(r.voids)}]:[]),{k:'hr'},{k:'lr',l:'Masada',r:fmt(r.total-r.pkgTotal)},{k:'lr',l:'Paket',r:fmt(r.pkgTotal)},{k:'big',l:'CİRO',r:fmt(r.total)},
     ...(r.tip?[{k:'hr'},{k:'lr',l:'Bahşiş (nakit)',r:fmt(r.tipCash)},{k:'lr',l:'Bahşiş (kart)',r:fmt(r.tipCard)},{k:'lr',l:'Toplam bahşiş',r:fmt(r.tip),b:true}]:[]),{k:'hr'},
+    ...(r.waiters.length?[{k:'c',text:'Garsonlara göre bahşiş',b:true},...r.waiters.map(([w,v])=>({k:'lr',l:`${w} (${v.n} adisyon)`,r:fmt(v.tip)})),{k:'hr'}]:[]),
     {k:'c',text:'Satılan ürünler · masada',b:true},...r.items.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)})),
     ...(r.pitems.length?[{k:'gap'},{k:'c',text:'Satılan ürünler · paket',b:true},...r.pitems.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)}))]:[]),{k:'hr'},
     {k:'c',text:'BİLGİ AMAÇLIDIR'}];
@@ -909,10 +921,10 @@ const A={
   async doPay(d){const t=S.tables[ui.table];if(!t)return;const pr=document.getElementById('payPrint')?.checked;
     const lines=t.lines.filter(l=>l.qty>0).map(l=>({name:l.name,price:l.price,qty:l.qty,...(l.pkg?{pkg:true}:{})}));
     const tip=tipAmount(tTotal(t));
-    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,pay:d.p,at:Date.now()};
+    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,pay:d.p,at:Date.now(),waiter:S.settings.waiter||''};
     S.sales.push(sale);delete S.tables[ui.table];save();closeLayer();ui.view='tables';render();
     toast(`${sale.table} kapandı · ${d.p} ${fmt(sale.total+tip)}${tip?' (bahşiş '+fmt(tip)+')':''}`);
-    if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:d.p,no:sale.no,at:sale.at,tip}),'Fiş')},
+    if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:d.p,no:sale.no,at:sale.at,tip,waiter:sale.waiter}),'Fiş')},
   clearTable(){requireAdmin(()=>ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')}))},
   moveTable(){const t=S.tables[ui.table];if(!t||!tCount(t)){toast('Taşınacak ürün yok');return}
     const free=tableList().filter(x=>x.key!==ui.table);
@@ -923,8 +935,8 @@ const A={
     if(to){to.lines.push(...from.lines);to.openedAt=Math.min(to.openedAt,from.openedAt)}else S.tables[d.k]=from;
     delete S.tables[ui.table];ui.table=d.k;save();closeLayer();render();toast('Taşındı: '+tName(d.k))},
   async printZ(){await printDoc(zDoc(ui.reportDay),'Gün sonu')},
-  csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Ödeme','Tutar','Paket tutarı','Bahşiş','Durum','Ürünler']];
-    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.pay,money(s.total),money(s.lines.filter(l=>l.pkg).reduce((a,l)=>a+l.qty*l.price,0)),money(s.tip||0),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name+(l.pkg?' (paket)':'')).join(', ')]));
+  csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Garson','Ödeme','Tutar','Paket tutarı','Bahşiş','Durum','Ürünler']];
+    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.waiter||'',s.pay,money(s.total),money(s.lines.filter(l=>l.pkg).reduce((a,l)=>a+l.qty*l.price,0)),money(s.tip||0),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name+(l.pkg?' (paket)':'')).join(', ')]));
     const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
     download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'kanaat-satis-'+ui.reportDay+'.csv')},
   saleMenu(d){const s=S.sales.find(x=>x.id===d.id);if(!s)return;
@@ -934,7 +946,7 @@ const A={
      <div class="total"><span class="muted">${s.pay}${s.void?' · İPTAL':''}</span><b class="num">${fmt(s.total+(s.tip||0))}</b></div>
      <button class="btn" data-act="reprint" data-id="${s.id}">Fişi tekrar yazdır</button>
      <button class="btn danger" data-act="voidSale" data-id="${s.id}">${s.void?'İptali geri al':'Adisyonu iptal et'}</button>`)},
-  async reprint(d){const s=S.sales.find(x=>x.id===d.id);closeLayer();await printDoc(billDoc(s.table,s.lines,s.total,{pay:s.pay,no:s.no,at:s.at,tip:s.tip||0}),'Fiş')},
+  async reprint(d){const s=S.sales.find(x=>x.id===d.id);closeLayer();await printDoc(billDoc(s.table,s.lines,s.total,{pay:s.pay,no:s.no,at:s.at,tip:s.tip||0,waiter:s.waiter||''}),'Fiş')},
   voidSale(d){const s=S.sales.find(x=>x.id===d.id);s.void=!s.void;save();closeLayer();render();toast(s.void?'Adisyon iptal edildi':'İptal geri alındı')},
   bulk(d){const txt=document.getElementById('bulk').value;const parsed=parseMenu(txt);
     if(!parsed.items.length){toast('Okunabilir satır yok. Biçim: Kategori | Ürün | Fiyat');return}
