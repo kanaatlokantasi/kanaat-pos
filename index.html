@@ -226,7 +226,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 40</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 41</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -274,7 +274,7 @@ function sampleMenu(){
 }
 function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
-  settings:{tableCount:8,extras:'Paket, Gel-Al',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,
+  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,
     header:'KANAAT LOKANTASI',
     footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
@@ -304,6 +304,7 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
    S.menu.items.forEach(i=>{if(/\(\d+\s*Adet\)/i.test(i.name)&&/Sarma|Dolma/.test(i.name))i.name=strip(i.name)});
    Object.values(S.tables||{}).forEach(t=>(t.lines||[]).forEach(l=>{if(/Sarma|Dolma/.test(l.name))l.name=strip(l.name)}))}
   S.settings.header=String(S.settings.header||'').split('\n').filter(x=>!/since\s*1933/i.test(x)).join('\n')||'KANAAT LOKANTASI';
+  if(!S.settings.extrasV1){if(String(S.settings.extras).replace(/\s/g,'')==='Paket,Gel-Al')S.settings.extras='';S.settings.extrasV1=true}
   if(!S.settings.tablesV1){if(S.settings.tableCount===12)S.settings.tableCount=8;S.settings.tablesV1=true}
   if(!S.settings.menuV13){S.menu.items.forEach(i=>{if(i.name==='Kuzu Pirzola (2 Kalem)')i.name='Kuzu Pirzola'});S.settings.menuV13=true}
   if(!S.settings.menuV12){const M=S.menu,i=M.items.findIndex(x=>x.name==='Kabak/Patlıcan Kızartma');
@@ -336,7 +337,8 @@ const ui={view:'tables',table:null,cat:null,reportDay:dayKey(Date.now())};
 
 function tableList(){const out=[];for(let i=1;i<=S.settings.tableCount;i++)out.push({key:'M'+i,name:'Masa '+i,short:String(i)});
   Object.keys(S.tables||{}).filter(k=>/^M\d+$/.test(k)&&+k.slice(1)>S.settings.tableCount&&tCount(S.tables[k])>0).sort((a,b)=>a.slice(1)-b.slice(1)).forEach(k=>out.push({key:k,name:'Masa '+k.slice(1),short:k.slice(1)}));
-  String(S.settings.extras||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(n=>out.push({key:'X:'+n,name:n,short:n}));return out}
+  String(S.settings.extras||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(n=>out.push({key:'X:'+n,name:n,short:n}));
+  Object.keys(S.tables||{}).filter(k=>k.startsWith('X:')&&!out.some(o=>o.key===k)&&tCount(S.tables[k])>0).forEach(k=>out.push({key:k,name:k.slice(2),short:k.slice(2)}));return out}
 const tName=k=>(tableList().find(t=>t.key===k)||{name:k.replace(/^X:/,'')}).name;
 const tTotal=t=>t?t.lines.reduce((a,l)=>a+l.qty*l.price,0):0;
 const itemHalf=it=>it.halfPrice!=null?it.halfPrice:halfPrice(it.price);
