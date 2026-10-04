@@ -215,7 +215,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 37</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 38</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -264,7 +264,7 @@ function sampleMenu(){
 function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
   settings:{tableCount:12,extras:'Paket, Gel-Al',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,
-    header:'KANAAT LOKANTASI\nSince 1933',
+    header:'KANAAT LOKANTASI',
     footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
 let S;
@@ -292,6 +292,7 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
   {const strip=n=>String(n).replace(/\s*\(\d+\s*Adet\)/gi,'');
    S.menu.items.forEach(i=>{if(/\(\d+\s*Adet\)/i.test(i.name)&&/Sarma|Dolma/.test(i.name))i.name=strip(i.name)});
    Object.values(S.tables||{}).forEach(t=>(t.lines||[]).forEach(l=>{if(/Sarma|Dolma/.test(l.name))l.name=strip(l.name)}))}
+  S.settings.header=String(S.settings.header||'').split('\n').filter(x=>!/since\s*1933/i.test(x)).join('\n')||'KANAAT LOKANTASI';
   if(!S.settings.menuV13){S.menu.items.forEach(i=>{if(i.name==='Kuzu Pirzola (2 Kalem)')i.name='Kuzu Pirzola'});S.settings.menuV13=true}
   if(!S.settings.menuV12){const M=S.menu,i=M.items.findIndex(x=>x.name==='Kabak/Patlıcan Kızartma');
     if(i>=0){const o=M.items[i];o.name='Kabak Kızartma';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Patlıcan Kızartma',price:o.price,noHalf:!!o.noHalf,...(o.halfPrice!=null?{halfPrice:o.halfPrice}:{})})}
