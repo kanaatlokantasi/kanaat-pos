@@ -137,6 +137,7 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .pkgbar span{flex:1;font-size:13px;opacity:.95;min-width:0}
 .pkgbar .linkbtn{color:#fff;text-decoration:underline}
 .billv .bsec{margin-top:10px;padding:4px 8px;background:#111;color:#fff;font-weight:700;letter-spacing:.08em;font-size:13px;border-radius:4px;display:inline-block}
+#updBar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:45;border:0;border-radius:12px;padding:14px;background:var(--accent);color:var(--accent-ink);font-size:16px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .halfchk{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
 
 .cartbar{background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:10px}
@@ -214,7 +215,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 34</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 35</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -229,6 +230,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 </div>
 <div id="layer"></div>
 <div id="toast"></div>
+<button id="updBar" hidden data-act="doUpdate">Yeni sürüm hazır · <b>Yenile</b></button>
 <input type="file" id="restoreFile" accept=".json,application/json" hidden>
 <input type="file" id="logoFile" accept="image/*" hidden>
 
@@ -1023,6 +1025,18 @@ document.getElementById('logoFile').onchange=e=>{const f=e.target.files[0];e.tar
     g.putImageData(d,0,0);S.settings.logoData=c.toDataURL('image/png');save();loadLogo();setTimeout(render,50);toast('Logo değişti');URL.revokeObjectURL(img.src)};
   img.onerror=()=>toast('Bu görsel açılamadı');img.src=URL.createObjectURL(f)};
 setInterval(()=>{if(ui.view==='tables')vTables()},60000);
+/* güncelleme kontrolü */
+const MY_VER=parseInt((document.querySelector('.brand small')?.textContent.match(/Sürüm (\d+)/)||[])[1]||'0');
+let NEW_VER=0;
+async function checkUpdate(){
+  if(!/^https?:/.test(location.protocol))return;
+  try{const r=await fetch(location.pathname+'?ver='+Date.now(),{cache:'no-store'});if(!r.ok)return;
+    const m=(await r.text()).match(/POS · Sürüm (\d+)/);const v=m?parseInt(m[1]):0;
+    if(v>MY_VER){NEW_VER=v;document.getElementById('updBar').hidden=false}}catch(e){}
+}
+A.doUpdate=()=>{location.replace(location.pathname+'?v='+(NEW_VER||Date.now()))};
+setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
 render();
 </script>
 </body>
