@@ -175,7 +175,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 10</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 11</small></div>
     <div class="sp"></div>
     <button class="chip on" id="admChip" data-act="lock" hidden><i></i><span>Yönetici · Kilitle</span></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı yok</span></button>
@@ -215,7 +215,7 @@ function sampleMenu(){
 }
 function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
-  settings:{tableCount:12,extras:'Paket, Gel-Al',logo:true,logoData:'',halfPct:60,printer:'niimbot',labelW:50,labelH:30,density:3,paper:58,mode:'image',cutter:false,kitchen:true,
+  settings:{tableCount:12,extras:'Paket, Gel-Al',logo:true,logoData:'',halfPct:50,printer:'niimbot',labelW:50,labelH:30,density:3,paper:58,mode:'image',cutter:false,kitchen:true,
     header:'KANAAT LOKANTASI\nSince 1933',
     footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
@@ -223,7 +223,8 @@ let S;
 function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}catch(e){}
   const def=defaults();S=d?{...def,...d,settings:{...def.settings,...(d.settings||{})}}:def;
   if(S.menu.sample){S.menu=def.menu;try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
-  S.menu.cats.forEach(c=>{if(c.half===undefined)c.half=HALF_CATS.includes(c.name)})}
+  S.menu.cats.forEach(c=>{if(c.half===undefined)c.half=HALF_CATS.includes(c.name)});
+  if(!S.settings.halfV2){S.settings.halfPct=50;S.settings.halfV2=true}}
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){toast('Kaydedilemedi: tarayıcı depolaması kapalı')}}
 load();
 
@@ -233,7 +234,7 @@ function tableList(){const out=[];for(let i=1;i<=S.settings.tableCount;i++)out.p
   String(S.settings.extras||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(n=>out.push({key:'X:'+n,name:n,short:n}));return out}
 const tName=k=>(tableList().find(t=>t.key===k)||{name:k.replace(/^X:/,'')}).name;
 const tTotal=t=>t?t.lines.reduce((a,l)=>a+l.qty*l.price,0):0;
-const halfPrice=p=>Math.round(p*(S.settings.halfPct||60)/100/10)*10;
+const halfPrice=p=>Math.round(p*(S.settings.halfPct||50))/100;
 const tCount=t=>t?t.lines.reduce((a,l)=>a+l.qty,0):0;
 
 /* ============ görünümler ============ */
@@ -380,9 +381,9 @@ function vMenu(){
    ${m.sample?`<div class="note">Bu bir <b>örnek menü</b>. Aşağıdaki kutuya kendi menünüzü yapıştırıp “Menüyü değiştir”e basın.</div>`:''}
    <div class="card stack">
      <h3 style="margin:0">Yarım porsiyon</h3>
-     <p class="muted" style="margin:0;font-size:13px">Aşağıda “½ var” işaretli kategorilerdeki yemeklerin kartında <b>½</b> düğmesi çıkar. Yarım porsiyon fiyatı tam fiyatın yüzdesi olarak hesaplanır ve 10 TL'ye yuvarlanır.</p>
-     <label class="f">Yarım porsiyon fiyatı (tam fiyatın %'si)<input id="halfPct" type="number" min="30" max="100" step="5" inputmode="numeric" value="${S.settings.halfPct||60}"></label>
-     <p class="muted num" style="margin:0;font-size:13px">Örnek: 320 TL'lik yemeğin yarımı <b>${fmt(halfPrice(320))}</b>, 520 TL'liğin yarımı <b>${fmt(halfPrice(520))}</b>.</p>
+     <p class="muted" style="margin:0;font-size:13px">Aşağıda “½ var” işaretli kategorilerdeki yemeklerin kartında <b>½</b> düğmesi çıkar. Yarım porsiyon fiyatı tam fiyatın yüzdesi olarak hesaplanır, yuvarlama yapılmaz.</p>
+     <label class="f">Yarım porsiyon fiyatı (tam fiyatın %'si)<input id="halfPct" type="number" min="30" max="100" step="5" inputmode="numeric" value="${S.settings.halfPct||50}"></label>
+     <p class="muted num" style="margin:0;font-size:13px">Örnek: 320 TL'lik yemeğin yarımı <b>${fmt(halfPrice(320))}</b>, 330 TL'liğin yarımı <b>${fmt(halfPrice(330))}</b>.</p>
    </div>
    <div class="card stack">
      <h3 style="margin:0">Toplu yükle</h3>
@@ -862,7 +863,7 @@ async function download(blob,name){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=A[b.dataset.act];if(f)f(b.dataset,b)});
 document.addEventListener('change',e=>{const el=e.target;
   if(el.dataset.cathalf){const c=S.menu.cats.find(x=>x.id===el.dataset.cathalf);if(c){c.half=el.checked;save();toast(c.name+': yarım porsiyon '+(c.half?'açık':'kapalı'))}}
-  if(el.id==='halfPct'){const n=Math.max(30,Math.min(100,parseInt(el.value)||60));S.settings.halfPct=n;save();vMenu()}
+  if(el.id==='halfPct'){const n=Math.max(30,Math.min(100,parseInt(el.value)||50));S.settings.halfPct=n;save();vMenu()}
   if(el.dataset.note){const l=findLine(el.dataset.note);if(l){l.note=el.value.trim();save()}}
   if(el.dataset.catname){const c=S.menu.cats.find(x=>x.id===el.dataset.catname);if(c){c.name=el.value.trim()||c.name;S.menu.sample=false;save()}}
   if(el.dataset.iname){const i=S.menu.items.find(x=>x.id===el.dataset.iname);if(i){i.name=el.value.trim()||i.name;S.menu.sample=false;save()}}
