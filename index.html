@@ -195,7 +195,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>POS · Sürüm 25</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small>POS · Sürüm 26</small></div>
     <div class="sp"></div>
     <button class="chip on" id="admChip" data-act="lock" hidden><i></i><span>Yönetici · Kilitle</span></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı yok</span></button>
@@ -227,10 +227,11 @@ const dmy=t=>new Date(t).toLocaleDateString('tr-TR');
 
 const HALF_CATS=['Çorbalar','Sıcak Sebze Yemekleri','Zeytinyağlılar','Izgaralar','Salatalar','Pilav ve Makarnalar','Köfteler','Et Yemekleri','Tatlılar'];
 const NO_HALF=['Kuzu Etli Özbek Pilavı','Çiftlik Kebabı','Kuzu Kapama','Talaş Kebabı','Kuzu Etli Talaş Böreği','İmam Bayıldı','Zeytinyağlı Enginar Dolma','Zeytinyağlı Enginar','Karnıyarık','Güveçte Parmak Kebabı','Tavuk Kızartma','Şehriyeli Tavuk','Dalyan Köfte','Dana Rosto',
-  'Kuzu Ayak Paça','Güveç Türlü','Kereviz Dolma','Tavuk Bonfile','Bonfile','Karışık Izgara','Kase Yoğurdu','Cacık','Fırın Makarna','Ekişili Köfte',
+  'Kuzu Ayak Paça','Güveç Türlü','Kereviz Dolma','Tavuk Bonfile','Bonfile','Karışık Izgara','Kase Yoğurdu','Cacık','Fırın Makarna',
   'Kuzu Ciğer Sarma','Kağıt Kebap','Kuzu Keşkek','Kuzu Haşlama','Kuzu Kaburga Dolma','Fırın Bonfile veya Pirzola','Palamut Pilaki',
   'Sütlaç','Aşure','Tavuk Göğsü','Kazandibi','Zerde','Yassı Kadayıf','Şekerpare','Tel Kadayıf','Keşkül','Krem Şokola'];
-const HALF_PRICE={'Kaymaklı İncir Tatlısı':210,'Kaymaklı Kayısı Tatlısı':210,'Sade İncir Tatlısı':160};
+const HALF_PRICE={'Kaymaklı İncir Tatlısı':210,'Kaymaklı Kayısı Tatlısı':210,'Sade İncir Tatlısı':160,
+  'Izgara Köfte (150 gram)':360,'Ankara Köfte':345,'İzmir Köfte':345,'Fırın Köfte':345,'Kayseri Köfte':345,'Mızrak Köfte':345,'Sebzeli Köfte':345,'Ekişili Köfte':345};
 const UNIT_ITEMS={'Yaprak Sarma (3 Adet)':110,'Lahana Sarma (3 Adet)':110};
 const baseName=n=>n.replace(/\s*\(\d+\s*Adet\)\s*$/i,'');
 const MENU_VERSION='2026-07-09';
@@ -268,6 +269,7 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
       const i=M.items.findIndex(x=>x.name===old);if(i<0)continue;const o=M.items[i];o.name=a;
       M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:b,price:o.price,noHalf:!!o.noHalf})}
     S.settings.menuV4=true}
+  if(!S.settings.menuV10){S.menu.items.forEach(i=>{if(HALF_PRICE[i.name])i.halfPrice=HALF_PRICE[i.name];if(i.name==='Ekişili Köfte')i.noHalf=false});S.settings.menuV10=true}
   if(!S.settings.menuV9){const M=S.menu;
     const i=M.items.findIndex(x=>x.name==='Barbunya / Fasülye Pilaki');
     if(i>=0){const o=M.items[i];o.name='Barbunya Pilaki';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Fasulye Pilaki',price:o.price,noHalf:!!o.noHalf})}
@@ -275,7 +277,7 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
     S.settings.menuV9=true}
   if(!S.settings.kitchenV1){S.settings.kitchen=false;S.settings.kitchenV1=true}
   if(!S.settings.menuV8){const M=S.menu;
-    M.items.forEach(i=>{if(HALF_PRICE[i.name])i.halfPrice=HALF_PRICE[i.name];if(i.name==='Krem Şokola')i.noHalf=true});
+    M.items.forEach(i=>{if(i.name==='Krem Şokola')i.noHalf=true});
     if(!M.items.some(x=>x.name==='Sade İncir Tatlısı')){const a=M.items.findIndex(x=>x.name==='Sade Ayva Tatlısı');
       const cat=a>=0?M.items[a].cat:(M.cats.find(c=>c.name==='Tatlılar')||{}).id;
       if(cat)M.items.splice(a>=0?a+1:M.items.length,0,{id:uid(),cat,name:'Sade İncir Tatlısı',price:270,halfPrice:160})}
