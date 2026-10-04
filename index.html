@@ -169,8 +169,9 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 8</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 9</small></div>
     <div class="sp"></div>
+    <button class="chip on" id="admChip" data-act="lock" hidden><i></i><span>Yönetici · Kilitle</span></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı yok</span></button>
   </header>
   <main id="main"></main>
@@ -228,12 +229,48 @@ const tCount=t=>t?t.lines.reduce((a,l)=>a+l.qty,0):0;
 
 /* ============ görünümler ============ */
 const $main=document.getElementById('main');
+/* ============ yönetici kilidi ============ */
+const ADM={until:0};
+const ADMIN_MIN=15;
+const isAdmin=()=>Date.now()<ADM.until;
+function touchAdmin(){if(isAdmin())ADM.until=Date.now()+ADMIN_MIN*60000}
+async function pinHash(pin){const t='kanaat-pos:'+pin;
+  try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+  catch(e){let h=5381;for(const ch of t)h=((h*33)^ch.charCodeAt(0))>>>0;return 'x'+h.toString(16)}}
+function unlockAdmin(){ADM.until=Date.now()+ADMIN_MIN*60000;renderAdmChip()}
+function lockAdmin(){ADM.until=0;renderAdmChip();if(['report','menu'].includes(ui.view))ui.view='tables';closeLayer();render()}
+function renderAdmChip(){const c=document.getElementById('admChip');if(c)c.hidden=!isAdmin()}
+function requireAdmin(fn,forceNew){
+  if(isAdmin()&&!forceNew){touchAdmin();fn();return}
+  const hasPin=!!S.settings.adminPin&&!forceNew;
+  modal(`<div class="row" style="justify-content:space-between"><h2>${hasPin?'Yönetici şifresi':'Yönetici şifresi belirleyin'}</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
+    <p class="muted" style="margin:0">${hasPin?'Bu bölüm sadece yönetici içindir.':'Rapor, Menü ve ayarları korumak için 4–8 haneli bir şifre belirleyin. Garsonlara söylemeyin.'}</p>
+    <label class="f">Şifre<input id="pin1" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+    ${hasPin?'':'<label class="f">Şifre (tekrar)<input id="pin2" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>'}
+    <p id="pinErr" class="muted" style="margin:0;color:var(--danger);min-height:1.2em"></p>
+    <button class="btn pri block" id="pinOk">${hasPin?'Aç':'Şifreyi kaydet'}</button>`);
+  const p1=document.getElementById('pin1'),err=document.getElementById('pinErr');setTimeout(()=>p1.focus(),50);
+  const go=async()=>{const v=p1.value.trim();
+    if(!/^\d{4,8}$/.test(v)){err.textContent='Şifre 4–8 rakamdan oluşmalı.';return}
+    if(!hasPin){if(v!==document.getElementById('pin2').value.trim()){err.textContent='İki şifre aynı değil.';return}
+      S.settings.adminPin=await pinHash(v);save();closeLayer();unlockAdmin();toast('Yönetici şifresi kaydedildi');fn();return}
+    if(await pinHash(v)!==S.settings.adminPin){err.textContent='Şifre yanlış.';p1.value='';p1.focus();return}
+    closeLayer();unlockAdmin();fn()};
+  document.getElementById('pinOk').onclick=go;
+  $layer.querySelectorAll('input').forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&isAdmin())lockAdmin()});
+setInterval(()=>{if(ADM.until&&!isAdmin()){lockAdmin();toast('Yönetici kilidi kapandı')}},20000);
+document.addEventListener('click',()=>touchAdmin(),true);
+
 function render(){
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('act',b.dataset.v===ui.view||(ui.view==='order'&&b.dataset.v==='tables')));
   const inOrder=ui.view==='order';
   document.getElementById('tabs').hidden=inOrder;
   document.getElementById('cartbar').hidden=!inOrder;
+  if(['report','menu'].includes(ui.view)&&!isAdmin())ui.view='tables';
   ({tables:vTables,order:vOrder,report:vReport,menu:vMenu,settings:vSettings})[ui.view]();
+  renderAdmChip();
   renderChip();
 }
 
@@ -371,6 +408,7 @@ function vSettings(){
      <div class="f">Bağlantı kayıtları<pre id="btlog" style="margin:0;max-height:180px;overflow:auto;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;font:12px/1.45 ui-monospace,Menlo,monospace;color:var(--ink);white-space:pre-wrap;font-weight:400">${esc(BLOG.join('\n')||'Henüz kayıt yok. “Yazıcıya bağlan”a basın.')}</pre></div>
      <button class="btn" data-act="copyLog">Kayıtları kopyala</button>
    </div>
+   ${isAdmin()?`
    <div class="card stack">
      <h3 style="margin:0">Fiş metinleri</h3>
      <label class="row" style="font-weight:600"><input type="checkbox" id="logoOn" ${s.logo?'checked':''}> Fişin üstüne logo bas</label>
@@ -389,12 +427,23 @@ function vSettings(){
      <h3 style="margin:0">Yedek</h3>
      <p class="muted" style="margin:0;font-size:13px">Veriler yalnızca bu telefonda, bu tarayıcıda durur. Ara ara yedek alın.</p>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="backup">Yedek indir</button><button class="btn" data-act="restore">Yedekten yükle</button></div>
+   </div>
+   <div class="card stack">
+     <h3 style="margin:0">Yönetici</h3>
+     <p class="muted" style="margin:0;font-size:13px">Rapor, Menü, masa boşaltma ve bu ayarlar yönetici şifresiyle açılır. Uygulamadan çıkınca ya da 15 dakika işlem yapılmayınca kendiliğinden kilitlenir.</p>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="changePin">Şifreyi değiştir</button><button class="btn pri" data-act="lock">Kilitle</button></div>
+   </div>`:`
+   <div class="card stack">
+     <h3 style="margin:0">Yönetici ayarları</h3>
+     <p class="muted" style="margin:0;font-size:13px">Fiş metinleri, logo, masa sayısı ve yedek yönetici şifresiyle açılır.</p>
+     <button class="btn" data-act="adminUnlock">Şifreyle aç</button>
+   </div>`}
    </div></div>`;
-  const bind=(id,fn)=>{const el=document.getElementById(id);el.onchange=()=>{fn(el);save();}};
+  const bind=(id,fn)=>{const el=document.getElementById(id);if(!el)return;el.onchange=()=>{fn(el);save();}};
   if(document.getElementById('cutter'))bind('cutter',e=>S.settings.cutter=e.checked);
   bind('kitchenOn',e=>S.settings.kitchen=e.checked);
   bind('hdr',e=>S.settings.header=e.value);
-  document.getElementById('logoOn').onchange=e=>{S.settings.logo=e.target.checked;save();render()};
+  const lo=document.getElementById('logoOn');if(lo)lo.onchange=e=>{S.settings.logo=e.target.checked;save();render()};
   bind('ftr',e=>S.settings.footer=e.value);
   bind('tcount',e=>S.settings.tableCount=Math.max(1,Math.min(99,parseInt(e.value)||1)));
   bind('extras',e=>S.settings.extras=e.value);
@@ -693,7 +742,10 @@ function renderChip(){const c=document.getElementById('prChip');const on=!!(BT.c
 function findLine(id){return S.tables[ui.table]?.lines.find(l=>l.id===id)}
 function pruneTable(k){const t=S.tables[k];if(!t)return;t.lines=t.lines.filter(l=>l.qty>0||l.sent>0);if(!t.lines.length)delete S.tables[k]}
 const A={
-  tab(d){ui.view=d.v;closeLayer();render();$main.scrollTop=0},
+  tab(d){const go=()=>{ui.view=d.v;closeLayer();render();$main.scrollTop=0};if(['report','menu'].includes(d.v))requireAdmin(go);else go()},
+  lock(){lockAdmin();toast('Kilitlendi')},
+  adminUnlock(){requireAdmin(()=>render())},
+  changePin(){requireAdmin(()=>requireAdmin(()=>render(),true))},
   printerChip(){ui.view='settings';render()},
   openTable(d){ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
   cat(d){ui.cat=d.id;render()},
@@ -723,7 +775,7 @@ const A={
     S.sales.push(sale);delete S.tables[ui.table];save();closeLayer();ui.view='tables';render();
     toast(`${sale.table} kapandı · ${d.p} ${fmt(sale.total)}`);
     if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:d.p,no:sale.no,at:sale.at}),'Fiş')},
-  clearTable(){ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')})},
+  clearTable(){requireAdmin(()=>ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')}))},
   moveTable(){const t=S.tables[ui.table];if(!t||!tCount(t)){toast('Taşınacak ürün yok');return}
     const free=tableList().filter(x=>x.key!==ui.table);
     modal(`<div class="row" style="justify-content:space-between"><h2>Nereye taşınsın?</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
