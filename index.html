@@ -315,9 +315,6 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
    S.menu.items.forEach(i=>{if(/\(\d+\s*Adet\)/i.test(i.name)&&/Sarma|Dolma/.test(i.name))i.name=strip(i.name)});
    Object.values(S.tables||{}).forEach(t=>(t.lines||[]).forEach(l=>{if(/Sarma|Dolma/.test(l.name))l.name=strip(l.name)}))}
   S.settings.header=String(S.settings.header||'').split('\n').filter(x=>!/since\s*1933/i.test(x)).join('\n')||'KANAAT LOKANTASI';
-  if(!S.settings.menuV16){const M=S.menu,i=M.items.findIndex(x=>x.name==='Etli Sarma');
-    if(i>=0){const o=M.items[i];o.name='Etli Yaprak Sarma';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Etli Lahana Sarma',price:o.price,noHalf:!!o.noHalf,...(o.halfPrice!=null?{halfPrice:o.halfPrice}:{})})}
-    S.settings.menuV16=true}
   if(!S.settings.menuV15){S.menu.items.forEach(i=>{if(i.name==='Döner Kebap (110 gram)')i.name='Döner Kebap';if(i.name==='Yoğurtlu Kebap (110 gram)')i.name='Yoğurtlu Kebap'});S.settings.menuV15=true}
   if(!S.settings.menuV14){S.menu.items.forEach(i=>{if(i.name==='Izgara Köfte (150 gram)')i.name='Izgara Köfte'});S.settings.menuV14=true}
   if(!S.settings.extrasV1){if(String(S.settings.extras).replace(/\s/g,'')==='Paket,Gel-Al')S.settings.extras='';S.settings.extrasV1=true}
@@ -345,7 +342,9 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
   if(!S.settings.menuV5){const M=S.menu,i=M.items.findIndex(x=>x.name==='Taze Fasulye/Türlü');
     if(i>=0){const o=M.items[i];o.name='Taze Fasulye';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Türlü',price:o.price,noHalf:!!o.noHalf})}
     S.settings.menuV5=true}
-  if(!S.settings.noHalfV1){S.menu.items.forEach(i=>{if(NO_HALF.includes(i.name))i.noHalf=true});S.settings.noHalfV1=true}}
+  if(!S.settings.noHalfV1){S.menu.items.forEach(i=>{if(NO_HALF.includes(i.name))i.noHalf=true});S.settings.noHalfV1=true}
+  {const M=S.menu,i=M.items.findIndex(x=>x.name==='Etli Sarma');
+    if(i>=0){const o=M.items[i];o.name='Etli Yaprak Sarma';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Etli Lahana Sarma',price:o.price,noHalf:!!o.noHalf,...(o.halfPrice!=null?{halfPrice:o.halfPrice}:{})})}}}
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){toast('Kaydedilemedi: tarayıcı depolaması kapalı')}}
 load();
 
