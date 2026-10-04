@@ -40,7 +40,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 #app{height:100%;display:flex;flex-direction:column}
 header.top{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;background:var(--surface);border-bottom:1px solid var(--line)}
 .brand{display:flex;flex-direction:column;line-height:1;min-width:0}
-.brand b{font:700 22px/1 var(--display);letter-spacing:.02em;text-transform:uppercase}
+.brand{flex:1}
+.top .chip{padding:6px 9px;max-width:120px;gap:5px}
+.top .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brand b{font:700 20px/1 var(--display);letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{white-space:nowrap}
 .brand small{font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
 .top .sp{flex:1}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:600;white-space:nowrap}
@@ -200,10 +204,9 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>POS · Sürüm 29</small></div>
-    <div class="sp"></div>
-    <button class="chip on" id="admChip" data-act="lock" hidden><i></i><span>Yönetici · Kilitle</span></button>
-    <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı yok</span></button>
+    <div class="brand"><b>Kanaat Lokantası</b><small>POS · Sürüm 30</small></div>
+    <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
+    <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
   <main id="main"></main>
   <nav class="tabs" id="tabs">
@@ -428,10 +431,11 @@ function salesOf(day){return S.sales.filter(s=>dayKey(s.at)===day)}
 function summary(day){
   const list=salesOf(day),valid=list.filter(s=>!s.void);
   const sum=(f)=>valid.filter(f).reduce((a,s)=>a+s.total,0);
-  const items={};valid.forEach(s=>s.lines.forEach(l=>{const k=l.name;items[k]=items[k]||{q:0,t:0};items[k].q+=l.qty;items[k].t+=l.qty*l.price}));
+  const items={},pitems={};let pkgTotal=0,pkgSales=0;
+  valid.forEach(s=>{let hasP=false;s.lines.forEach(l=>{const m=l.pkg?pitems:items,k=l.name;m[k]=m[k]||{q:0,t:0};m[k].q+=l.qty;m[k].t+=l.qty*l.price;if(l.pkg){pkgTotal+=l.qty*l.price;hasP=true}});if(hasP)pkgSales++});
   const tsum=f=>valid.filter(f).reduce((a,s)=>a+(s.tip||0),0);
   return{list,valid,total:sum(()=>1),cash:sum(s=>s.pay==='Nakit'),card:sum(s=>s.pay==='Kart'),tip:tsum(()=>1),tipCash:tsum(s=>s.pay==='Nakit'),tipCard:tsum(s=>s.pay==='Kart'),
-    items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),voids:list.length-valid.length}
+    items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),pitems:Object.entries(pitems).sort((a,b)=>b[1].t-a[1].t),pkgTotal,pkgSales,voids:list.length-valid.length}
 }
 function vReport(){
   const r=summary(ui.reportDay);
@@ -444,12 +448,16 @@ function vReport(){
      <div class="kpi"><span>Kart</span><b class="num">${fmt(r.card)}</b></div>
      <div class="kpi"><span>Adisyon</span><b class="num">${r.valid.length}</b></div>
      <div class="kpi"><span>Ortalama</span><b class="num">${fmt(r.valid.length?r.total/r.valid.length:0)}</b></div>
+     <div class="kpi"><span>Masada</span><b class="num">${fmt(r.total-r.pkgTotal)}</b></div>
+     <div class="kpi"><span>Paket</span><b class="num">${fmt(r.pkgTotal)}</b><span class="num" style="text-transform:none;letter-spacing:0">${r.pkgSales} adisyonda</span></div>
      <div class="kpi" style="grid-column:1/-1"><span>Gönüllü bahşiş (ciroya dahil değil)</span><b class="num">${fmt(r.tip)}</b><span class="num" style="text-transform:none;letter-spacing:0">Nakit ${fmt(r.tipCash)} · Kart ${fmt(r.tipCard)}</span></div>
    </div>
    <div class="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
      <button class="btn pri" data-act="printZ">Gün sonu yazdır</button><button class="btn" data-act="csv">Excel'e aktar (CSV)</button></div>
-   <div class="card"><h3>Satılan ürünler</h3>${r.items.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
-     ${r.items.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Bu gün satış yok.</p>'}</div>
+   <div class="card"><h3>Satılan ürünler · masada</h3>${r.items.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
+     ${r.items.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Masada satış yok.</p>'}</div>
+   <div class="card"><h3>Satılan ürünler · paket</h3>${r.pitems.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
+     ${r.pitems.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Paket satış yok.</p>'}</div>
    <div class="card"><h3>Adisyonlar</h3>${r.list.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Saat</th><th>Masa</th><th>Ödeme</th><th class="r">Tutar</th><th></th></tr>
      ${r.list.slice().reverse().map(s=>`<tr class="${s.void?'void':''}"><td class="num">${hm(s.at)}</td><td>${esc(s.table)}</td><td><span class="pill ${s.pay==='Nakit'?'nakit':'kart'}">${s.pay}</span></td><td class="r">${fmt(s.total)}</td>
        <td class="r"><button class="linkbtn" data-act="saleMenu" data-id="${s.id}">•••</button></td></tr>`).join('')}</table></div>`:'<p class="muted">Kayıt yok.</p>'}</div>
@@ -591,9 +599,10 @@ function zDoc(day){
   const r=summary(day);
   return [...headerRows(),{k:'gap'},{k:'title',text:'GÜN SONU'},{k:'c',text:day.split('-').reverse().join('.')+'  ·  yazdırma '+hm(Date.now())},{k:'hr'},
     {k:'lr',l:'Adisyon',r:String(r.valid.length)},{k:'lr',l:'Nakit',r:fmt(r.cash)},{k:'lr',l:'Kart',r:fmt(r.card)},
-    ...(r.voids?[{k:'lr',l:'İptal edilen',r:String(r.voids)}]:[]),{k:'hr'},{k:'big',l:'CİRO',r:fmt(r.total)},
+    ...(r.voids?[{k:'lr',l:'İptal edilen',r:String(r.voids)}]:[]),{k:'hr'},{k:'lr',l:'Masada',r:fmt(r.total-r.pkgTotal)},{k:'lr',l:'Paket',r:fmt(r.pkgTotal)},{k:'big',l:'CİRO',r:fmt(r.total)},
     ...(r.tip?[{k:'hr'},{k:'lr',l:'Bahşiş (nakit)',r:fmt(r.tipCash)},{k:'lr',l:'Bahşiş (kart)',r:fmt(r.tipCard)},{k:'lr',l:'Toplam bahşiş',r:fmt(r.tip),b:true}]:[]),{k:'hr'},
-    {k:'c',text:'Satılan ürünler',b:true},...r.items.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)})),{k:'hr'},
+    {k:'c',text:'Satılan ürünler · masada',b:true},...r.items.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)})),
+    ...(r.pitems.length?[{k:'gap'},{k:'c',text:'Satılan ürünler · paket',b:true},...r.pitems.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)}))]:[]),{k:'hr'},
     {k:'c',text:'BİLGİ AMAÇLIDIR'}];
 }
 
@@ -839,7 +848,7 @@ function showPreview(doc,label){
     toast('Görüntüye basılı tutup kaydedebilirsiniz')});
 }
 function renderChip(){const c=document.getElementById('prChip');const on=!!(BT.char&&BT.device?.gatt?.connected);
-  c.classList.toggle('on',on);c.querySelector('span').textContent=on?(BT.device.name||'Yazıcı bağlı'):'Yazıcı yok'}
+  c.classList.toggle('on',on);c.querySelector('span').textContent='Yazıcı';c.title=on?('Bağlı: '+(BT.device.name||'yazıcı')):'Yazıcı bağlı değil'}
 
 /* ============ eylemler ============ */
 function findLine(id){return S.tables[ui.table]?.lines.find(l=>l.id===id)}
@@ -914,8 +923,8 @@ const A={
     if(to){to.lines.push(...from.lines);to.openedAt=Math.min(to.openedAt,from.openedAt)}else S.tables[d.k]=from;
     delete S.tables[ui.table];ui.table=d.k;save();closeLayer();render();toast('Taşındı: '+tName(d.k))},
   async printZ(){await printDoc(zDoc(ui.reportDay),'Gün sonu')},
-  csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Ödeme','Tutar','Bahşiş','Durum','Ürünler']];
-    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.pay,money(s.total),money(s.tip||0),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name).join(', ')]));
+  csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Ödeme','Tutar','Paket tutarı','Bahşiş','Durum','Ürünler']];
+    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.pay,money(s.total),money(s.lines.filter(l=>l.pkg).reduce((a,l)=>a+l.qty*l.price,0)),money(s.tip||0),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name+(l.pkg?' (paket)':'')).join(', ')]));
     const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
     download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'kanaat-satis-'+ui.reportDay+'.csv')},
   saleMenu(d){const s=S.sales.find(x=>x.id===d.id);if(!s)return;
