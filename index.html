@@ -149,6 +149,17 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .catnav h3{margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .catnav .btn{min-height:40px;padding:8px 12px}
 @media (min-width:600px){.cgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.splitrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:22px;line-height:1}
+.stepper b{min-width:26px;text-align:center;font:700 24px/1 var(--display)}
+.shares{display:grid;gap:8px}
+.share{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.share .si{font-weight:600;color:var(--muted)}
+.share b{font:700 20px/1 var(--display);text-align:right}
+.share .btn{min-height:40px;padding:8px 12px}
+.share.paid{background:var(--ok-soft);border-color:transparent}
+.share .sp{color:var(--ok);font-weight:700}
 .halfchk{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
 
 .cartbar{background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:10px}
@@ -226,7 +237,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 44</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 45</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -346,7 +357,20 @@ const tTotal=t=>t?t.lines.reduce((a,l)=>a+l.qty*l.price,0):0;
 const itemHalf=it=>it.halfPrice!=null?it.halfPrice:halfPrice(it.price);
 const halfPrice=p=>Math.round(p*(S.settings.halfPct||50))/100;
 function tipAmount(total){const m=ui.tip?.mode;if(typeof m==='number')return Math.round(total*m)/100;if(m==='custom')return Math.round((ui.tip.custom||0)*100)/100;return 0}
-function updatePay(){const t=S.tables[ui.table];if(!t)return;const tot=tTotal(t),tip=tipAmount(tot);
+function payGrand(){const t=S.tables[ui.table];if(!t)return 0;const tot=tTotal(t);return Math.round((tot+tipAmount(tot))*100)/100}
+function splitShares(g){const n=ui.split?.n||1,c=Math.round(g*100),b=Math.floor(c/n);return Array.from({length:n},(_,i)=>(i===n-1?c-b*(n-1):b)/100)}
+function renderPayArea(){const el=document.getElementById('payArea');if(!el)return;const n=ui.split?.n||1;const g=payGrand();
+  const nEl=document.getElementById('splitN'),info=document.getElementById('splitInfo');if(nEl)nEl.textContent=n;
+  const sh=splitShares(g);if(info)info.textContent=n>1?`${n} kişi · kişi başı ${fmt(sh[0])}${sh[n-1]!==sh[0]?' (sonuncu '+fmt(sh[n-1])+')':''}`:'Bölünmüyor';
+  const locked=ui.split.paid.some(Boolean);document.querySelectorAll('.tipseg button,.stepper button').forEach(b=>b.disabled=locked);
+  const cancel=document.getElementById('payCancel');if(cancel)cancel.hidden=locked;
+  if(n===1){el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn ok" data-act="doPay" data-p="Nakit" style="min-height:56px">Nakit</button><button class="btn pri" data-act="doPay" data-p="Kart" style="min-height:56px">Kart</button></div>`;return}
+  el.innerHTML=`<div class="shares">${sh.map((a,i)=>{const p=ui.split.paid[i];return `<div class="share ${p?'paid':''}"><span class="si">${i+1}. kişi</span><b class="num">${fmt(a)}</b>
+    ${p?`<span class="sp">✓ ${p}</span><button class="linkbtn" data-act="undoSplit" data-i="${i}">Geri al</button>`:`<button class="btn ok" data-act="paySplit" data-i="${i}" data-p="Nakit">Nakit</button><button class="btn pri" data-act="paySplit" data-i="${i}" data-p="Kart">Kart</button>`}</div>`}).join('')}</div>
+    <p class="muted" style="margin:6px 0 0;font-size:13px">${ui.split.paid.filter(Boolean).length}/${n} kişi ödedi. Hepsi ödeyince masa kapanır.</p>`}
+function salePays(s){return s.payments||[{pay:s.pay,amount:(s.total||0)+(s.tip||0)}]}
+function saleSplit(s,method){const g=(s.total||0)+(s.tip||0);if(!g)return{food:0,tip:0};const a=salePays(s).filter(p=>p.pay===method).reduce((x,p)=>x+p.amount,0);return{food:a*(s.total/g),tip:a*((s.tip||0)/g)}}
+function updatePay(){renderPayArea();const t=S.tables[ui.table];if(!t)return;const tot=tTotal(t),tip=tipAmount(tot);
   const a=document.getElementById('tipAmt'),g=document.getElementById('payGrand'),lb=document.getElementById('tipLbl');if(a)a.textContent=fmt(tip);if(lb)lb.textContent='Gönüllü bahşiş'+(typeof ui.tip?.mode==='number'?` (%${ui.tip.mode})`:'');if(g)g.textContent=fmt(tot+tip)}
 const tCount=t=>t?t.lines.reduce((a,l)=>a+l.qty,0):0;
 
@@ -472,9 +496,10 @@ function summary(day){
   const items={},pitems={};let pkgTotal=0,pkgSales=0;
   valid.forEach(s=>{let hasP=false;s.lines.forEach(l=>{const m=l.pkg?pitems:items,k=l.name;m[k]=m[k]||{q:0,t:0};m[k].q+=l.qty;m[k].t+=l.qty*l.price;if(l.pkg){pkgTotal+=l.qty*l.price;hasP=true}});if(hasP)pkgSales++});
   const tsum=f=>valid.filter(f).reduce((a,s)=>a+(s.tip||0),0);
-  return{list,valid,total:sum(()=>1),cash:sum(s=>s.pay==='Nakit'),card:sum(s=>s.pay==='Kart'),tip:tsum(()=>1),tipCash:tsum(s=>s.pay==='Nakit'),tipCard:tsum(s=>s.pay==='Kart'),
+  const ms=(m,k)=>Math.round(valid.reduce((a,s)=>a+saleSplit(s,m)[k],0)*100)/100;
+  return{list,valid,total:sum(()=>1),cash:ms('Nakit','food'),card:ms('Kart','food'),tip:tsum(()=>1),tipCash:ms('Nakit','tip'),tipCard:ms('Kart','tip'),
     items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),pitems:Object.entries(pitems).sort((a,b)=>b[1].t-a[1].t),pkgTotal,pkgSales,voids:list.length-valid.length,
-    waiters:Object.entries(valid.reduce((m,s)=>{const w=s.waiter||'(adsız)';m[w]=m[w]||{n:0,t:0,tip:0,tc:0,tk:0};m[w].n++;m[w].t+=s.total;m[w].tip+=s.tip||0;if(s.pay==='Nakit')m[w].tc+=s.tip||0;else m[w].tk+=s.tip||0;return m},{})).sort((a,b)=>b[1].tip-a[1].tip)}
+    waiters:Object.entries(valid.reduce((m,s)=>{const w=s.waiter||'(adsız)';m[w]=m[w]||{n:0,t:0,tip:0,tc:0,tk:0};m[w].n++;m[w].t+=s.total;m[w].tip+=s.tip||0;m[w].tc+=saleSplit(s,'Nakit').tip;m[w].tk+=saleSplit(s,'Kart').tip;return m},{})).sort((a,b)=>b[1].tip-a[1].tip)}
 }
 function vReport(){
   const r=summary(ui.reportDay);
@@ -501,7 +526,7 @@ function vReport(){
    <div class="card"><h3>Satılan ürünler · paket</h3>${r.pitems.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
      ${r.pitems.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Paket satış yok.</p>'}</div>
    <div class="card"><h3>Adisyonlar</h3>${r.list.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Saat</th><th>Masa</th><th>Ödeme</th><th class="r">Tutar</th><th></th></tr>
-     ${r.list.slice().reverse().map(s=>`<tr class="${s.void?'void':''}"><td class="num">${hm(s.at)}</td><td>${esc(s.table)}</td><td><span class="pill ${s.pay==='Nakit'?'nakit':'kart'}">${s.pay}</span></td><td class="r">${fmt(s.total)}</td>
+     ${r.list.slice().reverse().map(s=>`<tr class="${s.void?'void':''}"><td class="num">${hm(s.at)}</td><td>${esc(s.table)}</td><td><span class="pill ${s.pay==='Nakit'?'nakit':s.pay==='Kart'?'kart':''}">${s.pay}${s.split?' ÷'+s.split:''}</span></td><td class="r">${fmt(s.total)}</td>
        <td class="r"><button class="linkbtn" data-act="saleMenu" data-id="${s.id}">•••</button></td></tr>`).join('')}</table></div>`:'<p class="muted">Kayıt yok.</p>'}</div>
   </div>`;
   document.getElementById('repDay').onchange=e=>{ui.reportDay=e.target.value||dayKey(Date.now());render()};
@@ -617,7 +642,7 @@ function ask(msg,okLabel,fn,danger=true){
   document.getElementById('askOk').onclick=()=>{closeLayer();fn()};
 }
 let tt;function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),1800)}
-$layer.addEventListener('click',e=>{if(e.target.hasAttribute('data-scrim'))closeLayer()});
+$layer.addEventListener('click',e=>{if(e.target.hasAttribute('data-scrim')){if(document.getElementById('payArea')&&ui.split?.paid?.some(Boolean)){toast('Önce kalan kişilerin ödemesini alın');return}closeLayer()}});
 
 /* ============ fiş içerikleri ============ */
 const DEFAULT_LOGO='data:image/png;base64,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';
@@ -635,7 +660,7 @@ function billDoc(tableName,lines,total,opts={}){
     {k:'lr',l:dmy(at),r:hm(at)},{k:'lr',l:tableName,r:opts.no?('No: '+opts.no):'',b:true},...((opts.waiter??S.settings.waiter)?[{k:'l',text:'Garson: '+(opts.waiter??S.settings.waiter),small:true}]:[]),{k:'hr'},
     ...[...lines.filter(l=>!l.pkg),...(lines.some(l=>l.pkg)?[{sec:1}]:[]),...lines.filter(l=>l.pkg)].flatMap(l=>l.sec?[{k:'gap'},{k:'l',text:'— PAKET —',b:true}]:[{k:'lr',l:`${l.qty} x ${l.name}`,r:money(l.qty*l.price)},...(l.qty>1?[{k:'l',text:`   ${l.qty} x ${money(l.price)}`,small:true}]:[])]),
     {k:'hr'},...(opts.tip>0?[{k:'lr',l:'Ara toplam',r:fmt(total)},{k:'lr',l:'Gönüllü bahşiş'+(opts.tipPct?` (%${opts.tipPct})`:''),r:fmt(opts.tip)},{k:'big',l:'TOPLAM',r:fmt(total+opts.tip)}]:[{k:'big',l:'TOPLAM',r:fmt(total)}]),
-    ...(opts.pay?[{k:'lr',l:'Ödeme',r:opts.pay}]:[{k:'c',text:'— Ödenmedi —'}]),
+    ...(opts.payments&&opts.payments.length>1?[{k:'lr',l:`Kişi başı (${opts.payments.length} kişi)`,r:fmt(opts.payments[0].amount)},...opts.payments.map((p,i)=>({k:'lr',l:`${i+1}. kişi · ${p.pay}`,r:money(p.amount),small:true}))]:opts.pay?[{k:'lr',l:'Ödeme',r:opts.pay}]:[{k:'c',text:'— Ödenmedi —'}]),
     {k:'l',text:'Fiyatlarımıza KDV dahildir.',small:true},
     {k:'gap'},...footerRows()];
 }
@@ -937,7 +962,7 @@ const A={
     await printDoc(kitchenDoc(tName(ui.table),items),'Mutfak fişi');
     items.forEach(x=>x.l.sent=x.l.qty);pruneTable(ui.table);save();if(document.querySelector('.sheet'))openCart();vOrder()},
   async bill(){const t=S.tables[ui.table];if(!t)return;await printDoc(billDoc(tName(ui.table),t.lines.filter(l=>l.qty>0),tTotal(t)),'Hesap fişi')},
-  pay(){const t=S.tables[ui.table];if(!t)return;ui.tip={mode:'none',custom:0};
+  pay(){const t=S.tables[ui.table];if(!t)return;ui.tip={mode:'none',custom:0};ui.split={n:1,paid:[]};
     const total=tTotal(t);
     modal(`<h2>Ödeme · ${esc(tName(ui.table))}</h2>
      <div class="tipbox">
@@ -950,23 +975,32 @@ const A={
      <div class="paysum card"><span class="muted">Hesap</span><span>${fmt(total)}</span>
        <span class="muted" id="tipLbl">Gönüllü bahşiş</span><span id="tipAmt">${fmt(0)}</span>
        <span style="font-weight:700;align-self:end">Ödenecek</span><span class="grand" id="payGrand">${fmt(total)}</span></div>
+     <div class="splitrow card"><div><b>Hesabı böl</b><div class="muted" id="splitInfo" style="font-size:13px">Bölünmüyor</div></div>
+       <div class="stepper"><button data-act="splitStep" data-d="-1" aria-label="Kişi azalt">−</button><b id="splitN" class="num">1</b><button data-act="splitStep" data-d="1" aria-label="Kişi artır">+</button></div></div>
      <label class="row" style="font-weight:600"><input type="checkbox" id="payPrint" checked> Fiş yazdır</label>
-     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn ok" data-act="doPay" data-p="Nakit" style="min-height:56px">Nakit</button><button class="btn pri" data-act="doPay" data-p="Kart" style="min-height:56px">Kart</button></div>
-     <button class="btn" data-act="close">Vazgeç</button>`);
+     <div id="payArea"></div>
+     <button class="btn" data-act="close" id="payCancel">Vazgeç</button>`);
+    renderPayArea();
     document.getElementById('tipInput').addEventListener('input',e=>{ui.tip.custom=Math.max(0,parseNum(e.target.value)||0);updatePay()});
   },
   tipMode(d){const v=d.v;ui.tip.mode=(v==='none'||v==='custom')?v:Number(v);
     document.querySelectorAll('.tipseg button').forEach(b=>b.classList.toggle('act',b.dataset.v===String(d.v)));
     const box=document.getElementById('tipCustomBox');box.hidden=v!=='custom';if(v==='custom')setTimeout(()=>document.getElementById('tipInput').focus(),50);
     updatePay()},
-  async doPay(d){const t=S.tables[ui.table];if(!t)return;const pr=document.getElementById('payPrint')?.checked;
+  splitStep(d){if(ui.split.paid.some(Boolean))return;ui.split.n=Math.max(1,Math.min(20,ui.split.n+Number(d.d)));ui.split.paid=[];updatePay()},
+  paySplit(d){const i=Number(d.i);ui.split.paid[i]=d.p;
+    if(ui.split.paid.filter(Boolean).length===ui.split.n){const sh=splitShares(payGrand());A.finishPay(ui.split.paid.map((p,k)=>({pay:p,amount:sh[k]})))}else updatePay()},
+  undoSplit(d){ui.split.paid[Number(d.i)]=null;updatePay()},
+  async doPay(d){const g=payGrand();await A.finishPay([{pay:d.p,amount:g}])},
+  async finishPay(payments){const t=S.tables[ui.table];if(!t)return;const pr=document.getElementById('payPrint')?.checked;
     const lines=t.lines.filter(l=>l.qty>0).map(l=>({name:l.name,price:l.price,qty:l.qty,...(l.pkg?{pkg:true}:{})}));
     const tip=tipAmount(tTotal(t));
     const tipPct=(tip>0&&typeof ui.tip?.mode==='number')?ui.tip.mode:null;
-    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,...(tipPct?{tipPct}:{}),pay:d.p,at:Date.now(),waiter:S.settings.waiter||''};
+    const methods=[...new Set(payments.map(p=>p.pay))];const payLbl=methods.length===1?methods[0]:'Karışık';
+    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,...(tipPct?{tipPct}:{}),pay:payLbl,...(payments.length>1?{payments,split:payments.length}:{}),at:Date.now(),waiter:S.settings.waiter||''};
     S.sales.push(sale);delete S.tables[ui.table];save();closeLayer();ui.view='tables';render();
-    toast(`${sale.table} kapandı · ${d.p} ${fmt(sale.total+tip)}${tip?' (bahşiş '+fmt(tip)+')':''}`);
-    if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:d.p,no:sale.no,at:sale.at,tip,tipPct,waiter:sale.waiter}),'Fiş')},
+    toast(`${sale.table} kapandı · ${payLbl} ${fmt(sale.total+tip)}${tip?' (bahşiş '+fmt(tip)+')':''}`);
+    if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:payLbl,no:sale.no,at:sale.at,tip,tipPct,waiter:sale.waiter,payments:sale.payments}),'Fiş')},
   clearTable(){requireAdmin(()=>ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')}))},
   moveTable(){const t=S.tables[ui.table];if(!t||!tCount(t)){toast('Taşınacak ürün yok');return}
     const free=tableList().filter(x=>x.key!==ui.table);
@@ -978,7 +1012,7 @@ const A={
     delete S.tables[ui.table];ui.table=d.k;save();closeLayer();render();toast('Taşındı: '+tName(d.k))},
   async printZ(){await printDoc(zDoc(ui.reportDay),'Gün sonu')},
   csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Garson','Ödeme','Tutar','Paket tutarı','Bahşiş','Durum','Ürünler']];
-    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.waiter||'',s.pay,money(s.total),money(s.lines.filter(l=>l.pkg).reduce((a,l)=>a+l.qty*l.price,0)),money(s.tip||0),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name+(l.pkg?' (paket)':'')).join(', ')]));
+    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.waiter||'',s.payments?s.payments.map(p=>p.pay+' '+money(p.amount)).join(' + '):s.pay,money(s.total),money(s.lines.filter(l=>l.pkg).reduce((a,l)=>a+l.qty*l.price,0)),money(s.tip||0),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name+(l.pkg?' (paket)':'')).join(', ')]));
     const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
     download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'kanaat-satis-'+ui.reportDay+'.csv')},
   saleMenu(d){const s=S.sales.find(x=>x.id===d.id);if(!s)return;
@@ -988,7 +1022,7 @@ const A={
      <div class="total"><span class="muted">${s.pay}${s.void?' · İPTAL':''}</span><b class="num">${fmt(s.total+(s.tip||0))}</b></div>
      <button class="btn" data-act="reprint" data-id="${s.id}">Fişi tekrar yazdır</button>
      <button class="btn danger" data-act="voidSale" data-id="${s.id}">${s.void?'İptali geri al':'Adisyonu iptal et'}</button>`)},
-  async reprint(d){const s=S.sales.find(x=>x.id===d.id);closeLayer();await printDoc(billDoc(s.table,s.lines,s.total,{pay:s.pay,no:s.no,at:s.at,tip:s.tip||0,tipPct:s.tipPct||null,waiter:s.waiter||''}),'Fiş')},
+  async reprint(d){const s=S.sales.find(x=>x.id===d.id);closeLayer();await printDoc(billDoc(s.table,s.lines,s.total,{pay:s.pay,no:s.no,at:s.at,tip:s.tip||0,tipPct:s.tipPct||null,waiter:s.waiter||'',payments:s.payments}),'Fiş')},
   voidSale(d){const s=S.sales.find(x=>x.id===d.id);s.void=!s.void;save();closeLayer();render();toast(s.void?'Adisyon iptal edildi':'İptal geri alındı')},
   bulk(d){const txt=document.getElementById('bulk').value;const parsed=parseMenu(txt);
     if(!parsed.items.length){toast('Okunabilir satır yok. Biçim: Kategori | Ürün | Fiyat');return}
