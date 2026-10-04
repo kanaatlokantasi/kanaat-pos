@@ -94,9 +94,10 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .item .q{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);border-radius:999px;min-width:24px;height:24px;display:grid;place-items:center;font-size:13px;font-weight:700;padding:0 6px}
 .item:active{background:var(--accent-soft)}
 .itemw{position:relative;display:flex}
+.item.hasq .nm{padding-right:68px}
 .itemw .item{flex:1;padding-right:12px}
 .itemw.hashalf .item{padding-bottom:12px}
-.halfb{position:absolute;right:8px;bottom:8px;width:44px;height:36px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);font:700 20px/1 var(--display)}
+.halfb{position:absolute;right:8px;bottom:8px;width:44px;height:36px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);font:700 19px/1 var(--display);letter-spacing:.04em}
 .halfb:active{background:var(--accent-soft)}
 .halfchk{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
 
@@ -175,7 +176,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 13</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 14</small></div>
     <div class="sp"></div>
     <button class="chip on" id="admChip" data-act="lock" hidden><i></i><span>Yönetici · Kilitle</span></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı yok</span></button>
@@ -316,10 +317,10 @@ function vOrder(){
       <h2 style="flex:1">${esc(tName(ui.table))}</h2>
       <button class="btn" data-act="moveTable">Taşı</button></div>
     <div class="cats">${cats.map(c=>`<button class="${c.id===ui.cat?'act':''}" data-act="cat" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>
-    ${cats.length?`<div class="igrid">${items.map(i=>{const f=qmap[i.id]||0,h=hmap[i.id]||0,hs=h?(h>1?h+'×½':'½'):'';const b=f&&h?f+' + '+hs:(f?String(f):hs);return `<div class="itemw ${catHalf&&!i.noHalf?'hashalf':''}"><button class="item" data-act="add" data-id="${i.id}">
+    ${cats.length?`<div class="igrid">${items.map(i=>{const f=qmap[i.id]||0,h=hmap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'';const b=f&&h?f+' + '+hs:(f?String(f):hs);return `<div class="itemw ${catHalf&&!i.noHalf?'hashalf':''}"><button class="item ${qmap[i.id]||hmap[i.id]?'hasq':''}" data-act="add" data-id="${i.id}">
       ${qmap[i.id]||hmap[i.id]?`<span class="q">${b}</span>`:''}
       <span class="nm">${esc(i.name)}</span><span class="pr num">${fmt(i.price)}</span></button>
-      ${catHalf&&!i.noHalf?`<button class="halfb" data-act="addHalf" data-id="${i.id}" aria-label="Yarım porsiyon ${esc(i.name)}, ${fmt(halfPrice(i.price))}">½</button>`:''}</div>`}).join('')||'<p class="muted">Bu kategoride ürün yok.</p>'}</div>`
+      ${catHalf&&!i.noHalf?`<button class="halfb" data-act="addHalf" data-id="${i.id}" aria-label="Az porsiyon ${esc(i.name)}, ${fmt(halfPrice(i.price))}">AZ</button>`:''}</div>`}).join('')||'<p class="muted">Bu kategoride ürün yok.</p>'}</div>`
     :`<div class="note">Menü boş. Menü sekmesinden ürün ekleyin.</div>`}`;
   renderCartBar();
 }
@@ -385,10 +386,10 @@ function vMenu(){
    <h2>Menü</h2>
    ${m.sample?`<div class="note">Bu bir <b>örnek menü</b>. Aşağıdaki kutuya kendi menünüzü yapıştırıp “Menüyü değiştir”e basın.</div>`:''}
    <div class="card stack">
-     <h3 style="margin:0">Yarım porsiyon</h3>
-     <p class="muted" style="margin:0;font-size:13px">Aşağıda “½ var” işaretli kategorilerdeki yemeklerin kartında <b>½</b> düğmesi çıkar. Tek bir yemekte istemiyorsanız o yemeğin yanındaki ½ kutusunu kaldırın. Yarım porsiyon fiyatı tam fiyatın yüzdesi olarak hesaplanır, yuvarlama yapılmaz.</p>
-     <label class="f">Yarım porsiyon fiyatı (tam fiyatın %'si)<input id="halfPct" type="number" min="30" max="100" step="5" inputmode="numeric" value="${S.settings.halfPct||50}"></label>
-     <p class="muted num" style="margin:0;font-size:13px">Örnek: 320 TL'lik yemeğin yarımı <b>${fmt(halfPrice(320))}</b>, 330 TL'liğin yarımı <b>${fmt(halfPrice(330))}</b>.</p>
+     <h3 style="margin:0">Az (yarım) porsiyon</h3>
+     <p class="muted" style="margin:0;font-size:13px">Aşağıda “AZ var” işaretli kategorilerdeki yemeklerin kartında <b>AZ</b> düğmesi çıkar. Tek bir yemekte istemiyorsanız o yemeğin yanındaki AZ kutusunu kaldırın. Az porsiyon fiyatı tam fiyatın yüzdesi olarak hesaplanır, yuvarlama yapılmaz.</p>
+     <label class="f">Az porsiyon fiyatı (tam fiyatın %'si)<input id="halfPct" type="number" min="30" max="100" step="5" inputmode="numeric" value="${S.settings.halfPct||50}"></label>
+     <p class="muted num" style="margin:0;font-size:13px">Örnek: 320 TL'lik yemeğin azı <b>${fmt(halfPrice(320))}</b>, 330 TL'liğin azı <b>${fmt(halfPrice(330))}</b>.</p>
    </div>
    <div class="card stack">
      <h3 style="margin:0">Toplu yükle</h3>
@@ -398,8 +399,8 @@ function vMenu(){
    </div>
    <div class="card mlist">
      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Ürünler (${m.items.length})</h3><span class="row" style="gap:6px"><button class="btn" data-act="resetMenu">Fiyat listesine dön</button><button class="btn" data-act="addCat">+ Kategori</button></span></div>
-     ${m.cats.map(c=>`<div class="cathead"><input id="cat-${c.id}" value="${esc(c.name)}" data-catname="${c.id}" aria-label="Kategori adı"><label class="halfchk"><input type="checkbox" data-cathalf="${c.id}" ${c.half?'checked':''}> ½ var</label><button class="linkbtn" data-act="delCat" data-id="${c.id}" style="color:var(--danger)">Sil</button></div>
-       ${m.items.filter(i=>i.cat===c.id).map(i=>`<div class="mi"><input id="in-${i.id}" value="${esc(i.name)}" data-iname="${i.id}" aria-label="Ürün adı"><input id="ip-${i.id}" class="p" inputmode="decimal" value="${money(i.price)}" data-iprice="${i.id}" aria-label="Fiyat">${c.half?`<label class="halfchk" title="Yarım porsiyon"><input type="checkbox" data-itemhalf="${i.id}" ${i.noHalf?'':'checked'}>½</label>`:'<span></span>'}<button class="del" data-act="delItem" data-id="${i.id}" aria-label="Sil">✕</button></div>`).join('')}
+     ${m.cats.map(c=>`<div class="cathead"><input id="cat-${c.id}" value="${esc(c.name)}" data-catname="${c.id}" aria-label="Kategori adı"><label class="halfchk"><input type="checkbox" data-cathalf="${c.id}" ${c.half?'checked':''}> AZ var</label><button class="linkbtn" data-act="delCat" data-id="${c.id}" style="color:var(--danger)">Sil</button></div>
+       ${m.items.filter(i=>i.cat===c.id).map(i=>`<div class="mi"><input id="in-${i.id}" value="${esc(i.name)}" data-iname="${i.id}" aria-label="Ürün adı"><input id="ip-${i.id}" class="p" inputmode="decimal" value="${money(i.price)}" data-iprice="${i.id}" aria-label="Fiyat">${c.half?`<label class="halfchk" title="Az porsiyon"><input type="checkbox" data-itemhalf="${i.id}" ${i.noHalf?'':'checked'}>AZ</label>`:'<span></span>'}<button class="del" data-act="delItem" data-id="${i.id}" aria-label="Sil">✕</button></div>`).join('')}
        <button class="linkbtn" data-act="addItem" data-cat="${c.id}">+ Bu kategoriye ürün ekle</button>`).join('')}
    </div></div>`;
 }
@@ -506,7 +507,7 @@ function billDoc(tableName,lines,total,opts={}){
 }
 function kitchenDoc(tableName,items){
   return [{k:'title',text:'MUTFAK'},{k:'title',text:tableName},{k:'c',text:dmy(Date.now())+' '+hm(Date.now())},{k:'hr'},
-    ...items.flatMap(x=>[{k:'kl',text:(x.d<0?`İPTAL ${-x.d} x `:`${x.d} x `)+(x.l.half?x.l.name.replace(' (yarım)','')+' — YARIM':x.l.name)},...(x.l.note?[{k:'l',text:'  » '+x.l.note,b:true}]:[])]),{k:'hr'}];
+    ...items.flatMap(x=>[{k:'kl',text:(x.d<0?`İPTAL ${-x.d} x `:`${x.d} x `)+(x.l.half?x.l.name.replace(/ \((yarım|az)\)$/,'')+' — AZ':x.l.name)},...(x.l.note?[{k:'l',text:'  » '+x.l.note,b:true}]:[])]),{k:'hr'}];
 }
 function zDoc(day){
   const r=summary(day);
@@ -779,9 +780,9 @@ const A={
     l.qty++;save();vOrder();toast('+1 '+it.name);if(navigator.vibrate)navigator.vibrate(10)},
   addHalf(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;const t=curT();const pr=halfPrice(it.price);
     let l=t.lines.find(x=>x.itemId===it.id&&x.half&&!x.note&&x.price===pr);
-    if(!l){l={id:uid(),itemId:it.id,name:it.name+' (yarım)',price:pr,qty:0,sent:0,note:'',half:true};t.lines.push(l)}
+    if(!l){l={id:uid(),itemId:it.id,name:it.name+' (az)',price:pr,qty:0,sent:0,note:'',half:true};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
-    l.qty++;save();vOrder();toast('+1 yarım '+it.name+' · '+fmt(pr));if(navigator.vibrate)navigator.vibrate(10)},
+    l.qty++;save();vOrder();toast('+1 az '+it.name+' · '+fmt(pr));if(navigator.vibrate)navigator.vibrate(10)},
   cart(){openCart()},
   close(){closeLayer()},
   inc(d){const l=findLine(d.id);if(l){l.qty++;save();openCart();vOrder()}},
@@ -867,8 +868,8 @@ async function download(blob,name){
 
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=A[b.dataset.act];if(f)f(b.dataset,b)});
 document.addEventListener('change',e=>{const el=e.target;
-  if(el.dataset.itemhalf){const i=S.menu.items.find(x=>x.id===el.dataset.itemhalf);if(i){i.noHalf=!el.checked;save();toast(i.name+': yarım '+(i.noHalf?'yok':'var'))}}
-  if(el.dataset.cathalf){const c=S.menu.cats.find(x=>x.id===el.dataset.cathalf);if(c){c.half=el.checked;save();toast(c.name+': yarım porsiyon '+(c.half?'açık':'kapalı'))}}
+  if(el.dataset.itemhalf){const i=S.menu.items.find(x=>x.id===el.dataset.itemhalf);if(i){i.noHalf=!el.checked;save();toast(i.name+': az '+(i.noHalf?'yok':'var'))}}
+  if(el.dataset.cathalf){const c=S.menu.cats.find(x=>x.id===el.dataset.cathalf);if(c){c.half=el.checked;save();toast(c.name+': az porsiyon '+(c.half?'açık':'kapalı'))}}
   if(el.id==='halfPct'){const n=Math.max(30,Math.min(100,parseInt(el.value)||50));S.settings.halfPct=n;save();vMenu()}
   if(el.dataset.note){const l=findLine(el.dataset.note);if(l){l.note=el.value.trim();save()}}
   if(el.dataset.catname){const c=S.menu.cats.find(x=>x.id===el.dataset.catname);if(c){c.name=el.value.trim()||c.name;S.menu.sample=false;save()}}
