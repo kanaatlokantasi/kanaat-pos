@@ -214,7 +214,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 33</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 34</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -916,7 +916,7 @@ const A={
     modal(`<h2>Ödeme · ${esc(tName(ui.table))}</h2>
      <div class="tipbox">
        <div class="tiptitle">GÖNÜLLÜ BAHŞİŞ</div>
-       <div class="tipsub">Bahşişin tamamı ekibimize gider. Teşekkür ederiz!</div>
+       <div class="tipsub">Teşekkür ederiz!</div>
        <div class="tipseg">${[['none','Yok'],[5,'%5'],[10,'%10'],[15,'%15'],['custom','Tutar']].map(([v,l])=>`<button data-act="tipMode" data-v="${v}" class="${v==='none'?'act':''}">${v===10?'<span class="tipfav">Önerilen</span>':''}${l}</button>`).join('')}</div>
      </div>
      <div id="tipCustomBox" hidden><label class="f">Bahşiş tutarı (TL)<input id="tipInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
