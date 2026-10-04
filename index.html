@@ -237,7 +237,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 47</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 48</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -911,6 +911,8 @@ async function printDoc(doc,label){
   }
   showPreview(doc,label);return false;
 }
+function docText(doc){return doc.map(r=>{if(r.k==='logo')return 'KANAAT LOKANTASI';if(r.k==='hr')return '----------------';if(r.k==='gap')return '';
+  if(r.k==='lr'||r.k==='big')return r.l+(r.r?'  '+r.r:'');return r.text||''}).filter((x,i,a)=>!(x===''&&a[i-1]==='')).join('\n').trim()}
 function showPreview(doc,label){
   const c=renderCanvas(doc);const url=c.toDataURL('image/png');
   modal(`<div class="row" style="justify-content:space-between"><h2>${esc(label)}</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
@@ -922,8 +924,11 @@ function showPreview(doc,label){
   const pc=document.getElementById('pvConnect');
   if(pc)pc.onclick=async()=>{try{await connectBT();closeLayer();await printDoc(doc,label)}catch(e){if(isCancel(e))return;blog('Hata: '+errText(e));toast(errText(e))}};
   document.getElementById('pvShare').onclick=()=>c.toBlob(async b=>{
-    const f=new File([b],'fis.png',{type:'image/png'});
-    try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:label});return}}catch(e){if(e.name==='AbortError')return}
+    const stamp=new Date();const fname=`kanaat-${label.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/gi,'-')}-${dayKey(stamp)}-${String(stamp.getHours()).padStart(2,'0')}${String(stamp.getMinutes()).padStart(2,'0')}.png`;
+    const f=new File([b],fname,{type:'image/png'});
+    const text=docText(doc);const title='Kanaat Lokantası · '+label;
+    try{if(navigator.canShare&&navigator.canShare({files:[f]})){
+        try{await navigator.share({files:[f],title,text});return}catch(e){if(e.name==='AbortError')return;await navigator.share({files:[f],title});return}}}catch(e){if(e.name==='AbortError')return}
     toast('Görüntüye basılı tutup kaydedebilirsiniz')});
 }
 function renderChip(){const c=document.getElementById('prChip');const on=!!(BT.char&&BT.device?.gatt?.connected);
