@@ -138,6 +138,17 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .pkgbar .linkbtn{color:#fff;text-decoration:underline}
 .billv .bsec{margin-top:10px;padding:4px 8px;background:#111;color:#fff;font-weight:700;letter-spacing:.08em;font-size:13px;border-radius:4px;display:inline-block}
 #updBar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:45;border:0;border-radius:12px;padding:14px;background:var(--accent);color:var(--accent-ink);font-size:16px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ctile{min-width:0;position:relative;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);min-height:84px;padding:12px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+.ctile .cn{font:700 19px/1.15 var(--display);letter-spacing:.01em}
+.ctile.hasq .cn{padding-right:28px}
+.ctile .cc{font-size:12px;color:var(--muted)}
+.ctile .q{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);border-radius:999px;min-width:24px;height:24px;display:grid;place-items:center;font-size:13px;font-weight:700;padding:0 6px}
+.ctile:active{background:var(--accent-soft)}
+.catnav{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.catnav h3{margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.catnav .btn{min-height:40px;padding:8px 12px}
+@media (min-width:600px){.cgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .halfchk{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
 
 .cartbar{background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:10px}
@@ -215,7 +226,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 38</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 39</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -399,7 +410,7 @@ function vTables(){
 
 function curT(){return S.tables[ui.table]||(S.tables[ui.table]={lines:[],openedAt:Date.now()})}
 function vOrder(){
-  const cats=S.menu.cats; if(!ui.cat||!cats.find(c=>c.id===ui.cat))ui.cat=cats[0]?.id;
+  const cats=S.menu.cats; if(ui.cat&&!cats.find(c=>c.id===ui.cat))ui.cat=null;
   const t=S.tables[ui.table]; const qmap={},hmap={},umap={}; (t?.lines||[]).forEach(l=>{const m=l.unit?umap:(l.half?hmap:qmap);m[l.itemId]=(m[l.itemId]||0)+l.qty});
   const catHalf=!!(cats.find(c=>c.id===ui.cat)||{}).half;
   const items=S.menu.items.filter(i=>i.cat===ui.cat);
@@ -408,8 +419,11 @@ function vOrder(){
       <h2 style="flex:1">${esc(tName(ui.table))}</h2>
       <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button><button class="btn" data-act="moveTable">Taşı</button></div>
     ${ui.pkg?`<div class="pkgbar"><b>PAKET ekleniyor</b><span>Dokunduğunuz ürünler paket olarak yazılır.</span><button class="linkbtn" data-act="togglePkg">Bitir</button></div>`:''}
-    <div class="cats">${cats.map(c=>`<button class="${c.id===ui.cat?'act':''}" data-act="cat" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>
-    ${cats.length?`<div class="igrid">${items.map(i=>{const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');return `<div class="itemw ${corner?'hashalf':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
+    ${!ui.cat?`<div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
+        return `<button class="ctile ${n?'hasq':''}" data-act="cat" data-id="${c.id}">${n?`<span class="q">${n}</span>`:''}<span class="cn">${esc(c.name)}</span><span class="cc">${S.menu.items.filter(i=>i.cat===c.id).length} ürün</span></button>`}).join('')}</div>`:`
+    <div class="catnav"><button class="btn" data-act="cat" data-id="">◀ Kategoriler</button><h3>${esc((cats.find(c=>c.id===ui.cat)||{}).name||'')}</h3></div>
+    <div class="cats">${cats.map(c=>`<button class="${c.id===ui.cat?'act':''}" data-act="cat" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>`}
+    ${!ui.cat?'':cats.length?`<div class="igrid">${items.map(i=>{const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');return `<div class="itemw ${corner?'hashalf':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
       ${hasB?`<span class="q">${b}</span>`:''}
       <span class="nm">${esc(i.name)}</span><span class="pr num">${fmt(i.price)}</span></button>
       ${corner==='unit'?`<button class="halfb" data-act="addUnit" data-id="${i.id}" aria-label="1 tek ${esc(baseName(i.name))}, ${fmt(i.unitPrice)}">TEK</button>`:''}
@@ -889,8 +903,8 @@ const A={
   changePin(){requireAdmin(()=>requireAdmin(()=>render(),true))},
   printerChip(){ui.view='settings';render()},
   togglePkg(){ui.pkg=!ui.pkg;vOrder();toast(ui.pkg?'Paket modu açık':'Paket modu kapandı')},
-  openTable(d){ui.pkg=false;ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
-  cat(d){ui.cat=d.id;render()},
+  openTable(d){ui.pkg=false;ui.cat=null;ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
+  cat(d){ui.cat=d.id||null;render();$main.scrollTop=0},
   add(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;const t=curT();
     let l=t.lines.find(x=>x.itemId===it.id&&!x.half&&!x.unit&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===it.price);
     if(!l){l={id:uid(),itemId:it.id,name:it.name,price:it.price,qty:0,sent:0,note:'',pkg:!!ui.pkg};t.lines.push(l)}
