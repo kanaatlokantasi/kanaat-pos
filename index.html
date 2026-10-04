@@ -176,7 +176,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 18</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 19</small></div>
     <div class="sp"></div>
     <button class="chip on" id="admChip" data-act="lock" hidden><i></i><span>Yönetici · Kilitle</span></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı yok</span></button>
@@ -210,7 +210,7 @@ const HALF_CATS=['Çorbalar','Sıcak Sebze Yemekleri','Zeytinyağlılar','Izgara
 const NO_HALF=['Kuzu Etli Özbek Pilavı','Çiftlik Kebabı','Kuzu Kapama','Talaş Kebabı','Kuzu Etli Talaş Böreği','İmam Bayıldı','Zeytinyağlı Enginar Dolma','Zeytinyağlı Enginar','Karnıyarık','Güveçte Parmak Kebabı','Tavuk Kızartma','Şehriyeli Tavuk','Dalyan Köfte','Dana Rosto',
   'Kuzu Ayak Paça','Güveç Türlü','Kereviz Dolma','Tavuk Bonfile','Bonfile','Karışık Izgara','Kase Yoğurdu','Cacık','Fırın Makarna','Ekişili Köfte',
   'Kuzu Ciğer Sarma','Kağıt Kebap','Kuzu Keşkek','Kuzu Haşlama','Kuzu Kaburga Dolma','Fırın Bonfile veya Pirzola','Palamut Pilaki',
-  'Sütlaç','Aşure','Tavuk Göğsü','Kazandibi','Zerde','Yassı Kadayıf','Şekerpare','Tel Kadayıf'];
+  'Sütlaç','Aşure','Tavuk Göğsü','Kazandibi','Zerde','Yassı Kadayıf','Şekerpare','Tel Kadayıf','Keşkül'];
 const UNIT_ITEMS={'Yaprak Sarma (3 Adet)':110,'Lahana Sarma (3 Adet)':110};
 const baseName=n=>n.replace(/\s*\(\d+\s*Adet\)\s*$/i,'');
 const MENU_VERSION='2026-07-09';
@@ -248,6 +248,7 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
       const i=M.items.findIndex(x=>x.name===old);if(i<0)continue;const o=M.items[i];o.name=a;
       M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:b,price:o.price,noHalf:!!o.noHalf})}
     S.settings.menuV4=true}
+  if(!S.settings.menuV7){S.menu.items.forEach(i=>{if(i.name==='Keşkül')i.noHalf=true});S.settings.menuV7=true}
   if(!S.settings.menuV6){S.menu.items.forEach(i=>{if(UNIT_ITEMS[i.name])i.unitPrice=UNIT_ITEMS[i.name]});S.settings.menuV6=true}
   if(!S.settings.menuV5){const M=S.menu,i=M.items.findIndex(x=>x.name==='Taze Fasulye/Türlü');
     if(i>=0){const o=M.items[i];o.name='Taze Fasulye';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Türlü',price:o.price,noHalf:!!o.noHalf})}
