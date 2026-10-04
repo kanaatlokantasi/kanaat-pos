@@ -103,6 +103,16 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .itemw.hashalf .item{padding-bottom:12px}
 .halfb{position:absolute;right:8px;bottom:8px;min-width:44px;padding:0 8px;height:36px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);font:700 19px/1 var(--display);letter-spacing:.04em}
 .halfb:active{background:var(--accent-soft)}
+.tipbox{background:linear-gradient(160deg,#1f8a55,#156b41);color:#fff;border-radius:14px;padding:14px 12px 12px;text-align:center;animation:tipglow 1.6s ease-in-out 3}
+.tiptitle{font:700 30px/1 var(--display);letter-spacing:.06em}
+.tipsub{font-size:14px;margin:6px 0 12px;opacity:.95}
+.tipbox .tipseg{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.5)}
+.tipbox .tipseg button{background:#fff;color:#156b41;border-left-color:rgba(21,107,65,.25);position:relative;font-size:16px;padding-top:16px}
+.tipbox .tipseg button.act{background:#0d3f27;color:#fff}
+.tipfav{position:absolute;top:3px;left:0;right:0;font:700 9px/1 var(--body);letter-spacing:.02em;text-transform:uppercase;color:#b45309}
+.tipbox .tipseg button.act .tipfav{color:#fde68a}
+@keyframes tipglow{0%,100%{box-shadow:0 0 0 0 rgba(31,138,85,0)}50%{box-shadow:0 0 0 8px rgba(31,138,85,.35),0 0 26px rgba(31,138,85,.55)}}
+@media (prefers-reduced-motion:reduce){.tipbox{animation:none}}
 .tipseg{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .tipseg button{border:0;border-left:1px solid var(--line);background:var(--surface);padding:12px 4px;font-weight:700;min-height:48px}
 .tipseg button:first-child{border-left:0}
@@ -204,7 +214,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 32</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 33</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -904,7 +914,11 @@ const A={
   pay(){const t=S.tables[ui.table];if(!t)return;ui.tip={mode:'none',custom:0};
     const total=tTotal(t);
     modal(`<h2>Ödeme · ${esc(tName(ui.table))}</h2>
-     <div class="f">Gönüllü bahşiş<div class="tipseg">${[['none','Yok'],[5,'%5'],[10,'%10'],[15,'%15'],['custom','Tutar']].map(([v,l])=>`<button data-act="tipMode" data-v="${v}" class="${v==='none'?'act':''}">${l}</button>`).join('')}</div></div>
+     <div class="tipbox">
+       <div class="tiptitle">GÖNÜLLÜ BAHŞİŞ</div>
+       <div class="tipsub">Bahşişin tamamı ekibimize gider. Teşekkür ederiz!</div>
+       <div class="tipseg">${[['none','Yok'],[5,'%5'],[10,'%10'],[15,'%15'],['custom','Tutar']].map(([v,l])=>`<button data-act="tipMode" data-v="${v}" class="${v==='none'?'act':''}">${v===10?'<span class="tipfav">Önerilen</span>':''}${l}</button>`).join('')}</div>
+     </div>
      <div id="tipCustomBox" hidden><label class="f">Bahşiş tutarı (TL)<input id="tipInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
        <p class="muted" style="margin:4px 0 0;font-size:13px">Telefonu müşteriye uzatabilirsiniz, tutarı kendisi yazar.</p></div>
      <div class="paysum card"><span class="muted">Hesap</span><span>${fmt(total)}</span>
