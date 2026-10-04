@@ -99,6 +99,14 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .itemw.hashalf .item{padding-bottom:12px}
 .halfb{position:absolute;right:8px;bottom:8px;min-width:44px;padding:0 8px;height:36px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);font:700 19px/1 var(--display);letter-spacing:.04em}
 .halfb:active{background:var(--accent-soft)}
+.tipseg{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tipseg button{border:0;border-left:1px solid var(--line);background:var(--surface);padding:12px 4px;font-weight:700;min-height:48px}
+.tipseg button:first-child{border-left:0}
+.tipseg button.act{background:var(--accent);color:var(--accent-ink)}
+.paysum{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-variant-numeric:tabular-nums}
+.paysum>span:nth-child(even){text-align:right}
+.paysum .grand{font:700 30px/1.1 var(--display)}
+#tipInput{font:700 32px/1.2 var(--display);text-align:center;padding:12px}
 .halfchk{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
 
 .cartbar{background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:10px}
@@ -176,7 +184,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 19</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 20</small></div>
     <div class="sp"></div>
     <button class="chip on" id="admChip" data-act="lock" hidden><i></i><span>Yönetici · Kilitle</span></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı yok</span></button>
@@ -264,6 +272,9 @@ function tableList(){const out=[];for(let i=1;i<=S.settings.tableCount;i++)out.p
 const tName=k=>(tableList().find(t=>t.key===k)||{name:k.replace(/^X:/,'')}).name;
 const tTotal=t=>t?t.lines.reduce((a,l)=>a+l.qty*l.price,0):0;
 const halfPrice=p=>Math.round(p*(S.settings.halfPct||50))/100;
+function tipAmount(total){const m=ui.tip?.mode;if(typeof m==='number')return Math.round(total*m/100);if(m==='custom')return Math.round((ui.tip.custom||0)*100)/100;return 0}
+function updatePay(){const t=S.tables[ui.table];if(!t)return;const tot=tTotal(t),tip=tipAmount(tot);
+  const a=document.getElementById('tipAmt'),g=document.getElementById('payGrand');if(a)a.textContent=fmt(tip);if(g)g.textContent=fmt(tot+tip)}
 const tCount=t=>t?t.lines.reduce((a,l)=>a+l.qty,0):0;
 
 /* ============ görünümler ============ */
@@ -377,7 +388,8 @@ function summary(day){
   const list=salesOf(day),valid=list.filter(s=>!s.void);
   const sum=(f)=>valid.filter(f).reduce((a,s)=>a+s.total,0);
   const items={};valid.forEach(s=>s.lines.forEach(l=>{const k=l.name;items[k]=items[k]||{q:0,t:0};items[k].q+=l.qty;items[k].t+=l.qty*l.price}));
-  return{list,valid,total:sum(()=>1),cash:sum(s=>s.pay==='Nakit'),card:sum(s=>s.pay==='Kart'),
+  const tsum=f=>valid.filter(f).reduce((a,s)=>a+(s.tip||0),0);
+  return{list,valid,total:sum(()=>1),cash:sum(s=>s.pay==='Nakit'),card:sum(s=>s.pay==='Kart'),tip:tsum(()=>1),tipCash:tsum(s=>s.pay==='Nakit'),tipCard:tsum(s=>s.pay==='Kart'),
     items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),voids:list.length-valid.length}
 }
 function vReport(){
@@ -391,6 +403,7 @@ function vReport(){
      <div class="kpi"><span>Kart</span><b class="num">${fmt(r.card)}</b></div>
      <div class="kpi"><span>Adisyon</span><b class="num">${r.valid.length}</b></div>
      <div class="kpi"><span>Ortalama</span><b class="num">${fmt(r.valid.length?r.total/r.valid.length:0)}</b></div>
+     <div class="kpi" style="grid-column:1/-1"><span>Gönüllü bahşiş (ciroya dahil değil)</span><b class="num">${fmt(r.tip)}</b><span class="num" style="text-transform:none;letter-spacing:0">Nakit ${fmt(r.tipCash)} · Kart ${fmt(r.tipCard)}</span></div>
    </div>
    <div class="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
      <button class="btn pri" data-act="printZ">Gün sonu yazdır</button><button class="btn" data-act="csv">Excel'e aktar (CSV)</button></div>
@@ -524,7 +537,7 @@ function billDoc(tableName,lines,total,opts={}){
   return [...headerRows(),{k:'gap'},
     {k:'lr',l:dmy(at),r:hm(at)},{k:'lr',l:tableName,r:opts.no?('No: '+opts.no):'',b:true},{k:'hr'},
     ...lines.flatMap(l=>[{k:'lr',l:`${l.qty} x ${l.name}`,r:money(l.qty*l.price)},...(l.qty>1?[{k:'l',text:`   ${l.qty} x ${money(l.price)}`,small:true}]:[])]),
-    {k:'hr'},{k:'big',l:'TOPLAM',r:fmt(total)},
+    {k:'hr'},...(opts.tip>0?[{k:'lr',l:'Ara toplam',r:fmt(total)},{k:'lr',l:'Gönüllü bahşiş',r:fmt(opts.tip)},{k:'big',l:'TOPLAM',r:fmt(total+opts.tip)}]:[{k:'big',l:'TOPLAM',r:fmt(total)}]),
     ...(opts.pay?[{k:'lr',l:'Ödeme',r:opts.pay}]:[{k:'c',text:'— Ödenmedi —'}]),
     {k:'l',text:'Fiyatlarımıza KDV dahildir.',small:true},
     {k:'gap'},...footerRows()];
@@ -537,7 +550,8 @@ function zDoc(day){
   const r=summary(day);
   return [...headerRows(),{k:'gap'},{k:'title',text:'GÜN SONU'},{k:'c',text:day.split('-').reverse().join('.')+'  ·  yazdırma '+hm(Date.now())},{k:'hr'},
     {k:'lr',l:'Adisyon',r:String(r.valid.length)},{k:'lr',l:'Nakit',r:fmt(r.cash)},{k:'lr',l:'Kart',r:fmt(r.card)},
-    ...(r.voids?[{k:'lr',l:'İptal edilen',r:String(r.voids)}]:[]),{k:'hr'},{k:'big',l:'CİRO',r:fmt(r.total)},{k:'hr'},
+    ...(r.voids?[{k:'lr',l:'İptal edilen',r:String(r.voids)}]:[]),{k:'hr'},{k:'big',l:'CİRO',r:fmt(r.total)},
+    ...(r.tip?[{k:'hr'},{k:'lr',l:'Bahşiş (nakit)',r:fmt(r.tipCash)},{k:'lr',l:'Bahşiş (kart)',r:fmt(r.tipCard)},{k:'lr',l:'Toplam bahşiş',r:fmt(r.tip),b:true}]:[]),{k:'hr'},
     {k:'c',text:'Satılan ürünler',b:true},...r.items.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)})),{k:'hr'},
     {k:'c',text:'BİLGİ AMAÇLIDIR'}];
 }
@@ -822,17 +836,31 @@ const A={
     await printDoc(kitchenDoc(tName(ui.table),items),'Mutfak fişi');
     items.forEach(x=>x.l.sent=x.l.qty);pruneTable(ui.table);save();if(document.querySelector('.sheet'))openCart();vOrder()},
   async bill(){const t=S.tables[ui.table];if(!t)return;await printDoc(billDoc(tName(ui.table),t.lines.filter(l=>l.qty>0),tTotal(t)),'Hesap fişi')},
-  pay(){const t=S.tables[ui.table];if(!t)return;
-    modal(`<h2>Ödeme · ${fmt(tTotal(t))}</h2><p class="muted" style="margin:0">${esc(tName(ui.table))} kapatılacak.</p>
+  pay(){const t=S.tables[ui.table];if(!t)return;ui.tip={mode:'none',custom:0};
+    const total=tTotal(t);
+    modal(`<h2>Ödeme · ${esc(tName(ui.table))}</h2>
+     <div class="f">Gönüllü bahşiş<div class="tipseg">${[['none','Yok'],[5,'%5'],[10,'%10'],[15,'%15'],['custom','Tutar']].map(([v,l])=>`<button data-act="tipMode" data-v="${v}" class="${v==='none'?'act':''}">${l}</button>`).join('')}</div></div>
+     <div id="tipCustomBox" hidden><label class="f">Bahşiş tutarı (TL)<input id="tipInput" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+       <p class="muted" style="margin:4px 0 0;font-size:13px">Telefonu müşteriye uzatabilirsiniz, tutarı kendisi yazar.</p></div>
+     <div class="paysum card"><span class="muted">Hesap</span><span>${fmt(total)}</span>
+       <span class="muted">Gönüllü bahşiş</span><span id="tipAmt">${fmt(0)}</span>
+       <span style="font-weight:700;align-self:end">Ödenecek</span><span class="grand" id="payGrand">${fmt(total)}</span></div>
      <label class="row" style="font-weight:600"><input type="checkbox" id="payPrint" checked> Fiş yazdır</label>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn ok" data-act="doPay" data-p="Nakit" style="min-height:56px">Nakit</button><button class="btn pri" data-act="doPay" data-p="Kart" style="min-height:56px">Kart</button></div>
-     <button class="btn" data-act="close">Vazgeç</button>`)},
+     <button class="btn" data-act="close">Vazgeç</button>`);
+    document.getElementById('tipInput').addEventListener('input',e=>{ui.tip.custom=Math.max(0,parseNum(e.target.value)||0);updatePay()});
+  },
+  tipMode(d){const v=d.v;ui.tip.mode=(v==='none'||v==='custom')?v:Number(v);
+    document.querySelectorAll('.tipseg button').forEach(b=>b.classList.toggle('act',b.dataset.v===String(d.v)));
+    const box=document.getElementById('tipCustomBox');box.hidden=v!=='custom';if(v==='custom')setTimeout(()=>document.getElementById('tipInput').focus(),50);
+    updatePay()},
   async doPay(d){const t=S.tables[ui.table];if(!t)return;const pr=document.getElementById('payPrint')?.checked;
     const lines=t.lines.filter(l=>l.qty>0).map(l=>({name:l.name,price:l.price,qty:l.qty}));
-    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),pay:d.p,at:Date.now()};
+    const tip=tipAmount(tTotal(t));
+    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,pay:d.p,at:Date.now()};
     S.sales.push(sale);delete S.tables[ui.table];save();closeLayer();ui.view='tables';render();
-    toast(`${sale.table} kapandı · ${d.p} ${fmt(sale.total)}`);
-    if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:d.p,no:sale.no,at:sale.at}),'Fiş')},
+    toast(`${sale.table} kapandı · ${d.p} ${fmt(sale.total+tip)}${tip?' (bahşiş '+fmt(tip)+')':''}`);
+    if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:d.p,no:sale.no,at:sale.at,tip}),'Fiş')},
   clearTable(){requireAdmin(()=>ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')}))},
   moveTable(){const t=S.tables[ui.table];if(!t||!tCount(t)){toast('Taşınacak ürün yok');return}
     const free=tableList().filter(x=>x.key!==ui.table);
@@ -843,17 +871,18 @@ const A={
     if(to){to.lines.push(...from.lines);to.openedAt=Math.min(to.openedAt,from.openedAt)}else S.tables[d.k]=from;
     delete S.tables[ui.table];ui.table=d.k;save();closeLayer();render();toast('Taşındı: '+tName(d.k))},
   async printZ(){await printDoc(zDoc(ui.reportDay),'Gün sonu')},
-  csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Ödeme','Tutar','Durum','Ürünler']];
-    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.pay,money(s.total),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name).join(', ')]));
+  csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Ödeme','Tutar','Bahşiş','Durum','Ürünler']];
+    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.pay,money(s.total),money(s.tip||0),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name).join(', ')]));
     const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
     download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'kanaat-satis-'+ui.reportDay+'.csv')},
   saleMenu(d){const s=S.sales.find(x=>x.id===d.id);if(!s)return;
     modal(`<div class="row" style="justify-content:space-between"><h2>${esc(s.table)} · ${hm(s.at)}</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
      <div>${s.lines.map(l=>`<div class="row" style="justify-content:space-between"><span>${l.qty} x ${esc(l.name)}</span><span class="num">${fmt(l.qty*l.price)}</span></div>`).join('')}</div>
-     <div class="total"><span class="muted">${s.pay}${s.void?' · İPTAL':''}</span><b class="num">${fmt(s.total)}</b></div>
+     ${s.tip?`<div class="row num" style="justify-content:space-between"><span class="muted">Gönüllü bahşiş</span><span>${fmt(s.tip)}</span></div>`:''}
+     <div class="total"><span class="muted">${s.pay}${s.void?' · İPTAL':''}</span><b class="num">${fmt(s.total+(s.tip||0))}</b></div>
      <button class="btn" data-act="reprint" data-id="${s.id}">Fişi tekrar yazdır</button>
      <button class="btn danger" data-act="voidSale" data-id="${s.id}">${s.void?'İptali geri al':'Adisyonu iptal et'}</button>`)},
-  async reprint(d){const s=S.sales.find(x=>x.id===d.id);closeLayer();await printDoc(billDoc(s.table,s.lines,s.total,{pay:s.pay,no:s.no,at:s.at}),'Fiş')},
+  async reprint(d){const s=S.sales.find(x=>x.id===d.id);closeLayer();await printDoc(billDoc(s.table,s.lines,s.total,{pay:s.pay,no:s.no,at:s.at,tip:s.tip||0}),'Fiş')},
   voidSale(d){const s=S.sales.find(x=>x.id===d.id);s.void=!s.void;save();closeLayer();render();toast(s.void?'Adisyon iptal edildi':'İptal geri alındı')},
   bulk(d){const txt=document.getElementById('bulk').value;const parsed=parseMenu(txt);
     if(!parsed.items.length){toast('Okunabilir satır yok. Biçim: Kategori | Ürün | Fiyat');return}
