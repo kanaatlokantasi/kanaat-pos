@@ -103,7 +103,7 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .itemw.hashalf .item{padding-bottom:12px}
 .halfb{position:absolute;right:8px;bottom:8px;min-width:44px;padding:0 8px;height:36px;border-radius:10px;border:1.5px solid var(--accent);background:var(--surface);color:var(--accent);font:700 19px/1 var(--display);letter-spacing:.04em}
 .halfb:active{background:var(--accent-soft)}
-.tipbox{background:linear-gradient(160deg,#1f8a55,#156b41);color:#fff;border-radius:14px;padding:14px 12px 12px;text-align:center;animation:tipglow 1.6s ease-in-out 3}
+.tipbox{background:linear-gradient(160deg,#1f8a55,#156b41);color:#fff;border-radius:14px;padding:14px 12px 12px;text-align:center;animation:tipglow 1.6s ease-in-out 6}
 .tiptitle{font:700 30px/1 var(--display);letter-spacing:.06em}
 .tipsub{font-size:14px;margin:6px 0 12px;opacity:.95}
 .tipbox .tipseg{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.5)}
@@ -215,7 +215,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 35</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 36</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -289,6 +289,9 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
       const i=M.items.findIndex(x=>x.name===old);if(i<0)continue;const o=M.items[i];o.name=a;
       M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:b,price:o.price,noHalf:!!o.noHalf})}
     S.settings.menuV4=true}
+  {const strip=n=>String(n).replace(/\s*\(\d+\s*Adet\)/gi,'');
+   S.menu.items.forEach(i=>{if(/\(\d+\s*Adet\)/i.test(i.name)&&/Sarma|Dolma/.test(i.name))i.name=strip(i.name)});
+   Object.values(S.tables||{}).forEach(t=>(t.lines||[]).forEach(l=>{if(/Sarma|Dolma/.test(l.name))l.name=strip(l.name)}))}
   if(!S.settings.menuV13){S.menu.items.forEach(i=>{if(i.name==='Kuzu Pirzola (2 Kalem)')i.name='Kuzu Pirzola'});S.settings.menuV13=true}
   if(!S.settings.menuV12){const M=S.menu,i=M.items.findIndex(x=>x.name==='Kabak/Patlıcan Kızartma');
     if(i>=0){const o=M.items[i];o.name='Kabak Kızartma';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Patlıcan Kızartma',price:o.price,noHalf:!!o.noHalf,...(o.halfPrice!=null?{halfPrice:o.halfPrice}:{})})}
