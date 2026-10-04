@@ -184,7 +184,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 21</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small>Since 1933 · POS · Sürüm 22</small></div>
     <div class="sp"></div>
     <button class="chip on" id="admChip" data-act="lock" hidden><i></i><span>Yönetici · Kilitle</span></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı yok</span></button>
@@ -280,7 +280,7 @@ const tName=k=>(tableList().find(t=>t.key===k)||{name:k.replace(/^X:/,'')}).name
 const tTotal=t=>t?t.lines.reduce((a,l)=>a+l.qty*l.price,0):0;
 const itemHalf=it=>it.halfPrice!=null?it.halfPrice:halfPrice(it.price);
 const halfPrice=p=>Math.round(p*(S.settings.halfPct||50))/100;
-function tipAmount(total){const m=ui.tip?.mode;if(typeof m==='number')return Math.round(total*m/100);if(m==='custom')return Math.round((ui.tip.custom||0)*100)/100;return 0}
+function tipAmount(total){const m=ui.tip?.mode;if(typeof m==='number')return Math.round(total*m)/100;if(m==='custom')return Math.round((ui.tip.custom||0)*100)/100;return 0}
 function updatePay(){const t=S.tables[ui.table];if(!t)return;const tot=tTotal(t),tip=tipAmount(tot);
   const a=document.getElementById('tipAmt'),g=document.getElementById('payGrand');if(a)a.textContent=fmt(tip);if(g)g.textContent=fmt(tot+tip)}
 const tCount=t=>t?t.lines.reduce((a,l)=>a+l.qty,0):0;
