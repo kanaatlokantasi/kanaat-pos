@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 58</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 59</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -291,7 +291,7 @@ function sampleMenu(){
 }
 function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
-  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:90,fx:{EUR:0,USD:0,GBP:0,at:0},
+  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:10,fx:{EUR:0,USD:0,GBP:0,at:0},
     header:'KANAAT LOKANTASI',
     footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
@@ -354,14 +354,14 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
   if(!S.settings.noHalfV1){S.menu.items.forEach(i=>{if(NO_HALF.includes(i.name))i.noHalf=true});S.settings.noHalfV1=true}
   {const M=S.menu,i=M.items.findIndex(x=>x.name==='Etli Sarma');
     if(i>=0){const o=M.items[i];o.name='Etli Yaprak Sarma';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Etli Lahana Sarma',price:o.price,noHalf:!!o.noHalf,...(o.halfPrice!=null?{halfPrice:o.halfPrice}:{})})}}}
-function pruneSales(){const d=S.settings.keepDays||90,lim=Date.now()-d*86400e3,n=S.sales.length;S.sales=S.sales.filter(x=>x.at>=lim);return n-S.sales.length}
+function pruneSales(){const d=S.settings.keepDays||10,lim=Date.now()-d*86400e3,n=S.sales.length;S.sales=S.sales.filter(x=>x.at>=lim);return n-S.sales.length}
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){
   /* depolama doluysa en eski adisyonların %20'sini silip tekrar dene; 7 günden yenilere dokunma */
   const lim=Date.now()-7*86400e3,old=S.sales.filter(x=>x.at<lim);
   if(old.length){const cut=new Set(old.slice(0,Math.max(1,Math.ceil(old.length*.2))).map(x=>x.id));S.sales=S.sales.filter(x=>!cut.has(x.id));
     try{localStorage.setItem(LS,JSON.stringify(S));toast('Depolama doldu: en eski '+cut.size+' adisyon silindi');return}catch(e2){}}
   toast('Kaydedilemedi: tarayıcı depolaması dolu veya kapalı')}}
-load();if(pruneSales())save();
+load();if(!S.settings.keepV10){S.settings.keepDays=10;S.settings.keepV10=true;pruneSales();save()}else if(pruneSales())save();
 
 const ui={view:'tables',table:null,cat:null,reportDay:dayKey(Date.now()),lang:'tr'};
 /* ============ İngilizce hesap ============ */
@@ -664,7 +664,7 @@ function vSettings(){
    </div>
    <div class="card stack">
      <h3 style="margin:0">Adisyon kayıtları</h3>
-     <div class="f">Ne kadar süre saklansın?<div class="seg">${[30,90,180,365].map(n=>`<button class="${(s.keepDays||90)==n?'act':''}" data-act="set" data-k="keepDays" data-val="${n}">${n} gün</button>`).join('')}</div></div>
+     <div class="f">Ne kadar süre saklansın?<div class="seg">${[10,30,90,365].map(n=>`<button class="${(s.keepDays||10)==n?'act':''}" data-act="set" data-k="keepDays" data-val="${n}">${n} gün</button>`).join('')}</div></div>
      <p class="muted" style="margin:0;font-size:13px">Bu telefonda ${S.sales.length} adisyon kayıtlı${S.sales.length?` (en eskisi ${dmy(Math.min(...S.sales.map(x=>x.at)))})`:''} · depolama yaklaşık %${Math.min(100,Math.max(1,Math.round(JSON.stringify(S).length/50000)))} dolu. Süresi dolan kayıtlar kendiliğinden silinir. Depolama dolarsa son 7 gün hariç en eski kayıtlar silinir.</p>
    </div>
    <div class="card stack">
