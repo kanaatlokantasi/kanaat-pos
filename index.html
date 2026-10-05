@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 56</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 57</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -721,7 +721,7 @@ function billDoc(tableName,lines,total,opts={}){
     ...(en&&fxReady()?[{k:'l',text:'Approx. in other currencies:',small:true},...fxList(total+(opts.tip>0?opts.tip:0)).map(x=>({k:'lr',l:`${x.n} (${x.sym})`,r:`${x.v} ${x.c}`,small:true})),{k:'l',text:S.settings.fx.src==='TCMB'?`Central Bank of Türkiye rates, ${S.settings.fx.date}. Payment in TL.`:`Rates of ${dmy(S.settings.fx.at||at)}. Payment in TL.`,small:true}]:[]),
     ...(opts.payments&&opts.payments.length>1?[{k:'lr',l:T(`Kişi başı (${opts.payments.length} kişi)`,`Per person (${opts.payments.length} people)`),r:fmt(opts.payments[0].amount)},...opts.payments.map((p,i)=>({k:'lr',l:T(`${i+1}. kişi · ${p.pay}`,`Person ${i+1} · ${P(p.pay)}`),r:money(p.amount),small:true}))]:opts.pay?[{k:'lr',l:T('Ödeme','Payment'),r:P(opts.pay)}]:[{k:'c',text:T('— Ödenmedi —','— Not paid —')}]),
     ...(opts.tip>0?[]:tipNudge(total,!(opts.pay||(opts.payments&&opts.payments.length)),en)),
-    {k:'l',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true},
+    {k:'c',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true},
     {k:'gap'},...(en?[{k:'c',text:'Enjoy your meal!'},{k:'c',text:'INFORMATION SLIP - NOT A FISCAL RECEIPT'}]:footerRows())];
 }
 
@@ -758,7 +758,7 @@ function renderCanvas(doc){
       ops.push({band:true,y:y,h});lns.forEach((ln,i)=>ops.push({t:ln,font,x:W/2,y:y+Math.round(sz*0.45)+Math.round(sz*1.25)*i+Math.round(sz*0.98),align:'center',white:true}));y+=h+fs*0.35;continue}
     if(r.k==='logo'){const lw=Math.round(W*0.82),lh=Math.round(LOGO_IMG.naturalHeight*lw/LOGO_IMG.naturalWidth);ops.push({img:true,x:Math.round((W-lw)/2),y:y+4,w:lw,h:lh});y+=lh+10;continue}
     if(r.k==='hr'){ops.push({hr:true,y:y+fs*0.4});y+=fs*0.9;continue}
-    if(r.k==='title'||r.k==='c'){const sz=r.k==='title'?Math.round(fs*1.45):fs;const font=F(sz,r.k==='title'||r.b);
+    if(r.k==='title'||r.k==='c'){const sz=r.k==='title'?Math.round(fs*1.45):(r.small?Math.round(fs*.85):fs);const font=F(sz,r.k==='title'||r.b);
       for(const ln of wrap(r.text,font,W-px*2)){ops.push({t:ln,font,x:W/2,y:y+sz,align:'center'});y+=sz*1.25}continue}
     if(r.k==='l'||r.k==='kl'){const sz=r.k==='kl'?Math.round(fs*1.25):(r.small?Math.round(fs*.85):fs);const font=F(sz,r.k==='kl'||r.b);
       for(const ln of wrap(r.text,font,W-px*2)){ops.push({t:ln,font,x:px,y:y+sz,align:'left'});y+=sz*1.25}continue}
