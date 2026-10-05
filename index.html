@@ -124,6 +124,8 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .billv{background:#fff;color:#111;border-radius:6px;padding:14px 14px 12px;box-shadow:0 1px 0 var(--line),0 6px 18px rgba(0,0,0,.06);border:1px solid var(--line)}
 .billv .muted{color:#666}
 .billv .bhead{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1.5px dashed #bbb;margin-bottom:4px}
+.fxgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fxline{margin-top:4px;font-size:14px;color:var(--muted);text-align:right;font-weight:600}
 .langsw{display:inline-flex;border:1.5px solid #111;border-radius:8px;overflow:hidden}.langsw button{border:0;background:#fff;color:#111;font-weight:700;font-size:14px;padding:6px 12px;min-height:36px}.langsw button.act{background:#111;color:#fff}
 .billv .bl{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
 .billv .bn{min-width:0;font-size:16px;line-height:1.3}
@@ -238,7 +240,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 49</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 50</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -286,7 +288,7 @@ function sampleMenu(){
 }
 function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
-  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,
+  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,fx:{EUR:0,USD:0,GBP:0,at:0},
     header:'KANAAT LOKANTASI',
     footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
@@ -362,6 +364,17 @@ function enLine(l){const m=String(l.name).match(/^(.*?)( \((az|tek)\))?$/);const
   const en=l.en||(it&&(it.en||EN_NAMES[baseName(it.name)]))||EN_NAMES[base]||EN_NAMES[baseName(base)]||base;
   return en+(m[3]==='az'?' (half)':m[3]==='tek'?' (1 piece)':'')}
 const enTable=n=>String(n).replace(/^Masa (\d+)$/,'Table $1');
+/* ---- döviz karşılığı (İngilizce hesap) ---- */
+const FX_CUR=[['EUR','Euro','€'],['USD','US Dollar','$'],['GBP','British Pound','£']];
+const fxReady=()=>S.settings.fxOn!==false&&FX_CUR.some(([c])=>S.settings.fx?.[c]>0);
+function fxList(tl){return FX_CUR.filter(([c])=>S.settings.fx?.[c]>0).map(([c,n,sym])=>({c,n,sym,v:(Math.round(tl/S.settings.fx[c]*100)/100).toFixed(2)}))}
+const fxInline=tl=>fxList(tl).map(x=>`≈ ${x.sym}${x.v}`).join(' · ');
+async function fetchFx(force){const s=S.settings;if(!s.fxAuto&&!force)return false;if(!force&&Date.now()-(s.fx?.at||0)<3*3600e3)return false;
+  const src=[['https://api.frankfurter.dev/v1/latest?base=TRY&symbols=EUR,USD,GBP',j=>j.rates],['https://open.er-api.com/v6/latest/TRY',j=>j.rates]];
+  for(const [u,f] of src){try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)continue;const R=f(await r.json());if(!R||!(R.EUR>0))continue;
+    s.fx={at:Date.now()};FX_CUR.forEach(([c])=>{s.fx[c]=R[c]>0?Math.round(10000/R[c])/10000:0});save();return true}catch(e){}}
+  return false}
+fetchFx();document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchFx()});
 const enPay=p=>({Nakit:'Cash',Kart:'Card','Karışık':'Mixed'})[p]||p;
 
 
@@ -388,7 +401,7 @@ function renderPayArea(){const el=document.getElementById('payArea');if(!el)retu
 function salePays(s){return s.payments||[{pay:s.pay,amount:(s.total||0)+(s.tip||0)}]}
 function saleSplit(s,method){const g=(s.total||0)+(s.tip||0);if(!g)return{food:0,tip:0};const a=salePays(s).filter(p=>p.pay===method).reduce((x,p)=>x+p.amount,0);return{food:a*(s.total/g),tip:a*((s.tip||0)/g)}}
 function updatePay(){renderPayArea();const t=S.tables[ui.table];if(!t)return;const tot=tTotal(t),tip=tipAmount(tot);
-  const a=document.getElementById('tipAmt'),g=document.getElementById('payGrand'),lb=document.getElementById('tipLbl');if(a)a.textContent=fmt(tip);if(lb)lb.textContent=isEN()?'Voluntary tip'+(typeof ui.tip?.mode==='number'?` (${ui.tip.mode}%)`:''):'Gönüllü bahşiş'+(typeof ui.tip?.mode==='number'?` (%${ui.tip.mode})`:'');if(g)g.textContent=fmt(tot+tip)}
+  const a=document.getElementById('tipAmt'),g=document.getElementById('payGrand'),lb=document.getElementById('tipLbl');if(a)a.textContent=fmt(tip);if(lb)lb.textContent=isEN()?'Voluntary tip'+(typeof ui.tip?.mode==='number'?` (${ui.tip.mode}%)`:''):'Gönüllü bahşiş'+(typeof ui.tip?.mode==='number'?` (%${ui.tip.mode})`:'');if(g)g.textContent=fmt(tot+tip);const fx=document.getElementById('payFx');if(fx)fx.textContent=fxInline(tot+tip)}
 const tCount=t=>t?t.lines.reduce((a,l)=>a+l.qty,0):0;
 
 /* ============ görünümler ============ */
@@ -495,7 +508,8 @@ function openCart(){
         ${ed?`<div class="qty"><button data-act="dec" data-id="${l.id}" aria-label="Bir azalt">−</button><span class="num">${l.qty}</span><button data-act="inc" data-id="${l.id}" aria-label="Bir artır">+</button></div>`:`<div class="ba num">${money(l.qty*l.price)}</div>`}
       </div>`).join('')}
       <div class="btot"><span>${L('TOPLAM','TOTAL')}</span><b class="num">${fmt(tTotal(t))}</b></div>
-      <p class="muted" style="margin:6px 0 0;font-size:12px">${L('Fiyatlarımıza KDV dahildir.','Prices include VAT.')}</p>
+      ${isEN()&&fxReady()?`<div class="fxline num">${fxInline(tTotal(t))}</div>`:''}
+      <p class="muted" style="margin:6px 0 0;font-size:12px">${L('Fiyatlarımıza KDV dahildir.','Prices include VAT.')}${isEN()&&fxReady()?' Payment in Turkish Lira; foreign amounts are approximate.':''}</p>
     </div>`:'<p class="muted">Hesap boş. Menüden ürüne dokunun.</p>'}
    </div>
    <div class="sf">
@@ -613,6 +627,14 @@ function vSettings(){
      <label class="f">Alt not<textarea id="ftr" style="min-height:70px">${esc(s.footer)}</textarea></label>
    </div>
    <div class="card stack">
+     <h3 style="margin:0">Döviz karşılığı (İngilizce hesap)</h3>
+     <label class="row" style="font-weight:600"><input type="checkbox" id="fxOn" ${s.fxOn!==false?'checked':''}> Döviz karşılığını göster</label>
+     ${s.fxOn!==false?`<label class="row" style="font-weight:600"><input type="checkbox" id="fxAuto" ${s.fxAuto?'checked':''}> Kurları internetten otomatik al</label>
+     <div class="fxgrid">${FX_CUR.map(([c,n,sym])=>`<label class="f">1 ${sym} = TL<input id="fx_${c}" type="text" inputmode="decimal" value="${s.fx?.[c]?money(s.fx[c]):''}" ${s.fxAuto?'disabled':''} placeholder="0"></label>`).join('')}</div>
+     <p class="muted" style="margin:0;font-size:13px">${s.fx?.at?`Son güncelleme: ${dmy(s.fx.at)} ${hm(s.fx.at)}. `:'Henüz kur alınmadı. '}${s.fxAuto?'Uygulama açıldıkça birkaç saatte bir kendiliğinden yenilenir (Avrupa Merkez Bankası kuru).':'Kurları elle girdiniz; değiştirene kadar bunlar kullanılır.'}</p>
+     ${s.fxAuto?'<button class="btn" data-act="fxNow">Kurları şimdi güncelle</button>':''}`:''}
+   </div>
+   <div class="card stack">
      <h3 style="margin:0">Bu telefonun garsonu</h3>
      <p class="muted" style="margin:0;font-size:13px">Bu telefondan alınan ödemeler bu ada yazılır. Raporda garsona göre satış ve bahşiş görünür. Garson değişirse buradan değiştirin.</p>
      <label class="f">Garson adı<input id="waiter" value="${esc(s.waiter||'')}" placeholder="Örn. Ahmet" autocomplete="off"></label>
@@ -647,6 +669,9 @@ function vSettings(){
   bind('tcount',e=>S.settings.tableCount=Math.max(1,Math.min(99,parseInt(e.value)||1)));
   bind('extras',e=>S.settings.extras=e.value);
   bind('waiter',e=>{S.settings.waiter=e.value.trim();renderWaiterTag()});
+  const fo=document.getElementById('fxOn');if(fo)fo.onchange=e=>{S.settings.fxOn=e.target.checked;save();render()};
+  const fa=document.getElementById('fxAuto');if(fa)fa.onchange=async e=>{S.settings.fxAuto=e.target.checked;save();render();if(S.settings.fxAuto&&await fetchFx(true))render()};
+  FX_CUR.forEach(([c])=>bind('fx_'+c,e=>{const n=parseNum(e.value);S.settings.fx=S.settings.fx||{};S.settings.fx[c]=n>0?n:0;S.settings.fx.at=Date.now()}));
 }
 
 /* ============ katmanlar ============ */
@@ -678,6 +703,7 @@ function billDoc(tableName,lines,total,opts={}){
     {k:'lr',l:dmy(at),r:hm(at)},{k:'lr',l:en?enTable(tableName):tableName,r:opts.no?('No: '+opts.no):'',b:true},...(w?[{k:'l',text:T('Garson: ','Server: ')+w,small:true}]:[]),{k:'hr'},
     ...[...lines.filter(l=>!l.pkg),...(lines.some(l=>l.pkg)?[{sec:1}]:[]),...lines.filter(l=>l.pkg)].flatMap(l=>l.sec?[{k:'gap'},{k:'l',text:T('— PAKET —','— TAKE AWAY —'),b:true}]:[{k:'lr',l:`${l.qty} x ${en?(l.en||enLine(l)):l.name}`,r:money(l.qty*l.price)},...(l.qty>1?[{k:'l',text:`   ${l.qty} x ${money(l.price)}`,small:true}]:[])]),
     {k:'hr'},...(opts.tip>0?[{k:'lr',l:T('Ara toplam','Subtotal'),r:fmt(total)},{k:'lr',l:T('Gönüllü bahşiş','Voluntary tip')+(opts.tipPct?(en?` (${opts.tipPct}%)`:` (%${opts.tipPct})`):''),r:fmt(opts.tip)},{k:'big',l:T('TOPLAM','TOTAL'),r:fmt(total+opts.tip)}]:[{k:'big',l:T('TOPLAM','TOTAL'),r:fmt(total)}]),
+    ...(en&&fxReady()?[{k:'l',text:'Approx. in other currencies:',small:true},...fxList(total+(opts.tip>0?opts.tip:0)).map(x=>({k:'lr',l:`${x.n} (${x.sym})`,r:`${x.v} ${x.c}`,small:true})),{k:'l',text:`Rates of ${dmy(S.settings.fx.at||at)}. Payment in TL.`,small:true}]:[]),
     ...(opts.payments&&opts.payments.length>1?[{k:'lr',l:T(`Kişi başı (${opts.payments.length} kişi)`,`Per person (${opts.payments.length} people)`),r:fmt(opts.payments[0].amount)},...opts.payments.map((p,i)=>({k:'lr',l:T(`${i+1}. kişi · ${p.pay}`,`Person ${i+1} · ${P(p.pay)}`),r:money(p.amount),small:true}))]:opts.pay?[{k:'lr',l:T('Ödeme','Payment'),r:P(opts.pay)}]:[{k:'c',text:T('— Ödenmedi —','— Not paid —')}]),
     {k:'l',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true},
     {k:'gap'},...(en?[{k:'c',text:'Enjoy your meal!'},{k:'c',text:'INFORMATION SLIP - NOT A FISCAL RECEIPT'}]:footerRows())];
@@ -976,7 +1002,8 @@ const A={
     if(!tCount(t))t.openedAt=Date.now();
     l.qty++;save();vOrder();toast('+1 az '+it.name+' · '+fmt(pr));if(navigator.vibrate)navigator.vibrate(10)},
   cart(){ui.editCart=false;openCart()},
-  lang(d){ui.lang=d.l==='en'?'en':'tr';openCart()},
+  async fxNow(){toast('Kurlar alınıyor…');if(await fetchFx(true)){toast('Kurlar güncellendi');render()}else toast('Kur alınamadı. İnternet bağlantısını kontrol edin.')},
+  lang(d){ui.lang=d.l==='en'?'en':'tr';openCart();if(ui.lang==='en')fetchFx().then(ok=>{if(ok&&ui.lang==='en'&&document.querySelector('.billv'))openCart()})},
   close(){closeLayer()},
   toggleEdit(){ui.editCart=!ui.editCart;openCart()},
   inc(d){const l=findLine(d.id);if(l){l.qty++;save();openCart();vOrder()}},
@@ -1000,7 +1027,7 @@ const A={
        <p class="muted" style="margin:4px 0 0;font-size:13px">${L('Telefonu müşteriye uzatabilirsiniz, tutarı kendisi yazar.','Please enter the amount you would like to add.')}</p></div>
      <div class="paysum card"><span class="muted">${L('Hesap','Bill')}</span><span>${fmt(total)}</span>
        <span class="muted" id="tipLbl">${L('Gönüllü bahşiş','Voluntary tip')}</span><span id="tipAmt">${fmt(0)}</span>
-       <span style="font-weight:700;align-self:end">${L('Ödenecek','Total to pay')}</span><span class="grand" id="payGrand">${fmt(total)}</span></div>
+       <span style="font-weight:700;align-self:end">${L('Ödenecek','Total to pay')}</span><span class="grand" id="payGrand">${fmt(total)}</span>${en&&fxReady()?`<span class="fxline num" id="payFx" style="grid-column:1/-1;text-align:right">${fxInline(total)}</span>`:''}</div>
      <div class="splitrow card"><div><b>${L('Hesabı böl','Split the bill')}</b><div class="muted" id="splitInfo" style="font-size:13px">${L('Bölünmüyor','Not split')}</div></div>
        <div class="stepper"><button data-act="splitStep" data-d="-1" aria-label="Kişi azalt">−</button><b id="splitN" class="num">1</b><button data-act="splitStep" data-d="1" aria-label="Kişi artır">+</button></div></div>
      <label class="row" style="font-weight:600"><input type="checkbox" id="payPrint" checked> ${L('Fiş yazdır','Print receipt')}</label>
