@@ -233,6 +233,9 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 72px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center}
 #toast.show{opacity:1}
+#toast.act{pointer-events:auto;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;align-items:center;gap:12px;padding:6px 6px 6px 16px;white-space:nowrap}
+#toast.act span{overflow:hidden;text-overflow:ellipsis}
+#toast .tundo{flex:none;border:0;background:#fde68a;color:#111;font-weight:800;font-size:15px;border-radius:999px;padding:9px 16px;min-height:40px}
 @media (min-width:600px){.tgrid{grid-template-columns:repeat(4,1fr)}.igrid{grid-template-columns:repeat(3,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -240,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 52</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 53</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -685,7 +688,9 @@ function ask(msg,okLabel,fn,danger=true){
   modal(`<h2>${esc(msg)}</h2><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="close">Vazgeç</button><button class="btn ${danger?'danger':'pri'}" id="askOk">${esc(okLabel)}</button></div>`);
   document.getElementById('askOk').onclick=()=>{closeLayer();fn()};
 }
-let tt;function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),1800)}
+let tt;function toast(m,undo){const el=document.getElementById('toast');ui.undo=undo||null;
+  if(undo){el.innerHTML=`<span>${esc(m)}</span><button class="tundo" data-act="undoAdd">Geri al</button>`;el.classList.add('act')}else{el.textContent=m;el.classList.remove('act')}
+  el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>{el.classList.remove('show','act');ui.undo=null},undo?4000:1800)}
 $layer.addEventListener('click',e=>{if(e.target.hasAttribute('data-scrim')){if(document.getElementById('payArea')&&ui.split?.paid?.some(Boolean)){toast('Önce kalan kişilerin ödemesini alın');return}closeLayer()}});
 
 /* ============ fiş içerikleri ============ */
@@ -992,17 +997,21 @@ const A={
     let l=t.lines.find(x=>x.itemId===it.id&&!x.half&&!x.unit&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===it.price);
     if(!l){l={id:uid(),itemId:it.id,name:it.name,price:it.price,qty:0,sent:0,note:'',pkg:!!ui.pkg};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
-    l.qty++;save();vOrder();toast((ui.pkg?'PAKET +1 ':'+1 ')+it.name);if(navigator.vibrate)navigator.vibrate(10)},
+    l.qty++;save();vOrder();toast((ui.pkg?'PAKET +1 ':'+1 ')+it.name,{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
   addUnit(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it||!it.unitPrice)return;const t=curT();const pr=it.unitPrice;
     let l=t.lines.find(x=>x.itemId===it.id&&x.unit&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===pr);
     if(!l){l={id:uid(),itemId:it.id,name:baseName(it.name)+' (tek)',price:pr,qty:0,sent:0,note:'',unit:true,pkg:!!ui.pkg};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
-    l.qty++;save();vOrder();toast('+1 tek '+baseName(it.name)+' · '+fmt(pr));if(navigator.vibrate)navigator.vibrate(10)},
+    l.qty++;save();vOrder();toast('+1 tek '+baseName(it.name)+' · '+fmt(pr),{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
   addHalf(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;const t=curT();const pr=itemHalf(it);
     let l=t.lines.find(x=>x.itemId===it.id&&x.half&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===pr);
     if(!l){l={id:uid(),itemId:it.id,name:it.name+' (az)',price:pr,qty:0,sent:0,note:'',half:true,pkg:!!ui.pkg};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
-    l.qty++;save();vOrder();toast('+1 az '+it.name+' · '+fmt(pr));if(navigator.vibrate)navigator.vibrate(10)},
+    l.qty++;save();vOrder();toast('+1 az '+it.name+' · '+fmt(pr),{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
+  undoAdd(){const u=ui.undo;if(!u)return;const t=S.tables[u.k];const l=t&&t.lines.find(x=>x.id===u.id);
+    if(!l||l.qty<=l.sent||l.qty<1){toast('Geri alınacak bir şey yok');return}
+    l.qty--;const nm=l.name;pruneTable(u.k);save();if(ui.view==='order'&&ui.table===u.k)vOrder();
+    if(document.querySelector('.billv')&&ui.table===u.k)openCart();toast('Silindi: 1 '+nm);if(navigator.vibrate)navigator.vibrate([10,40,10])},
   cart(){ui.editCart=false;openCart()},
   async fxNow(){toast('Kurlar alınıyor…');if(await fetchFx(true)){toast('Kurlar güncellendi');render()}else toast('Kur alınamadı. İnternet bağlantısını kontrol edin.')},
   lang(d){ui.lang=d.l==='en'?'en':'tr';openCart();if(ui.lang==='en')fetchFx().then(ok=>{if(ok&&ui.lang==='en'&&document.querySelector('.billv'))openCart()})},
