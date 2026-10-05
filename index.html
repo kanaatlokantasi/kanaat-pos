@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 53</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 54</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -703,6 +703,16 @@ function headerRows(){const h=S.settings.header.split('\n').filter(x=>x.trim());
   if(logoOn())return [{k:'logo'},...h.slice(1).map((x,i)=>({k:'c',text:x,b:i===0}))];
   return h.map((x,i)=>i===0?{k:'title',text:x}:{k:'c',text:x})}
 function footerRows(){return S.settings.footer.split('\n').filter(x=>x.trim()).map(x=>({k:'c',text:x}))}
+/* bahşiş eklenmediyse fişte hatırlatma kutusu */
+function tipNudge(total,unpaid,en){const T=(a,b)=>en?b:a;
+  const rows=[{k:'bs'},{k:'inv',text:T('GÖNÜLLÜ BAHŞİŞ','VOLUNTARY TIP')}];
+  if(unpaid){rows.push({k:'c',text:T('Hesaba dahil değildir.','Not included in the bill.'),b:true});
+    [5,10,15].forEach(p=>{const a=Math.round(total*p)/100;rows.push({k:'lr',l:en?p+'%':'%'+p,r:`+${money(a)} = ${fmt(total+a)}`})});
+    rows.push({k:'c',text:T('Takdir tamamen sizindir.','Entirely at your discretion.')},{k:'c',text:T('Teşekkür ederiz!','Thank you!')})}
+  else{rows.push({k:'c',text:T('Hesabınıza bahşiş eklenmedi.','No tip was added to your bill.'),b:true},
+    {k:'c',text:T('Memnun kaldıysanız masaya bırakabilirsiniz.','If you enjoyed your meal, you may leave it on the table.')},
+    {k:'c',text:T('Teşekkür ederiz!','Thank you!')})}
+  rows.push({k:'be'});return rows}
 function billDoc(tableName,lines,total,opts={}){
   const at=opts.at||Date.now(),en=opts.lang==='en',T=(a,b)=>en?b:a,P=p=>en?enPay(p):p;
   const w=opts.waiter??S.settings.waiter;
@@ -712,6 +722,7 @@ function billDoc(tableName,lines,total,opts={}){
     {k:'hr'},...(opts.tip>0?[{k:'lr',l:T('Ara toplam','Subtotal'),r:fmt(total)},{k:'lr',l:T('Gönüllü bahşiş','Voluntary tip')+(opts.tipPct?(en?` (${opts.tipPct}%)`:` (%${opts.tipPct})`):''),r:fmt(opts.tip)},{k:'big',l:T('TOPLAM','TOTAL'),r:fmt(total+opts.tip)}]:[{k:'big',l:T('TOPLAM','TOTAL'),r:fmt(total)}]),
     ...(en&&fxReady()?[{k:'l',text:'Approx. in other currencies:',small:true},...fxList(total+(opts.tip>0?opts.tip:0)).map(x=>({k:'lr',l:`${x.n} (${x.sym})`,r:`${x.v} ${x.c}`,small:true})),{k:'l',text:S.settings.fx.src==='TCMB'?`Central Bank of Türkiye rates, ${S.settings.fx.date}. Payment in TL.`:`Rates of ${dmy(S.settings.fx.at||at)}. Payment in TL.`,small:true}]:[]),
     ...(opts.payments&&opts.payments.length>1?[{k:'lr',l:T(`Kişi başı (${opts.payments.length} kişi)`,`Per person (${opts.payments.length} people)`),r:fmt(opts.payments[0].amount)},...opts.payments.map((p,i)=>({k:'lr',l:T(`${i+1}. kişi · ${p.pay}`,`Person ${i+1} · ${P(p.pay)}`),r:money(p.amount),small:true}))]:opts.pay?[{k:'lr',l:T('Ödeme','Payment'),r:P(opts.pay)}]:[{k:'c',text:T('— Ödenmedi —','— Not paid —')}]),
+    ...(opts.tip>0?[]:tipNudge(total,!(opts.pay||(opts.payments&&opts.payments.length)),en)),
     {k:'l',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true},
     {k:'gap'},...(en?[{k:'c',text:'Enjoy your meal!'},{k:'c',text:'INFORMATION SLIP - NOT A FISCAL RECEIPT'}]:footerRows())];
 }
@@ -740,22 +751,29 @@ function renderCanvas(doc){
   const m=document.createElement('canvas').getContext('2d');
   const wrap=(text,font,maxW)=>{m.font=font;const words=String(text).split(' ');const out=[];let cur='';
     for(const w of words){const t=cur?cur+' '+w:w;if(m.measureText(t).width<=maxW||!cur)cur=t;else{out.push(cur);cur=w}}out.push(cur);return out};
-  const ops=[];let y=10;
+  const ops=[];let y=10,px=pad,boxY=0;
   for(const r of doc){
     if(r.k==='gap'){y+=fs*0.5;continue}
+    if(r.k==='bs'){y+=fs*0.3;boxY=y;y+=6;px=pad+12;continue}
+    if(r.k==='be'){y+=fs*0.35;ops.push({rect:true,y0:boxY,y1:y});px=pad;y+=fs*0.3;continue}
+    if(r.k==='inv'){const sz=Math.round(fs*1.15),font=F(sz,true);ops.push({band:true,y:y,h:Math.round(sz*1.6)});
+      ops.push({t:r.text,font,x:W/2,y:y+Math.round(sz*1.18),align:'center',white:true});y+=Math.round(sz*1.6)+fs*0.35;continue}
     if(r.k==='logo'){const lw=Math.round(W*0.82),lh=Math.round(LOGO_IMG.naturalHeight*lw/LOGO_IMG.naturalWidth);ops.push({img:true,x:Math.round((W-lw)/2),y:y+4,w:lw,h:lh});y+=lh+10;continue}
     if(r.k==='hr'){ops.push({hr:true,y:y+fs*0.4});y+=fs*0.9;continue}
     if(r.k==='title'||r.k==='c'){const sz=r.k==='title'?Math.round(fs*1.45):fs;const font=F(sz,r.k==='title'||r.b);
-      for(const ln of wrap(r.text,font,W-pad*2)){ops.push({t:ln,font,x:W/2,y:y+sz,align:'center'});y+=sz*1.25}continue}
+      for(const ln of wrap(r.text,font,W-px*2)){ops.push({t:ln,font,x:W/2,y:y+sz,align:'center'});y+=sz*1.25}continue}
     if(r.k==='l'||r.k==='kl'){const sz=r.k==='kl'?Math.round(fs*1.25):(r.small?Math.round(fs*.85):fs);const font=F(sz,r.k==='kl'||r.b);
-      for(const ln of wrap(r.text,font,W-pad*2)){ops.push({t:ln,font,x:pad,y:y+sz,align:'left'});y+=sz*1.25}continue}
+      for(const ln of wrap(r.text,font,W-px*2)){ops.push({t:ln,font,x:px,y:y+sz,align:'left'});y+=sz*1.25}continue}
     if(r.k==='lr'||r.k==='big'){const sz=r.k==='big'?Math.round(fs*1.4):fs;const font=F(sz,r.k==='big'||r.b);
-      m.font=font;const rw=r.r?m.measureText(r.r).width+12:0;const lines=wrap(r.l,font,W-pad*2-rw);
-      lines.forEach((ln,i)=>{ops.push({t:ln,font,x:pad,y:y+sz,align:'left'});if(i===0&&r.r)ops.push({t:r.r,font,x:W-pad,y:y+sz,align:'right'});y+=sz*1.25});continue}
+      m.font=font;const rw=r.r?m.measureText(r.r).width+12:0;const lines=wrap(r.l,font,W-px*2-rw);
+      lines.forEach((ln,i)=>{ops.push({t:ln,font,x:px,y:y+sz,align:'left'});if(i===0&&r.r)ops.push({t:r.r,font,x:W-px,y:y+sz,align:'right'});y+=sz*1.25});continue}
   }
   const c=document.createElement('canvas');c.width=W;c.height=Math.ceil(y+24);
   const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.fillStyle='#000';g.strokeStyle='#000';
   for(const o of ops){if(o.img){g.drawImage(LOGO_IMG,o.x,o.y,o.w,o.h);continue}
+    if(o.rect){g.setLineDash([]);g.lineWidth=4;g.strokeRect(pad+2,o.y0,W-pad*2-4,o.y1-o.y0);continue}
+    if(o.band){g.fillStyle='#000';g.fillRect(pad+2,o.y,W-pad*2-4,o.h);continue}
+    if(o.white){g.font=o.font;g.textAlign=o.align;g.fillStyle='#fff';g.fillText(o.t,o.x,o.y);g.fillStyle='#000';continue}
     if(o.hr){g.setLineDash([6,5]);g.lineWidth=2;g.beginPath();g.moveTo(pad,o.y);g.lineTo(W-pad,o.y);g.stroke();continue}
     g.font=o.font;g.textAlign=o.align;g.textBaseline='alphabetic';g.fillText(o.t,o.x,o.y)}
   return c;
@@ -781,6 +799,8 @@ function textJob(doc){
   for(const r of doc){
     if(r.k==='gap'){nl();continue}
     if(r.k==='hr'){out.push(enc('-'.repeat(cols)));nl();continue}
+    if(r.k==='bs'||r.k==='be'){out.push(enc('='.repeat(cols)));nl();continue}
+    if(r.k==='inv'){out.push(new Uint8Array([ESC,0x61,1,ESC,0x45,1,GS,0x42,1]),enc(' '+r.text+' '));nl();out.push(new Uint8Array([GS,0x42,0,ESC,0x45,0,ESC,0x61,0]));continue}
     if(r.k==='title'){out.push(new Uint8Array([ESC,0x61,1,GS,0x21,0x11,ESC,0x45,1]),enc(r.text));nl();out.push(new Uint8Array([GS,0x21,0,ESC,0x45,0,ESC,0x61,0]));continue}
     if(r.k==='c'){out.push(new Uint8Array([ESC,0x61,1,ESC,0x45,r.b?1:0]),enc(r.text));nl();out.push(new Uint8Array([ESC,0x45,0,ESC,0x61,0]));continue}
     if(r.k==='kl'){out.push(new Uint8Array([GS,0x21,0x01,ESC,0x45,1]),enc(r.text));nl();out.push(new Uint8Array([GS,0x21,0,ESC,0x45,0]));continue}
@@ -958,7 +978,7 @@ async function printDoc(doc,label){
   }
   showPreview(doc,label);return false;
 }
-function docText(doc){return doc.map(r=>{if(r.k==='logo')return 'KANAAT LOKANTASI';if(r.k==='hr')return '----------------';if(r.k==='gap')return '';
+function docText(doc){return doc.map(r=>{if(r.k==='logo')return 'KANAAT LOKANTASI';if(r.k==='hr')return '----------------';if(r.k==='bs'||r.k==='be')return '================';if(r.k==='gap')return '';
   if(r.k==='lr'||r.k==='big')return r.l+(r.r?'  '+r.r:'');return r.text||''}).filter((x,i,a)=>!(x===''&&a[i-1]==='')).join('\n').trim()}
 function showPreview(doc,label){
   const c=renderCanvas(doc);const url=c.toDataURL('image/png');
