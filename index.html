@@ -124,7 +124,7 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 .billv{background:#fff;color:#111;border-radius:6px;padding:14px 14px 12px;box-shadow:0 1px 0 var(--line),0 6px 18px rgba(0,0,0,.06);border:1px solid var(--line)}
 .billv .muted{color:#666}
 .billv .bhead{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1.5px dashed #bbb;margin-bottom:4px}
-.fxgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fxgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .fxline{margin-top:4px;font-size:14px;color:var(--muted);text-align:right;font-weight:600}
 .langsw{display:inline-flex;border:1.5px solid #111;border-radius:8px;overflow:hidden}.langsw button{border:0;background:#fff;color:#111;font-weight:700;font-size:14px;padding:6px 12px;min-height:36px}.langsw button.act{background:#111;color:#fff}
 .billv .bl{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
@@ -240,7 +240,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 51</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 52</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -365,7 +365,7 @@ function enLine(l){const m=String(l.name).match(/^(.*?)( \((az|tek)\))?$/);const
   return en+(m[3]==='az'?' (half)':m[3]==='tek'?' (1 piece)':'')}
 const enTable=n=>String(n).replace(/^Masa (\d+)$/,'Table $1');
 /* ---- döviz karşılığı (İngilizce hesap) ---- */
-const FX_CUR=[['EUR','Euro','€'],['USD','US Dollar','$'],['GBP','British Pound','£']];
+const FX_CUR=[['EUR','Euro','€'],['USD','US Dollar','$']];
 const fxReady=()=>S.settings.fxOn!==false&&FX_CUR.some(([c])=>S.settings.fx?.[c]>0);
 function fxList(tl){return FX_CUR.filter(([c])=>S.settings.fx?.[c]>0).map(([c,n,sym])=>({c,n,sym,v:(Math.round(tl/S.settings.fx[c]*100)/100).toFixed(2)}))}
 const fxInline=tl=>fxList(tl).map(x=>`≈ ${x.sym}${x.v}`).join(' · ');
