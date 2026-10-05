@@ -1,0 +1,25 @@
+name: TCMB kurlarini guncelle
+on:
+  schedule:
+    # Hafta içi 09:05–19:35 (TR saati) arası her 30 dakikada bir. TCMB bülteni 15:30'da çıkar.
+    - cron: '5,35 6-16 * * 1-5'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: tcmb-kur
+jobs:
+  kur:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/scripts/tcmb.py
+      - name: Degisiklik varsa kaydet
+        run: |
+          if [ -n "$(git status --porcelain fx.json)" ]; then
+            git config user.name "kur-botu"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add fx.json
+            git commit -m "TCMB kurlari $(python3 -c 'import json;print(json.load(open("fx.json"))["date"])')"
+            git pull --rebase -q origin main
+            git push
+          fi

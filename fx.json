@@ -1,0 +1,10 @@
+{
+ "source": "TCMB",
+ "kind": "ForexBuying",
+ "date": "02.10.2026",
+ "bulletin": "2026/186",
+ "EUR": 55.0826,
+ "USD": 48.9699,
+ "GBP": 64.5796,
+ "fetchedAt": "2026-10-05T12:00:00Z"
+}
