@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 54</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 55</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -709,9 +709,7 @@ function tipNudge(total,unpaid,en){const T=(a,b)=>en?b:a;
   if(unpaid){rows.push({k:'c',text:T('Hesaba dahil değildir.','Not included in the bill.'),b:true});
     [5,10,15].forEach(p=>{const a=Math.round(total*p)/100;rows.push({k:'lr',l:en?p+'%':'%'+p,r:`+${money(a)} = ${fmt(total+a)}`})});
     rows.push({k:'c',text:T('Takdir tamamen sizindir.','Entirely at your discretion.')},{k:'c',text:T('Teşekkür ederiz!','Thank you!')})}
-  else{rows.push({k:'c',text:T('Hesabınıza bahşiş eklenmedi.','No tip was added to your bill.'),b:true},
-    {k:'c',text:T('Memnun kaldıysanız masaya bırakabilirsiniz.','If you enjoyed your meal, you may leave it on the table.')},
-    {k:'c',text:T('Teşekkür ederiz!','Thank you!')})}
+  else return [{k:'gap'},{k:'inv',text:T('Hesabınıza bahşiş veya servis ücreti eklenmemiştir.','No tip or service is added to your bill.')},{k:'gap'}];
   rows.push({k:'be'});return rows}
 function billDoc(tableName,lines,total,opts={}){
   const at=opts.at||Date.now(),en=opts.lang==='en',T=(a,b)=>en?b:a,P=p=>en?enPay(p):p;
@@ -756,8 +754,8 @@ function renderCanvas(doc){
     if(r.k==='gap'){y+=fs*0.5;continue}
     if(r.k==='bs'){y+=fs*0.3;boxY=y;y+=6;px=pad+12;continue}
     if(r.k==='be'){y+=fs*0.35;ops.push({rect:true,y0:boxY,y1:y});px=pad;y+=fs*0.3;continue}
-    if(r.k==='inv'){const sz=Math.round(fs*1.15),font=F(sz,true);ops.push({band:true,y:y,h:Math.round(sz*1.6)});
-      ops.push({t:r.text,font,x:W/2,y:y+Math.round(sz*1.18),align:'center',white:true});y+=Math.round(sz*1.6)+fs*0.35;continue}
+    if(r.k==='inv'){const sz=Math.round(fs*1.15),font=F(sz,true),lns=wrap(r.text,font,W-pad*2-28),h=Math.round(sz*0.45)*2+lns.length*Math.round(sz*1.25);
+      ops.push({band:true,y:y,h});lns.forEach((ln,i)=>ops.push({t:ln,font,x:W/2,y:y+Math.round(sz*0.45)+Math.round(sz*1.25)*i+Math.round(sz*0.98),align:'center',white:true}));y+=h+fs*0.35;continue}
     if(r.k==='logo'){const lw=Math.round(W*0.82),lh=Math.round(LOGO_IMG.naturalHeight*lw/LOGO_IMG.naturalWidth);ops.push({img:true,x:Math.round((W-lw)/2),y:y+4,w:lw,h:lh});y+=lh+10;continue}
     if(r.k==='hr'){ops.push({hr:true,y:y+fs*0.4});y+=fs*0.9;continue}
     if(r.k==='title'||r.k==='c'){const sz=r.k==='title'?Math.round(fs*1.45):fs;const font=F(sz,r.k==='title'||r.b);
