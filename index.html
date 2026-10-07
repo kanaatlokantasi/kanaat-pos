@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 60</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 61</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -252,7 +252,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
     <button data-act="tab" data-v="tables" class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Masalar</button>
     <button data-act="tab" data-v="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Rapor</button>
     <button data-act="tab" data-v="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>Menü</button>
-    <button data-act="tab" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V3h12v6M6 17H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v7H7z"/></svg>Yazıcı</button>
+    <button data-act="tab" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V3h12v6M6 17H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v7H7z"/></svg>Ayarlar</button>
   </nav>
   <div class="cartbar" id="cartbar" hidden></div>
 </div>
@@ -291,7 +291,7 @@ function sampleMenu(){
 }
 function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
-  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:10,fx:{EUR:0,USD:0,GBP:0,at:0},
+  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:10,reviewQr:true,reviewUrl:'https://g.page/r/CcuksLiev2hyEBM/review',fx:{EUR:0,USD:0,GBP:0,at:0},
     header:'KANAAT LOKANTASI',
     footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
@@ -670,6 +670,12 @@ function vSettings(){
      <label class="f">Ek masalar (virgülle)<input id="extras" value="${esc(s.extras)}" placeholder="Paket, Gel-Al, Bahçe 1"></label>
    </div>
    <div class="card stack">
+     <h3 style="margin:0">Google değerlendirme QR'ı</h3>
+     <label class="row" style="font-weight:600"><input type="checkbox" id="revOn" ${s.reviewQr?'checked':''}> Fişin en altına QR kodu bas</label>
+     <label class="f">Değerlendirme bağlantısı<input id="revUrl" type="url" autocomplete="off" value="${esc(s.reviewUrl||'')}" placeholder="https://g.page/r/…/review"></label>
+     <p class="muted" style="margin:0;font-size:13px">Müşteri kodu okutunca Google'daki değerlendirme sayfanız açılır. Yorum karşılığında indirim veya ikram vermeyin; Google kurallarına aykırıdır.</p>
+   </div>
+   <div class="card stack">
      <h3 style="margin:0">Adisyon kayıtları</h3>
      <div class="f">Ne kadar süre saklansın?<div class="seg">${[10,30,90,365].map(n=>`<button class="${(s.keepDays||10)==n?'act':''}" data-act="set" data-k="keepDays" data-val="${n}">${n} gün</button>`).join('')}</div></div>
      <p class="muted" style="margin:0;font-size:13px">Bu telefonda ${S.sales.length} adisyon kayıtlı${S.sales.length?` (en eskisi ${dmy(Math.min(...S.sales.map(x=>x.at)))})`:''} · depolama yaklaşık %${Math.min(100,Math.max(1,Math.round(JSON.stringify(S).length/50000)))} dolu. Süresi dolan kayıtlar kendiliğinden silinir. Depolama dolarsa son 7 gün hariç en eski kayıtlar silinir.</p>
@@ -699,6 +705,8 @@ function vSettings(){
   bind('tcount',e=>S.settings.tableCount=Math.max(1,Math.min(99,parseInt(e.value)||1)));
   bind('extras',e=>S.settings.extras=e.value);
   bind('waiter',e=>{S.settings.waiter=e.value.trim();renderWaiterTag()});
+  bind('revOn',e=>S.settings.reviewQr=e.checked);
+  bind('revUrl',e=>S.settings.reviewUrl=e.value.trim());
   const fo=document.getElementById('fxOn');if(fo)fo.onchange=e=>{S.settings.fxOn=e.target.checked;save();render()};
   const fa=document.getElementById('fxAuto');if(fa)fa.onchange=async e=>{S.settings.fxAuto=e.target.checked;save();render();if(S.settings.fxAuto&&await fetchFx(true))render()};
   FX_CUR.forEach(([c])=>bind('fx_'+c,e=>{const n=parseNum(e.value);S.settings.fx=S.settings.fx||{};S.settings.fx[c]=n>0?n:0;S.settings.fx.at=Date.now()}));
@@ -747,7 +755,8 @@ function billDoc(tableName,lines,total,opts={}){
     ...(opts.payments&&opts.payments.length>1?[{k:'lr',l:T(`Kişi başı (${opts.payments.length} kişi)`,`Per person (${opts.payments.length} people)`),r:fmt(opts.payments[0].amount)},...opts.payments.map((p,i)=>({k:'lr',l:T(`${i+1}. kişi · ${p.pay}`,`Person ${i+1} · ${P(p.pay)}`),r:money(p.amount),small:true}))]:opts.pay?[{k:'lr',l:T('Ödeme','Payment'),r:P(opts.pay)}]:[{k:'c',text:T('— Ödenmedi —','— Not paid —')}]),
     ...(opts.tip>0?[]:tipNudge(total,!(opts.pay||(opts.payments&&opts.payments.length)),en)),
     {k:'c',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true},
-    {k:'gap'},...(en?[{k:'c',text:'Enjoy your meal!'},{k:'c',text:'INFORMATION SLIP - NOT A FISCAL RECEIPT'}]:footerRows())];
+    {k:'gap'},...(en?[{k:'c',text:'Enjoy your meal!'},{k:'c',text:'INFORMATION SLIP - NOT A FISCAL RECEIPT'}]:footerRows()),
+    ...(S.settings.reviewQr&&S.settings.reviewUrl?[{k:'gap'},{k:'c',text:T('Bizi Google\'da değerlendirin','Rate us on Google'),b:true},{k:'qr',data:S.settings.reviewUrl}]:[])];
 }
 
 function kitchenDoc(tableName,items){
@@ -767,6 +776,59 @@ function zDoc(day){
     {k:'c',text:'BİLGİ AMAÇLIDIR'}];
 }
 
+/* ---- küçük QR kod üretici (bayt modu, hata düzeltme M, sürüm 1–10) ---- */
+function qrMatrix(text){
+  const data=[...new TextEncoder().encode(text)];
+  const RAW=[26,44,70,100,134,172,196,242,292,346],ECL=[10,16,26,18,24,16,18,22,22,26],NB=[1,1,1,2,2,4,4,4,5,5];
+  let ver=0;for(let v=1;v<=10;v++){const cap=RAW[v-1]-ECL[v-1]*NB[v-1];if(4+(v<10?8:16)+data.length*8<=cap*8){ver=v;break}}
+  if(!ver)return null;
+  const size=ver*4+17,M=[...Array(size)].map(()=>Array(size).fill(false)),F=[...Array(size)].map(()=>Array(size).fill(false));
+  const set=(x,y,d)=>{M[y][x]=d;F[y][x]=true};
+  for(let i=0;i<size;i++){set(6,i,i%2==0);set(i,6,i%2==0)}
+  const finder=(cx,cy)=>{for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const d=Math.max(Math.abs(dx),Math.abs(dy)),x=cx+dx,y=cy+dy;if(x>=0&&x<size&&y>=0&&y<size)set(x,y,d!=2&&d!=4)}};
+  finder(3,3);finder(size-4,3);finder(3,size-4);
+  const AP=[[],[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50]][ver],L=AP.length;
+  for(let i=0;i<L;i++)for(let j=0;j<L;j++){if((i==0&&j==0)||(i==0&&j==L-1)||(i==L-1&&j==0))continue;
+    for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)set(AP[i]+dx,AP[j]+dy,Math.max(Math.abs(dx),Math.abs(dy))!=1)}
+  const bit=(v,i)=>((v>>>i)&1)!=0;
+  const fmt=mask=>{const d=(0<<3)|mask;let r=d;for(let i=0;i<10;i++)r=(r<<1)^((r>>>9)*0x537);const b=((d<<10)|r)^0x5412;
+    for(let i=0;i<=5;i++)set(8,i,bit(b,i));set(8,7,bit(b,6));set(8,8,bit(b,7));set(7,8,bit(b,8));
+    for(let i=9;i<15;i++)set(14-i,8,bit(b,i));for(let i=0;i<8;i++)set(size-1-i,8,bit(b,i));
+    for(let i=8;i<15;i++)set(8,size-15+i,bit(b,i));set(8,size-8,true)};
+  fmt(0);
+  if(ver>=7){let r=ver;for(let i=0;i<12;i++)r=(r<<1)^((r>>>11)*0x1F25);const b=ver<<12|r;
+    for(let i=0;i<18;i++){const v=bit(b,i),a=size-11+i%3,c=Math.floor(i/3);set(a,c,v);set(c,a,v)}}
+  // veri
+  const raw=RAW[ver-1],ecl=ECL[ver-1],nb=NB[ver-1],cap=raw-ecl*nb,bb=[];
+  const push=(v,n)=>{for(let i=n-1;i>=0;i--)bb.push((v>>>i)&1)};
+  push(4,4);push(data.length,ver<10?8:16);data.forEach(b=>push(b,8));
+  push(0,Math.min(4,cap*8-bb.length));push(0,(8-bb.length%8)%8);
+  for(let p=0xEC;bb.length<cap*8;p^=0xEC^0x11)push(p,8);
+  const dc=[];for(let i=0;i<bb.length;i+=8)dc.push(parseInt(bb.slice(i,i+8).join(''),2));
+  const mul=(x,y)=>{let z=0;for(let i=7;i>=0;i--){z=(z<<1)^((z>>>7)*0x11D);z^=((y>>>i)&1)*x}return z};
+  const div=[...Array(ecl)].fill(0);div[ecl-1]=1;let root=1;
+  for(let i=0;i<ecl;i++){for(let j=0;j<ecl;j++){div[j]=mul(div[j],root);if(j+1<ecl)div[j]^=div[j+1]}root=mul(root,2)}
+  const rem=d=>{const r=Array(ecl).fill(0);for(const b of d){const f=b^r.shift();r.push(0);div.forEach((c,i)=>r[i]^=mul(c,f))}return r};
+  const nShort=nb-raw%nb,sLen=Math.floor(raw/nb),blocks=[];
+  for(let i=0,k=0;i<nb;i++){const dat=dc.slice(k,k+sLen-ecl+(i<nShort?0:1));k+=dat.length;const e=rem(dat);if(i<nShort)dat.push(0);blocks.push(dat.concat(e))}
+  const cw=[];for(let i=0;i<blocks[0].length;i++)blocks.forEach((b,j)=>{if(i!=sLen-ecl||j>=nShort)cw.push(b[i])});
+  let i=0;for(let right=size-1;right>=1;right-=2){if(right==6)right=5;
+    for(let v=0;v<size;v++)for(let j=0;j<2;j++){const x=right-j,up=((right+1)&2)==0,y=up?size-1-v:v;
+      if(!F[y][x]&&i<cw.length*8){M[y][x]=bit(cw[i>>>3],7-(i&7));i++}}}
+  // maske seçimi
+  const MF=[(x,y)=>(x+y)%2==0,(x,y)=>y%2==0,(x,y)=>x%3==0,(x,y)=>(x+y)%3==0,(x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2==0,
+    (x,y)=>x*y%2+x*y%3==0,(x,y)=>(x*y%2+x*y%3)%2==0,(x,y)=>((x+y)%2+x*y%3)%2==0];
+  const apply=m=>{for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(!F[y][x]&&MF[m](x,y))M[y][x]=!M[y][x]};
+  const pen=()=>{let p=0,dark=0;
+    for(let y=0;y<size;y++){let run=1;for(let x=1;x<=size;x++){if(x<size&&M[y][x]==M[y][x-1])run++;else{if(run>=5)p+=run-2;run=1}}}
+    for(let x=0;x<size;x++){let run=1;for(let y=1;y<=size;y++){if(y<size&&M[y][x]==M[y-1][x])run++;else{if(run>=5)p+=run-2;run=1}}}
+    for(let y=0;y<size-1;y++)for(let x=0;x<size-1;x++){const c=M[y][x];if(c==M[y][x+1]&&c==M[y+1][x]&&c==M[y+1][x+1])p+=3}
+    const pat=[1,0,1,1,1,0,1,0,0,0,0],pat2=[0,0,0,0,1,0,1,1,1,0,1];
+    for(let y=0;y<size;y++)for(let x=0;x+11<=size;x++){let a=true,b=true,c=true,d=true;for(let k=0;k<11;k++){const h=M[y][x+k]?1:0,v=M[x+k][y]?1:0;if(h!=pat[k])a=false;if(h!=pat2[k])b=false;if(v!=pat[k])c=false;if(v!=pat2[k])d=false}p+=40*(a+b+c+d)}
+    for(const r of M)for(const c of r)if(c)dark++;p+=Math.floor(Math.abs(dark*20-size*size*10)/(size*size))*10;return p};
+  let best=0,bp=Infinity;for(let m=0;m<8;m++){apply(m);fmt(m);const p=pen();if(p<bp){bp=p;best=m}apply(m)}
+  apply(best);fmt(best);return M}
+
 /* ============ fiş çizimi (görüntü) ============ */
 function renderCanvas(doc){
   const W=S.settings.printer==='niimbot'?Math.min(384,Math.floor(S.settings.labelW*8/8)*8):(S.settings.paper==80?576:384);
@@ -778,6 +840,8 @@ function renderCanvas(doc){
   const ops=[];let y=10,px=pad,boxY=0;
   for(const r of doc){
     if(r.k==='gap'){y+=fs*0.5;continue}
+    if(r.k==='qr'){const Q=qrMatrix(r.data);if(!Q)continue;const n=Q.length,sc=Math.max(3,Math.floor(Math.min(W*0.42,240)/n)),x0=Math.round((W-n*sc)/2);
+      ops.push({qr:Q,x:x0,y:y+8,sc});y+=n*sc+16;continue}
     if(r.k==='bs'){y+=fs*0.3;boxY=y;y+=6;px=pad+12;continue}
     if(r.k==='be'){y+=fs*0.35;ops.push({rect:true,y0:boxY,y1:y});px=pad;y+=fs*0.3;continue}
     if(r.k==='inv'){const sz=Math.round(fs*1.15),font=F(sz,true),lns=wrap(r.text,font,W-pad*2-28),h=Math.round(sz*0.45)*2+lns.length*Math.round(sz*1.25);
@@ -795,6 +859,7 @@ function renderCanvas(doc){
   const c=document.createElement('canvas');c.width=W;c.height=Math.ceil(y+24);
   const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.fillStyle='#000';g.strokeStyle='#000';
   for(const o of ops){if(o.img){g.drawImage(LOGO_IMG,o.x,o.y,o.w,o.h);continue}
+    if(o.qr){g.fillStyle='#000';o.qr.forEach((row,yy)=>row.forEach((d,xx)=>{if(d)g.fillRect(o.x+xx*o.sc,o.y+yy*o.sc,o.sc,o.sc)}));continue}
     if(o.rect){g.setLineDash([]);g.lineWidth=4;g.strokeRect(pad+2,o.y0,W-pad*2-4,o.y1-o.y0);continue}
     if(o.band){g.fillStyle='#000';g.fillRect(pad+2,o.y,W-pad*2-4,o.h);continue}
     if(o.white){g.font=o.font;g.textAlign=o.align;g.fillStyle='#fff';g.fillText(o.t,o.x,o.y);g.fillStyle='#000';continue}
@@ -824,6 +889,8 @@ function textJob(doc){
     if(r.k==='gap'){nl();continue}
     if(r.k==='hr'){out.push(enc('-'.repeat(cols)));nl();continue}
     if(r.k==='bs'||r.k==='be'){out.push(enc('='.repeat(cols)));nl();continue}
+    if(r.k==='qr'){const d=new TextEncoder().encode(r.data),L=d.length+3;
+      out.push(new Uint8Array([ESC,0x61,1,GS,0x28,0x6b,4,0,0x31,0x41,0x32,0,GS,0x28,0x6b,3,0,0x31,0x43,6,GS,0x28,0x6b,3,0,0x31,0x45,0x31,GS,0x28,0x6b,L&255,L>>8,0x31,0x50,0x30]),d,new Uint8Array([GS,0x28,0x6b,3,0,0x31,0x51,0x30,ESC,0x61,0]));nl();continue}
     if(r.k==='inv'){out.push(new Uint8Array([ESC,0x61,1,ESC,0x45,1,GS,0x42,1]),enc(' '+r.text+' '));nl();out.push(new Uint8Array([GS,0x42,0,ESC,0x45,0,ESC,0x61,0]));continue}
     if(r.k==='title'){out.push(new Uint8Array([ESC,0x61,1,GS,0x21,0x11,ESC,0x45,1]),enc(r.text));nl();out.push(new Uint8Array([GS,0x21,0,ESC,0x45,0,ESC,0x61,0]));continue}
     if(r.k==='c'){out.push(new Uint8Array([ESC,0x61,1,ESC,0x45,r.b?1:0]),enc(r.text));nl();out.push(new Uint8Array([ESC,0x45,0,ESC,0x61,0]));continue}
@@ -1002,7 +1069,7 @@ async function printDoc(doc,label){
   }
   showPreview(doc,label);return false;
 }
-function docText(doc){return doc.map(r=>{if(r.k==='logo')return 'KANAAT LOKANTASI';if(r.k==='hr')return '----------------';if(r.k==='bs'||r.k==='be')return '================';if(r.k==='gap')return '';
+function docText(doc){return doc.map(r=>{if(r.k==='logo')return 'KANAAT LOKANTASI';if(r.k==='hr')return '----------------';if(r.k==='bs'||r.k==='be')return '================';if(r.k==='qr')return r.data;if(r.k==='gap')return '';
   if(r.k==='lr'||r.k==='big')return r.l+(r.r?'  '+r.r:'');return r.text||''}).filter((x,i,a)=>!(x===''&&a[i-1]==='')).join('\n').trim()}
 function showPreview(doc,label){
   const c=renderCanvas(doc);const url=c.toDataURL('image/png');
