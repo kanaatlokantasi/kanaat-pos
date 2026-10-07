@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 64</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 65</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -291,7 +291,7 @@ function sampleMenu(){
 }
 function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
-  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:10,reviewQr:false,reviewUrl:'https://g.page/r/CcuksLiev2hyEBM/review',fx:{EUR:0,USD:0,GBP:0,at:0},
+  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:10,reviewQr:false,fontSize:'l',reviewUrl:'https://g.page/r/CcuksLiev2hyEBM/review',fx:{EUR:0,USD:0,GBP:0,at:0},
     header:'KANAAT LOKANTASI',
     footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
@@ -637,6 +637,7 @@ function vSettings(){
      <div class="f">Kağıt genişliği<div class="seg"><button class="${s.paper==58?'act':''}" data-act="set" data-k="paper" data-val="58">58 mm</button><button class="${s.paper==80?'act':''}" data-act="set" data-k="paper" data-val="80">80 mm</button></div></div>
      <div class="f">Yazdırma şekli<div class="seg"><button class="${s.mode==='image'?'act':''}" data-act="set" data-k="mode" data-val="image">Görüntü (Türkçe tam)</button><button class="${s.mode==='text'?'act':''}" data-act="set" data-k="mode" data-val="text">Metin (hızlı)</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Görüntü modu ı, ş, ğ, ₺ gibi karakterleri doğru basar. Yazıcı anlamsız karakter basarsa veya çok yavaşsa “Metin”e geçin (Türkçe harfler sadeleşir: ş→s).</p>
+     <div class="f">Fişteki yazı boyutu<div class="seg">${[['n','Normal'],['l','Büyük'],['xl','Çok büyük']].map(([v,t])=>`<button class="${(s.fontSize||'l')===v?'act':''}" data-act="set" data-k="fontSize" data-val="${v}">${t}</button>`).join('')}</div></div>
      <div class="f">Baskı hızı<div class="seg"><button class="${s.speed!=='safe'?'act':''}" data-act="set" data-k="speed" data-val="fast">Hızlı</button><button class="${s.speed==='safe'?'act':''}" data-act="set" data-k="speed" data-val="safe">Güvenli</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Fişte kayma, eksik satır veya bozuk görüntü olursa “Güvenli”ye geçin.</p>
      <label class="row" style="font-weight:600"><input type="checkbox" id="cutter" ${s.cutter?'checked':''}> Yazıcıda kağıt kesici var</label>`}
@@ -835,7 +836,8 @@ function qrMatrix(text){
 /* ============ fiş çizimi (görüntü) ============ */
 function renderCanvas(doc){
   const W=S.settings.printer==='niimbot'?Math.min(384,Math.floor(S.settings.labelW*8/8)*8):(S.settings.paper==80?576:384);
-  const fs=W===576?28:Math.max(15,Math.round(W*0.06)), pad=6;
+  const FZ={n:1,l:1.15,xl:1.3}[S.settings.fontSize||'l']||1.15;
+  const fs=Math.round((W===576?28:Math.max(15,Math.round(W*0.06)))*FZ), pad=6;
   const F=(sz,b)=>`${b?700:500} ${sz}px Figtree, "Helvetica Neue", Arial, sans-serif`;
   const m=document.createElement('canvas').getContext('2d');
   const wrap=(text,font,maxW)=>{m.font=font;const words=String(text).split(' ');const out=[];let cur='';
