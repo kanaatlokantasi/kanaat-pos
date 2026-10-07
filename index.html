@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 62</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 63</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -291,7 +291,7 @@ function sampleMenu(){
 }
 function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
-  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:10,reviewQr:true,reviewUrl:'https://g.page/r/CcuksLiev2hyEBM/review',fx:{EUR:0,USD:0,GBP:0,at:0},
+  settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:10,reviewQr:false,reviewUrl:'https://g.page/r/CcuksLiev2hyEBM/review',fx:{EUR:0,USD:0,GBP:0,at:0},
     header:'KANAAT LOKANTASI',
     footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
@@ -361,7 +361,8 @@ function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){
   if(old.length){const cut=new Set(old.slice(0,Math.max(1,Math.ceil(old.length*.2))).map(x=>x.id));S.sales=S.sales.filter(x=>!cut.has(x.id));
     try{localStorage.setItem(LS,JSON.stringify(S));toast('Depolama doldu: en eski '+cut.size+' adisyon silindi');return}catch(e2){}}
   toast('Kaydedilemedi: tarayıcı depolaması dolu veya kapalı')}}
-load();if(!S.settings.keepV10){S.settings.keepDays=10;S.settings.keepV10=true;pruneSales();save()}else if(pruneSales())save();
+load();if(!S.settings.qrOffV1){S.settings.reviewQr=false;S.settings.qrOffV1=true;save()}
+if(!S.settings.keepV10){S.settings.keepDays=10;S.settings.keepV10=true;pruneSales();save()}else if(pruneSales())save();
 
 const ui={view:'tables',table:null,cat:null,reportDay:dayKey(Date.now()),lang:'tr'};
 /* ============ İngilizce hesap ============ */
