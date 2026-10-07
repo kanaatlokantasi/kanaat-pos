@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 61</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 62</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -731,7 +731,7 @@ const DEFAULT_LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlgAAAD0AQAAAA
 const LOGO_IMG=new Image();
 function loadLogo(){LOGO_IMG.src=S.settings.logoData||DEFAULT_LOGO}
 loadLogo();
-const logoOn=()=>S.settings.logo&&LOGO_IMG.complete&&LOGO_IMG.naturalWidth>0&&!(S.settings.printer!=='niimbot'&&S.settings.mode==='text');
+const logoOn=()=>S.settings.logo&&LOGO_IMG.complete&&LOGO_IMG.naturalWidth>0;
 function headerRows(){const h=S.settings.header.split('\n').filter(x=>x.trim());
   if(logoOn())return [{k:'logo'},...h.slice(1).map((x,i)=>({k:'c',text:x,b:i===0}))];
   return h.map((x,i)=>i===0?{k:'title',text:x}:{k:'c',text:x})}
@@ -872,6 +872,16 @@ function renderCanvas(doc){
 const ESC=0x1b,GS=0x1d;
 function concat(arrs){const n=arrs.reduce((a,b)=>a+b.length,0);const o=new Uint8Array(n);let p=0;for(const a of arrs){o.set(a,p);p+=a.length}return o}
 function tail(){const t=[new Uint8Array([ESC,0x64,4])];if(S.settings.cutter)t.push(new Uint8Array([GS,0x56,66,0]));return t}
+/* metin modunda da logoyu görüntü olarak bas */
+function logoRaster(){const W=S.settings.paper==80?576:384,lw=Math.round(W*0.82),lh=Math.round(LOGO_IMG.naturalHeight*lw/LOGO_IMG.naturalWidth);
+  const c=document.createElement('canvas');c.width=W;c.height=lh+8;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,W,c.height);g.drawImage(LOGO_IMG,Math.round((W-lw)/2),4,lw,lh);
+  return rasterParts(c)}
+function rasterParts(canvas){
+  const W=canvas.width,H=canvas.height,bpr=W/8;const d=canvas.getContext('2d').getImageData(0,0,W,H).data;const parts=[];
+  for(let y0=0;y0<H;y0+=96){const h=Math.min(96,H-y0);const b=new Uint8Array(8+bpr*h);b.set([GS,0x76,0x30,0,bpr&255,bpr>>8,h&255,h>>8]);
+    for(let y=0;y<h;y++)for(let x=0;x<W;x++){const i=((y0+y)*W+x)*4;if(d[i]*.299+d[i+1]*.587+d[i+2]*.114<150)b[8+y*bpr+(x>>3)]|=0x80>>(x&7)}
+    parts.push(b)}
+  return parts}
 function rasterJob(canvas){
   const W=canvas.width,H=canvas.height,bpr=W/8;const d=canvas.getContext('2d').getImageData(0,0,W,H).data;const parts=[new Uint8Array([ESC,0x40])];
   for(let y0=0;y0<H;y0+=96){const h=Math.min(96,H-y0);const b=new Uint8Array(8+bpr*h);b.set([GS,0x76,0x30,0,bpr&255,bpr>>8,h&255,h>>8]);
@@ -887,6 +897,7 @@ function textJob(doc){
   const wrapC=(t,w)=>{const words=ascii(t).split(' ');const o=[];let c='';for(const x of words){const n=c?c+' '+x:x;if(n.length<=w||!c)c=n;else{o.push(c);c=x}}o.push(c);return o.flatMap(l=>l.match(new RegExp('.{1,'+w+'}','g'))||[''])};
   for(const r of doc){
     if(r.k==='gap'){nl();continue}
+    if(r.k==='logo'){try{out.push(...logoRaster())}catch(e){out.push(new Uint8Array([ESC,0x61,1,ESC,0x45,1]),enc('KANAAT LOKANTASI'),new Uint8Array([0x0a,ESC,0x45,0,ESC,0x61,0]))}continue}
     if(r.k==='hr'){out.push(enc('-'.repeat(cols)));nl();continue}
     if(r.k==='bs'||r.k==='be'){out.push(enc('='.repeat(cols)));nl();continue}
     if(r.k==='qr'){const d=new TextEncoder().encode(r.data),L=d.length+3;
