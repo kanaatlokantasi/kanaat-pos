@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 59</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 60</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -532,7 +532,13 @@ function openCart(){
 
 /* ---- rapor ---- */
 function saleHay(s){const d=x=>String(x).replace(/\D/g,'');const g=(s.total||0)+(s.tip||0);
-  return [' '+d(hm(s.at)),d(money(s.total)),d(money(g)),d(Math.round(s.total)),d(Math.round(g)),'no'+s.no,d(s.no),s.table,s.pay,s.waiter||'',hm(s.at),money(s.total),money(g),...s.lines.map(l=>l.name)].join(' ').toLocaleLowerCase('tr')}
+  return [' '+d(hm(s.at)),d(money(s.total)),d(money(g)),d(Math.round(s.total)),d(Math.round(g)),'no'+s.no,d(s.no),s.table,s.lang==='en'?'yabancı ingilizce english':'',s.pay,s.waiter||'',hm(s.at),money(s.total),money(g),...s.lines.map(l=>l.name)].join(' ').toLocaleLowerCase('tr')}
+/* yabancı müşteri oranı: İngilizce (EN) alınan hesaplar */
+const pctTxt=x=>'%'+(Math.round(x*10)/10).toLocaleString('tr-TR');
+function foreignStats(list){const en=list.filter(s=>s.lang==='en'),of=list.length,ciro=list.reduce((a,s)=>a+s.total,0),ec=en.reduce((a,s)=>a+s.total,0);
+  return{n:en.length,of,pct:of?en.length*100/of:0,ciro:ec,ciroPct:ciro?ec*100/ciro:0}}
+function foreignPeriod(day){const end=new Date(day+'T23:59:59').getTime(),d=S.settings.keepDays||10,start=end-d*86400e3;
+  return{days:d,...foreignStats(S.sales.filter(s=>!s.void&&s.at>start&&s.at<=end))}}
 function salesOf(day){return S.sales.filter(s=>dayKey(s.at)===day)}
 function summary(day){
   const list=salesOf(day),valid=list.filter(s=>!s.void);
@@ -559,6 +565,7 @@ function vReport(){
      <div class="kpi"><span>Masada</span><b class="num">${fmt(r.total-r.pkgTotal)}</b></div>
      <div class="kpi"><span>Paket</span><b class="num">${fmt(r.pkgTotal)}</b><span class="num" style="text-transform:none;letter-spacing:0">${r.pkgSales} adisyonda</span></div>
      <div class="kpi" style="grid-column:1/-1"><span>Gönüllü bahşiş (ciroya dahil değil)</span><b class="num">${fmt(r.tip)}</b><span class="num" style="text-transform:none;letter-spacing:0">Nakit ${fmt(r.tipCash)} · Kart ${fmt(r.tipCard)}</span></div>
+     ${(()=>{const f=foreignStats(r.valid),fp=foreignPeriod(ui.reportDay);return `<div class="kpi" style="grid-column:1/-1"><span>Yabancı müşteri (İngilizce hesap)</span><b class="num">${f.n} / ${f.of} hesap · ${pctTxt(f.pct)}</b><span class="num" style="text-transform:none;letter-spacing:0">Ciro payı ${pctTxt(f.ciroPct)} (${fmt(f.ciro)}) · Son ${fp.days} gün: ${fp.n}/${fp.of} hesap, ${pctTxt(fp.pct)}</span></div>`})()}
    </div>
    <div class="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
      <button class="btn pri" data-act="printZ">Gün sonu yazdır</button><button class="btn" data-act="csv">Excel'e aktar (CSV)</button></div>
@@ -572,7 +579,7 @@ function vReport(){
    <div class="card"><h3>Adisyonlar</h3>${r.list.length?`<input id="saleQ" type="search" inputmode="search" autocomplete="off" placeholder="Ara: saat (14:30), tutar (1750), masa, ürün…" style="margin-bottom:6px">
      <p class="muted" id="saleQn" style="margin:0 0 6px;font-size:13px">${r.list.length} adisyon</p>
      <div style="overflow-x:auto"><table class="t"><tr><th>Saat</th><th>Masa</th><th>Ödeme</th><th class="r">Tutar</th><th></th></tr>
-     ${r.list.slice().reverse().map(s=>`<tr class="${s.void?'void':''}" data-q="${esc(saleHay(s))}"><td class="num">${hm(s.at)}</td><td>${esc(s.table)}</td><td><span class="pill ${s.pay==='Nakit'?'nakit':s.pay==='Kart'?'kart':''}">${s.pay}${s.split?' ÷'+s.split:''}</span></td><td class="r">${fmt(s.total)}</td>
+     ${r.list.slice().reverse().map(s=>`<tr class="${s.void?'void':''}" data-q="${esc(saleHay(s))}"><td class="num">${hm(s.at)}</td><td>${esc(s.table)}${s.lang==='en'?' <span class="pill">EN</span>':''}</td><td><span class="pill ${s.pay==='Nakit'?'nakit':s.pay==='Kart'?'kart':''}">${s.pay}${s.split?' ÷'+s.split:''}</span></td><td class="r">${fmt(s.total)}</td>
        <td class="r"><button class="linkbtn" data-act="saleMenu" data-id="${s.id}">•••</button></td></tr>`).join('')}</table></div>`:'<p class="muted">Kayıt yok.</p>'}</div>
   </div>`;
   document.getElementById('repDay').onchange=e=>{ui.reportDay=e.target.value||dayKey(Date.now());render()};
@@ -752,6 +759,7 @@ function zDoc(day){
   return [...headerRows(),{k:'gap'},{k:'title',text:'GÜN SONU'},{k:'c',text:day.split('-').reverse().join('.')+'  ·  yazdırma '+hm(Date.now())},{k:'hr'},
     {k:'lr',l:'Adisyon',r:String(r.valid.length)},{k:'lr',l:'Nakit',r:fmt(r.cash)},{k:'lr',l:'Kart',r:fmt(r.card)},
     ...(r.voids?[{k:'lr',l:'İptal edilen',r:String(r.voids)}]:[]),{k:'hr'},{k:'lr',l:'Masada',r:fmt(r.total-r.pkgTotal)},{k:'lr',l:'Paket',r:fmt(r.pkgTotal)},{k:'big',l:'CİRO',r:fmt(r.total)},
+    ...(()=>{const f=foreignStats(r.valid);return f.of?[{k:'lr',l:'Yabancı müşteri (EN hesap)',r:`${f.n}/${f.of} · ${pctTxt(f.pct)}`}]:[]})(),
     ...(r.tip?[{k:'hr'},{k:'lr',l:'Bahşiş (nakit)',r:fmt(r.tipCash)},{k:'lr',l:'Bahşiş (kart)',r:fmt(r.tipCard)},{k:'lr',l:'Toplam bahşiş',r:fmt(r.tip),b:true}]:[]),{k:'hr'},
     ...(r.waiters.length?[{k:'c',text:'Garsonlara göre bahşiş',b:true},...r.waiters.map(([w,v])=>({k:'lr',l:`${w} (${v.n} adisyon)`,r:fmt(v.tip)})),{k:'hr'}]:[]),
     {k:'c',text:'Satılan ürünler · masada',b:true},...r.items.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)})),
@@ -1112,8 +1120,8 @@ const A={
     if(to){to.lines.push(...from.lines);to.openedAt=Math.min(to.openedAt,from.openedAt)}else S.tables[d.k]=from;
     delete S.tables[ui.table];ui.table=d.k;save();closeLayer();render();toast('Taşındı: '+tName(d.k))},
   async printZ(){await printDoc(zDoc(ui.reportDay),'Gün sonu')},
-  csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Garson','Ödeme','Tutar','Paket tutarı','Bahşiş','Durum','Ürünler']];
-    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.waiter||'',s.payments?s.payments.map(p=>p.pay+' '+money(p.amount)).join(' + '):s.pay,money(s.total),money(s.lines.filter(l=>l.pkg).reduce((a,l)=>a+l.qty*l.price,0)),money(s.tip||0),s.void?'İptal':'',s.lines.map(l=>l.qty+'x '+l.name+(l.pkg?' (paket)':'')).join(', ')]));
+  csv(){const r=summary(ui.reportDay);const rows=[['No','Tarih','Saat','Masa','Garson','Ödeme','Tutar','Paket tutarı','Bahşiş','Durum','Dil','Ürünler']];
+    r.list.forEach(s=>rows.push([s.no,dmy(s.at),hm(s.at),s.table,s.waiter||'',s.payments?s.payments.map(p=>p.pay+' '+money(p.amount)).join(' + '):s.pay,money(s.total),money(s.lines.filter(l=>l.pkg).reduce((a,l)=>a+l.qty*l.price,0)),money(s.tip||0),s.void?'İptal':'',s.lang==='en'?'EN':'TR',s.lines.map(l=>l.qty+'x '+l.name+(l.pkg?' (paket)':'')).join(', ')]));
     const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\n');
     download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'kanaat-satis-'+ui.reportDay+'.csv')},
   saleMenu(d){const s=S.sales.find(x=>x.id===d.id);if(!s)return;
