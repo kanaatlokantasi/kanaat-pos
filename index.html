@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 63</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 64</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -637,6 +637,8 @@ function vSettings(){
      <div class="f">Kağıt genişliği<div class="seg"><button class="${s.paper==58?'act':''}" data-act="set" data-k="paper" data-val="58">58 mm</button><button class="${s.paper==80?'act':''}" data-act="set" data-k="paper" data-val="80">80 mm</button></div></div>
      <div class="f">Yazdırma şekli<div class="seg"><button class="${s.mode==='image'?'act':''}" data-act="set" data-k="mode" data-val="image">Görüntü (Türkçe tam)</button><button class="${s.mode==='text'?'act':''}" data-act="set" data-k="mode" data-val="text">Metin (hızlı)</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Görüntü modu ı, ş, ğ, ₺ gibi karakterleri doğru basar. Yazıcı anlamsız karakter basarsa veya çok yavaşsa “Metin”e geçin (Türkçe harfler sadeleşir: ş→s).</p>
+     <div class="f">Baskı hızı<div class="seg"><button class="${s.speed!=='safe'?'act':''}" data-act="set" data-k="speed" data-val="fast">Hızlı</button><button class="${s.speed==='safe'?'act':''}" data-act="set" data-k="speed" data-val="safe">Güvenli</button></div></div>
+     <p class="muted" style="margin:0;font-size:13px">Fişte kayma, eksik satır veya bozuk görüntü olursa “Güvenli”ye geçin.</p>
      <label class="row" style="font-weight:600"><input type="checkbox" id="cutter" ${s.cutter?'checked':''}> Yazıcıda kağıt kesici var</label>`}
      <label class="row" style="font-weight:600"><input type="checkbox" id="kitchenOn" ${s.kitchen?'checked':''}> Mutfak fişi kullan</label>
      <div class="f">Bağlantı kayıtları<pre id="btlog" style="margin:0;max-height:180px;overflow:auto;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;font:12px/1.45 ui-monospace,Menlo,monospace;color:var(--ink);white-space:pre-wrap;font-weight:400">${esc(BLOG.join('\n')||'Henüz kayıt yok. “Yazıcıya bağlan”a basın.')}</pre></div>
@@ -885,9 +887,13 @@ function rasterParts(canvas){
   return parts}
 function rasterJob(canvas){
   const W=canvas.width,H=canvas.height,bpr=W/8;const d=canvas.getContext('2d').getImageData(0,0,W,H).data;const parts=[new Uint8Array([ESC,0x40])];
-  for(let y0=0;y0<H;y0+=96){const h=Math.min(96,H-y0);const b=new Uint8Array(8+bpr*h);b.set([GS,0x76,0x30,0,bpr&255,bpr>>8,h&255,h>>8]);
-    for(let y=0;y<h;y++)for(let x=0;x<W;x++){const i=((y0+y)*W+x)*4;if(d[i]*.299+d[i+1]*.587+d[i+2]*.114<150)b[8+y*bpr+(x>>3)]|=0x80>>(x&7)}
-    parts.push(b)}
+  /* satırları bit dizisine çevir; tamamen beyaz satırları resim yerine "kâğıt ilerlet" komutuyla geç (çok daha az veri) */
+  const rows=[];for(let y=0;y<H;y++){const r=new Uint8Array(bpr);let any=false;
+    for(let x=0;x<W;x++){const i=(y*W+x)*4;if(d[i]*.299+d[i+1]*.587+d[i+2]*.114<150){r[x>>3]|=0x80>>(x&7);any=true}}rows.push(any?r:null)}
+  let y=0;while(y<H){
+    if(!rows[y]){let n=0;while(y<H&&!rows[y]&&n<255){n++;y++}parts.push(new Uint8Array([ESC,0x4a,n]));continue}
+    let h=0;while(y+h<H&&rows[y+h]&&h<96)h++;
+    const b=new Uint8Array(8+bpr*h);b.set([GS,0x76,0x30,0,bpr&255,bpr>>8,h&255,h>>8]);for(let k=0;k<h;k++)b.set(rows[y+k],8+k*bpr);parts.push(b);y+=h}
   return concat([...parts,...tail()]);
 }
 const TR={'ç':'c','Ç':'C','ğ':'g','Ğ':'G','ı':'i','İ':'I','ö':'o','Ö':'O','ş':'s','Ş':'S','ü':'u','Ü':'U','â':'a','Â':'A','î':'i','û':'u','₺':'TL','»':'>>','—':'-','–':'-','·':'-'};
@@ -994,11 +1000,14 @@ async function ensureBT(){
 }
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function sendBytes(bytes){
-  const CH=100;
+  /* hızlı: büyük paket, kısa bekleme; güvenli: küçük paket, uzun bekleme (kâğıtta bozukluk olursa) */
+  const safe=S.settings.speed==='safe',t0=Date.now();
+  const CH=BT.noResp?(safe?100:180):(safe?100:512),W=safe?18:6;
   for(let i=0;i<bytes.length;i+=CH){const part=bytes.slice(i,i+CH);
-    if(BT.noResp&&BT.char.writeValueWithoutResponse){await BT.char.writeValueWithoutResponse(part);await sleep(18)}
+    if(BT.noResp&&BT.char.writeValueWithoutResponse){await BT.char.writeValueWithoutResponse(part);await sleep(W)}
     else if(BT.char.writeValueWithResponse)await BT.char.writeValueWithResponse(part);
     else await BT.char.writeValue(part);}
+  blog(`Gönderildi: ${(bytes.length/1024).toFixed(1)} KB, ${((Date.now()-t0)/1000).toFixed(1)} sn (${safe?'güvenli':'hızlı'}, ${BT.noResp?'yanıtsız':'yanıtlı'} yazma)`);
 }
 function jobFor(doc){return S.settings.mode==='text'?textJob(doc):rasterJob(renderCanvas(doc))}
 
