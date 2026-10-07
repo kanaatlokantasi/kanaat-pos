@@ -243,7 +243,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 66</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 67</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -637,7 +637,7 @@ function vSettings(){
      <p class="muted" style="margin:0;font-size:13px">B1 bir etiket yazıcısıdır. Uzun fişler birkaç etikete bölünerek basılır; satırlar etiket arasından bölünmez. Hesap fişi için 50×80 veya daha uzun etiket rahat olur. Silik basarsa koyuluğu 4–5 yapın.</p>`:`
      <div class="f">Kağıt genişliği<div class="seg"><button class="${s.paper==58?'act':''}" data-act="set" data-k="paper" data-val="58">58 mm</button><button class="${s.paper==80?'act':''}" data-act="set" data-k="paper" data-val="80">80 mm</button></div></div>
      <div class="f">Yazdırma şekli<div class="seg"><button class="${s.mode==='image'?'act':''}" data-act="set" data-k="mode" data-val="image">Görüntü (Türkçe tam)</button><button class="${s.mode==='text'?'act':''}" data-act="set" data-k="mode" data-val="text">Metin (hızlı)</button></div></div>
-     <p class="muted" style="margin:0;font-size:13px">Görüntü modu ı, ş, ğ, ₺ gibi karakterleri doğru basar. Yazıcı anlamsız karakter basarsa veya çok yavaşsa “Metin”e geçin (Türkçe harfler sadeleşir: ş→s).</p>
+     <p class="muted" style="margin:0;font-size:13px">Görüntü modu ı, ş, ğ, ₺ gibi karakterleri doğru basar ve yazı boyutu ayarı tam çalışır. Yazıcı anlamsız karakter basarsa veya çok yavaşsa “Metin”e geçin (Türkçe harfler sadeleşir: ş→s).</p>
      <div class="f">Fişteki yazı boyutu<div class="seg">${[['n','Normal'],['l','Büyük'],['xl','Çok büyük']].map(([v,t])=>`<button class="${(s.fontSize||'xl')===v?'act':''}" data-act="set" data-k="fontSize" data-val="${v}">${t}</button>`).join('')}</div></div>
      <div class="f">Baskı hızı<div class="seg"><button class="${s.speed!=='safe'?'act':''}" data-act="set" data-k="speed" data-val="fast">Hızlı</button><button class="${s.speed==='safe'?'act':''}" data-act="set" data-k="speed" data-val="safe">Güvenli</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Fişte kayma, eksik satır veya bozuk görüntü olursa “Güvenli”ye geçin.</p>
@@ -902,7 +902,8 @@ function rasterJob(canvas){
 const TR={'ç':'c','Ç':'C','ğ':'g','Ğ':'G','ı':'i','İ':'I','ö':'o','Ö':'O','ş':'s','Ş':'S','ü':'u','Ü':'U','â':'a','Â':'A','î':'i','û':'u','₺':'TL','»':'>>','—':'-','–':'-','·':'-'};
 const ascii=s=>String(s).replace(/[^\x20-\x7e]/g,c=>TR[c]??'?');
 function textJob(doc){
-  const cols=S.settings.paper==80?48:32;const enc=s=>new TextEncoder().encode(ascii(s));const out=[new Uint8Array([ESC,0x40])];
+  const cols=S.settings.paper==80?48:32;const enc=s=>new TextEncoder().encode(ascii(s));const B=(S.settings.fontSize||'xl')==='n'?0:0x01;/* metin modunda büyük yazı: çift yükseklik */
+  const out=[new Uint8Array([ESC,0x40,GS,0x21,B])];
   const nl=()=>out.push(new Uint8Array([0x0a]));
   const wrapC=(t,w)=>{const words=ascii(t).split(' ');const o=[];let c='';for(const x of words){const n=c?c+' '+x:x;if(n.length<=w||!c)c=n;else{o.push(c);c=x}}o.push(c);return o.flatMap(l=>l.match(new RegExp('.{1,'+w+'}','g'))||[''])};
   for(const r of doc){
@@ -913,14 +914,15 @@ function textJob(doc){
     if(r.k==='qr'){const d=new TextEncoder().encode(r.data),L=d.length+3;
       out.push(new Uint8Array([ESC,0x61,1,GS,0x28,0x6b,4,0,0x31,0x41,0x32,0,GS,0x28,0x6b,3,0,0x31,0x43,6,GS,0x28,0x6b,3,0,0x31,0x45,0x31,GS,0x28,0x6b,L&255,L>>8,0x31,0x50,0x30]),d,new Uint8Array([GS,0x28,0x6b,3,0,0x31,0x51,0x30,ESC,0x61,0]));nl();continue}
     if(r.k==='inv'){out.push(new Uint8Array([ESC,0x61,1,ESC,0x45,1,GS,0x42,1]),enc(' '+r.text+' '));nl();out.push(new Uint8Array([GS,0x42,0,ESC,0x45,0,ESC,0x61,0]));continue}
-    if(r.k==='title'){out.push(new Uint8Array([ESC,0x61,1,GS,0x21,0x11,ESC,0x45,1]),enc(r.text));nl();out.push(new Uint8Array([GS,0x21,0,ESC,0x45,0,ESC,0x61,0]));continue}
+    if(r.k==='title'){out.push(new Uint8Array([ESC,0x61,1,GS,0x21,0x11,ESC,0x45,1]),enc(r.text));nl();out.push(new Uint8Array([GS,0x21,B,ESC,0x45,0,ESC,0x61,0]));continue}
     if(r.k==='c'){out.push(new Uint8Array([ESC,0x61,1,ESC,0x45,r.b?1:0]),enc(r.text));nl();out.push(new Uint8Array([ESC,0x45,0,ESC,0x61,0]));continue}
-    if(r.k==='kl'){out.push(new Uint8Array([GS,0x21,0x01,ESC,0x45,1]),enc(r.text));nl();out.push(new Uint8Array([GS,0x21,0,ESC,0x45,0]));continue}
+    if(r.k==='kl'){out.push(new Uint8Array([GS,0x21,0x01,ESC,0x45,1]),enc(r.text));nl();out.push(new Uint8Array([GS,0x21,B,ESC,0x45,0]));continue}
     if(r.k==='l'){out.push(new Uint8Array([ESC,0x45,r.b?1:0]),enc(r.text));nl();out.push(new Uint8Array([ESC,0x45,0]));continue}
-    if(r.k==='lr'||r.k==='big'){const R=ascii(r.r||'');const L=wrapC(r.l,cols-R.length-1);
-      if(r.k==='big'||r.b)out.push(new Uint8Array([ESC,0x45,1]));
-      L.forEach((ln,i)=>{out.push(enc(i===0?ln+' '.repeat(Math.max(1,cols-ln.length-R.length))+R:ln));nl()});
-      out.push(new Uint8Array([ESC,0x45,0]));continue}
+    if(r.k==='lr'||r.k==='big'){const big=r.k==='big',cw=big?cols/2:cols,R=ascii(r.r||'');const L=wrapC(r.l,Math.max(4,cw-R.length-1));
+      if(big)out.push(new Uint8Array([GS,0x21,0x11]));
+      if(big||r.b)out.push(new Uint8Array([ESC,0x45,1]));
+      L.forEach((ln,i)=>{out.push(enc(i===0?ln+' '.repeat(Math.max(1,cw-ln.length-R.length))+R:ln));nl()});
+      out.push(new Uint8Array([ESC,0x45,0,GS,0x21,B]));continue}
   }
   return concat([...out,...tail()]);
 }
