@@ -260,7 +260,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 73</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 74</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -440,7 +440,9 @@ const $main=document.getElementById('main');
 /* ============ yönetici kilidi ============ */
 const ADM={until:0};
 const ADMIN_MIN=15;
-const isAdmin=()=>Date.now()<ADM.until;
+/* yönetici telefonu: bu telefonda şifre sorulmaz (sadece bu cihazda saklanır) */
+const isTrusted=()=>!!(S.settings.trustedAdmin&&S.settings.adminPin);
+const isAdmin=()=>isTrusted()||Date.now()<ADM.until;
 function touchAdmin(){if(isAdmin())ADM.until=Date.now()+ADMIN_MIN*60000}
 async function pinHash(pin){const t='kanaat-pos:'+pin;
   try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
@@ -468,7 +470,7 @@ function requireAdmin(fn,forceNew){
   document.getElementById('pinOk').onclick=go;
   $layer.querySelectorAll('input').forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&isAdmin())lockAdmin()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&isAdmin()&&!isTrusted())lockAdmin()});
 setInterval(()=>{if(ADM.until&&!isAdmin()){lockAdmin();toast('Yönetici kilidi kapandı')}},20000);
 document.addEventListener('click',()=>touchAdmin(),true);
 
@@ -718,6 +720,8 @@ function vSettings(){
    <div class="card stack">
      <h3 style="margin:0">Yönetici</h3>
      <p class="muted" style="margin:0;font-size:13px">Rapor, Menü, masa boşaltma ve bu ayarlar yönetici şifresiyle açılır. Uygulamadan çıkınca ya da 15 dakika işlem yapılmayınca kendiliğinden kilitlenir.</p>
+     <label class="row" style="font-weight:600;align-items:flex-start"><input type="checkbox" id="trustAdm" ${s.trustedAdmin?'checked':''} style="margin-top:3px"> Bu benim telefonum: şifre sorma</label>
+     <p class="muted" style="margin:0;font-size:13px">Sadece yöneticinin kendi telefonunda açın; garson telefonlarında açmayın. Telefonunuzun ekran kilidi (Face ID / şifre) açık olsun. “Kilitle”ye basarsanız bu ayar kapanır.</p>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="changePin">Şifreyi değiştir</button><button class="btn pri" data-act="lock">Kilitle</button></div>
    </div>`:`
    <div class="card stack">
@@ -737,6 +741,7 @@ function vSettings(){
   bind('waiter',e=>{S.settings.waiter=e.value.trim();renderWaiterTag()});
   bind('revOn',e=>S.settings.reviewQr=e.checked);
   bind('revUrl',e=>S.settings.reviewUrl=e.value.trim());
+  const ta=document.getElementById('trustAdm');if(ta)ta.onchange=e=>{S.settings.trustedAdmin=e.target.checked;save();renderAdmChip();toast(e.target.checked?'Bu telefonda artık şifre sorulmayacak':'Bu telefon yine şifre soracak')};
   const fo=document.getElementById('fxOn');if(fo)fo.onchange=e=>{S.settings.fxOn=e.target.checked;save();render()};
   const fa=document.getElementById('fxAuto');if(fa)fa.onchange=async e=>{S.settings.fxAuto=e.target.checked;save();render();if(S.settings.fxAuto&&await fetchFx(true))render()};
   FX_CUR.forEach(([c])=>bind('fx_'+c,e=>{const n=parseNum(e.value);S.settings.fx=S.settings.fx||{};S.settings.fx[c]=n>0?n:0;S.settings.fx.at=Date.now()}));
@@ -1147,7 +1152,7 @@ function findLine(id){return S.tables[ui.table]?.lines.find(l=>l.id===id)}
 function pruneTable(k){const t=S.tables[k];if(!t)return;t.lines=t.lines.filter(l=>l.qty>0||l.sent>0);if(!t.lines.length)delete S.tables[k]}
 const A={
   tab(d){const go=()=>{ui.view=d.v;closeLayer();render();$main.scrollTop=0};if(['report','menu'].includes(d.v))requireAdmin(go);else go()},
-  lock(){lockAdmin();toast('Kilitlendi')},
+  lock(){const t=isTrusted();S.settings.trustedAdmin=false;save();lockAdmin();toast(t?'Kilitlendi · bu telefon artık şifre soracak':'Kilitlendi')},
   adminUnlock(){requireAdmin(()=>render())},
   changePin(){requireAdmin(()=>requireAdmin(()=>render(),true))},
   printerChip(){ui.view='settings';render()},
