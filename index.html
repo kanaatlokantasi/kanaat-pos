@@ -260,7 +260,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 71</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 72</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -310,7 +310,7 @@ function defaults(){return{
   menu:sampleMenu(), tables:{}, sales:[], seq:0,
   settings:{tableCount:8,extras:'',logo:true,logoData:'',halfPct:50,printer:'escpos',labelW:50,labelH:30,density:3,paper:80,mode:'image',cutter:false,kitchen:false,fxOn:true,fxAuto:true,keepDays:10,reviewQr:false,fontSize:'xl',reviewUrl:'https://g.page/r/CcuksLiev2hyEBM/review',fx:{EUR:0,USD:0,GBP:0,at:0},
     header:'KANAAT LOKANTASI',
-    footer:'Afiyet olsun!\nBİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
+    footer:'BİLGİ FİŞİDİR - MALİ DEĞERİ YOKTUR'}
 }}
 let S;
 function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}catch(e){}
@@ -378,7 +378,8 @@ function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){
   if(old.length){const cut=new Set(old.slice(0,Math.max(1,Math.ceil(old.length*.2))).map(x=>x.id));S.sales=S.sales.filter(x=>!cut.has(x.id));
     try{localStorage.setItem(LS,JSON.stringify(S));toast('Depolama doldu: en eski '+cut.size+' adisyon silindi');return}catch(e2){}}
   toast('Kaydedilemedi: tarayıcı depolaması dolu veya kapalı')}}
-load();if(!S.settings.fontXlV1){S.settings.fontSize='xl';S.settings.fontXlV1=true;save()}
+load();if(!S.settings.noAfiyetV1){S.settings.footer=String(S.settings.footer||'').split('\n').filter(x=>!/^\s*afiyet olsun!?\s*$/i.test(x)).join('\n');S.settings.noAfiyetV1=true;save()}
+if(!S.settings.fontXlV1){S.settings.fontSize='xl';S.settings.fontXlV1=true;save()}
 if(!S.settings.qrOffV1){S.settings.reviewQr=false;S.settings.qrOffV1=true;save()}
 if(!S.settings.keepV10){S.settings.keepDays=10;S.settings.keepV10=true;pruneSales();save()}else if(pruneSales())save();
 
@@ -783,7 +784,7 @@ function billDoc(tableName,lines,total,opts={}){
     ...(opts.payments&&opts.payments.length>1?[{k:'lr',l:T(`Kişi başı (${opts.payments.length} kişi)`,`Per person (${opts.payments.length} people)`),r:fmt(opts.payments[0].amount)},...opts.payments.map((p,i)=>({k:'lr',l:T(`${i+1}. kişi · ${p.pay}`,`Person ${i+1} · ${P(p.pay)}`),r:money(p.amount),small:true}))]:opts.pay?[{k:'lr',l:T('Ödeme','Payment'),r:P(opts.pay)}]:[]),
     ...(opts.tip>0?[]:tipNudge(total,!(opts.pay||(opts.payments&&opts.payments.length)),en)),
     {k:'c',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true},
-    {k:'gap'},...(en?[{k:'c',text:'Enjoy your meal!'},{k:'c',text:'INFORMATION SLIP - NOT A FISCAL RECEIPT'}]:footerRows()),
+    {k:'gap'},...(en?[{k:'c',text:'INFORMATION SLIP - NOT A FISCAL RECEIPT'}]:footerRows()),
     ...(S.settings.reviewQr&&S.settings.reviewUrl?[{k:'gap'},{k:'c',text:T('Bizi Google\'da değerlendirin','Rate us on Google'),b:true},{k:'qr',data:S.settings.reviewUrl}]:[])];
 }
 
