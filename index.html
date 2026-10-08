@@ -261,7 +261,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 80</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 81</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -581,8 +581,8 @@ function openCart(){
     </div>`:'<p class="muted">Hesap boş. Menüden ürüne dokunun.</p>'}
    </div>
    <div class="sf">
-     <div class="g2"><button class="btn ok" data-act="pay" ${tCount(t)?'':'disabled'} style="min-height:60px;font-size:18px">${tipOfT(t)>0?'Bahşişi değiştir':'Bahşiş ekle'}</button><button class="btn pri" data-act="closeBill" ${tCount(t)?'':'disabled'} style="min-height:60px;font-size:18px">Hesabı kapat</button></div>
-     <div class="g2"><button class="btn" data-act="bill" ${lines.length?'':'disabled'}>Fişi yazdır</button>${lines.length?`<button class="btn danger" data-act="clearTable">Masayı boşalt</button>`:'<span></span>'}</div>
+     <div class="g2"><button class="btn pri" data-act="bill" ${lines.length?'':'disabled'} style="min-height:60px;font-size:18px">Fişi yazdır</button><button class="btn ok" data-act="pay" ${tCount(t)?'':'disabled'} style="min-height:60px;font-size:18px">${tipOfT(t)>0?'Bahşişi değiştir':'Bahşiş ekle'}</button></div>
+     ${ed&&lines.length?`<button class="btn danger" data-act="clearTable">Masayı boşalt</button>`:''}
      ${S.settings.kitchen&&lines.length?`<button class="btn" data-act="kitchen">Mutfağa gönder</button>`:''}
    </div>`);
 }
@@ -1257,7 +1257,15 @@ const A={
     if(!items.length){toast('Mutfağa gidecek yeni ürün yok');return}
     await printDoc(kitchenDoc(tName(ui.table),items),'Mutfak fişi');
     items.forEach(x=>x.l.sent=x.l.qty);pruneTable(ui.table);save();if(document.querySelector('.sheet'))openCart();vOrder()},
-  async bill(){const t=S.tables[ui.table];if(!t)return;await printDoc(billDoc(tName(ui.table),t.lines.filter(l=>l.qty>0).map(l=>({...l,en:enLine(l)})),tTotal(t),{lang:ui.lang,tip:tipOfT(t),tipPct:tipPctT(t),splitN:t.split||1}),'Hesap fişi')},
+  async bill(){const t=S.tables[ui.table];if(!t)return;const k=ui.table;
+    await printDoc(billDoc(tName(k),t.lines.filter(l=>l.qty>0).map(l=>({...l,en:enLine(l)})),tTotal(t),{lang:ui.lang,tip:tipOfT(t),tipPct:tipPctT(t),splitN:t.split||1}),'Hesap fişi');
+    if(ui.table!==k||!S.tables[k])return;
+    const tp=tipOfT(t);
+    const html=`<h2>Ödeme alındı mı?</h2>
+     <p class="muted" style="margin:0">${esc(tName(k))} · ${fmt(tTotal(t)+tp)}${tp?` (bahşiş ${fmt(tp)} dahil)`:''}. Müşteri Ingenico'dan ödediyse masayı kapatın.</p>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="close" style="min-height:56px">Masa açık kalsın</button><button class="btn pri" data-act="finishCloseNoPrint" style="min-height:56px">Masayı kapat</button></div>`;
+    const m=document.querySelector('.modal');if(m)m.insertAdjacentHTML('beforeend','<hr style="width:100%;border:0;border-top:1px solid var(--line);margin:4px 0">'+html);else modal(html)},
+  async finishCloseNoPrint(){const t=S.tables[ui.table];if(!t)return;ui.tip=t.tip?{...t.tip}:{mode:'none'};closeLayer();await A.finishPay([{pay:'',amount:tTotal(t)+tipOfT(t)}],t.split||1)},
   pay(){const t=S.tables[ui.table];if(!t)return;ui.tip=t.tip?{...t.tip}:{mode:'none',custom:0};ui.split={n:t.split||1,paid:[]};
     const total=tTotal(t);
     const en=isEN();const cur=String(ui.tip.mode);
