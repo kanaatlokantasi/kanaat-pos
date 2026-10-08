@@ -260,7 +260,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 76</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 77</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1215,6 +1215,7 @@ function findLine(id){return S.tables[ui.table]?.lines.find(l=>l.id===id)}
 function pruneTable(k){const t=S.tables[k];if(!t)return;t.lines=t.lines.filter(l=>l.qty>0||l.sent>0);if(!t.lines.length)delete S.tables[k]}
 const A={
   tab(d){const go=()=>{ui.view=d.v;closeLayer();render();$main.scrollTop=0};if(['report','menu'].includes(d.v))requireAdmin(go);else go()},
+  waiterChange(){requireAdmin(()=>askWaiter(true))},
   tipDay(d){ui.tipDay=d.d;render();$main.scrollTop=0},
   lock(){const t=isTrusted();S.settings.trustedAdmin=false;save();lockAdmin();toast(t?'Kilitlendi · bu telefon artık şifre soracak':'Kilitlendi')},
   adminUnlock(){requireAdmin(()=>render())},
@@ -1394,7 +1395,23 @@ async function checkUpdate(){
 A.doUpdate=()=>{location.replace(location.pathname+'?v='+(NEW_VER||Date.now()))};
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
+/* ---- garson adı: telefonda yoksa ilk açılışta sor; değiştirmek yönetici şifresi ister ---- */
+function askWaiter(change){
+  modal(`<h2>${change?'Garson değiştir':'Hoş geldiniz'}</h2>
+    <p class="muted" style="margin:0">${change?'Bu telefonu kullanacak garsonun adını ve soyadını yazın.':'Bu telefonu kullanacak garsonun adını ve soyadını yazın. Hesap fişinde ve bahşiş listesinde bu ad görünür.'}</p>
+    <label class="f">Ad Soyad<input id="wname" value="${esc(change?S.settings.waiter||'':'')}" autocomplete="name" autocapitalize="words" placeholder="Örn. Ahmet Yılmaz"></label>
+    <p id="wErr" class="muted" style="margin:0;color:var(--danger);min-height:1.2em"></p>
+    <button class="btn pri block" id="wOk">Kaydet</button>
+    ${change?'<button class="btn" data-act="close">Vazgeç</button>':''}`);
+  const i=document.getElementById('wname');setTimeout(()=>i.focus(),80);
+  const go=()=>{const v=i.value.replace(/\s+/g,' ').trim();
+    if(v.split(' ').length<2||v.length<4){document.getElementById('wErr').textContent='Lütfen ad ve soyad yazın.';return}
+    S.settings.waiter=v.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');save();closeLayer();renderWaiterTag();render();toast('Garson: '+S.settings.waiter)};
+  document.getElementById('wOk').onclick=go;i.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+  if(!change){const sc=$layer.querySelector('[data-scrim]');if(sc)sc.removeAttribute('data-scrim')}
+}
 render();
+if(!(S.settings.waiter||'').trim())askWaiter(false);
 </script>
 </body>
 </html>
