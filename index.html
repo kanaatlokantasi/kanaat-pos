@@ -260,7 +260,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 74</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 75</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -451,16 +451,44 @@ function unlockAdmin(){ADM.until=Date.now()+ADMIN_MIN*60000;renderAdmChip()}
 function lockAdmin(){ADM.until=0;renderAdmChip();if(['report','menu'].includes(ui.view))ui.view='tables';closeLayer();render()}
 function renderWaiterTag(){const e=document.getElementById('wtag');if(e)e.textContent=S.settings.waiter?S.settings.waiter+' · ':''}
 function renderAdmChip(){renderWaiterTag();const c=document.getElementById('admChip');if(c)c.hidden=!isAdmin()}
+/* kurulum anahtarı: yeni telefonda yönetici şifresi belirlemek veya unutulan şifreyi sıfırlamak için.
+   Anahtarın kendisi kodda yok; sadece yavaş (PBKDF2) özeti var. */
+const SETUP_HASH='11af2a73c7e6dcf7dfb486ad913b94ebead9cc23d1a4215e8e44a626e72bed02';
+async function setupKeyOk(k){k=String(k).toUpperCase().replace(/[^A-Z0-9]/g,'');if(k.length!==10||!crypto.subtle)return false;
+  try{const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(k),'PBKDF2',false,['deriveBits']);
+    const b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode('kanaat-pos-kurulum-v1'),iterations:150000,hash:'SHA-256'},km,256);
+    return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')===SETUP_HASH}catch(e){return false}}
+function pinSetup(fn,reset){
+  modal(`<div class="row" style="justify-content:space-between"><h2>${reset?'Şifreyi sıfırla':'Şifre kurulumu'}</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
+    <p class="muted" style="margin:0">${reset?'Kurulum anahtarıyla yeni bir yönetici şifresi belirleyin.':'Bu telefonda yönetici şifresi yok. Kurulumu sadece yönetici yapabilir: kurulum anahtarını ve yeni şifreyi girin.'}</p>
+    <label class="f">Kurulum anahtarı<input id="skey" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX"></label>
+    <label class="f">Yeni şifre (4–8 rakam)<input id="pin1" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+    <label class="f">Yeni şifre (tekrar)<input id="pin2" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
+    <p id="pinErr" class="muted" style="margin:0;color:var(--danger);min-height:1.2em"></p>
+    <button class="btn pri block" id="pinOk">Kaydet</button>`);
+  const err=document.getElementById('pinErr'),btn=document.getElementById('pinOk');setTimeout(()=>document.getElementById('skey').focus(),50);
+  const go=async()=>{const v=document.getElementById('pin1').value.trim();
+    if(!/^\d{4,8}$/.test(v)){err.textContent='Şifre 4–8 rakamdan oluşmalı.';return}
+    if(v!==document.getElementById('pin2').value.trim()){err.textContent='İki şifre aynı değil.';return}
+    btn.disabled=true;err.textContent='Kontrol ediliyor…';
+    const ok=await setupKeyOk(document.getElementById('skey').value);btn.disabled=false;
+    if(!ok){err.textContent='Kurulum anahtarı yanlış.';return}
+    S.settings.adminPin=await pinHash(v);save();closeLayer();unlockAdmin();toast('Yönetici şifresi kaydedildi');fn()};
+  btn.onclick=go;$layer.querySelectorAll('input').forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
+}
 function requireAdmin(fn,forceNew){
   if(isAdmin()&&!forceNew){touchAdmin();fn();return}
-  const hasPin=!!S.settings.adminPin&&!forceNew;
-  modal(`<div class="row" style="justify-content:space-between"><h2>${hasPin?'Yönetici şifresi':'Yönetici şifresi belirleyin'}</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
-    <p class="muted" style="margin:0">${hasPin?'Bu bölüm sadece yönetici içindir.':'Rapor, Menü ve ayarları korumak için 4–8 haneli bir şifre belirleyin. Garsonlara söylemeyin.'}</p>
+  if(!S.settings.adminPin){pinSetup(fn,false);return}
+  const hasPin=!forceNew;
+  modal(`<div class="row" style="justify-content:space-between"><h2>${hasPin?'Yönetici şifresi':'Yeni yönetici şifresi'}</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
+    <p class="muted" style="margin:0">${hasPin?'Bu bölüm sadece yönetici içindir.':'Yeni şifreyi iki kez girin. Garsonlara söylemeyin.'}</p>
     <label class="f">Şifre<input id="pin1" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>
     ${hasPin?'':'<label class="f">Şifre (tekrar)<input id="pin2" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>'}
     <p id="pinErr" class="muted" style="margin:0;color:var(--danger);min-height:1.2em"></p>
-    <button class="btn pri block" id="pinOk">${hasPin?'Aç':'Şifreyi kaydet'}</button>`);
+    <button class="btn pri block" id="pinOk">${hasPin?'Aç':'Şifreyi kaydet'}</button>
+    ${hasPin?'<button class="linkbtn" id="pinForgot" style="align-self:center">Şifremi unuttum (kurulum anahtarıyla sıfırla)</button>':''}`);
   const p1=document.getElementById('pin1'),err=document.getElementById('pinErr');setTimeout(()=>p1.focus(),50);
+  const fg=document.getElementById('pinForgot');if(fg)fg.onclick=()=>pinSetup(fn,true);
   const go=async()=>{const v=p1.value.trim();
     if(!/^\d{4,8}$/.test(v)){err.textContent='Şifre 4–8 rakamdan oluşmalı.';return}
     if(!hasPin){if(v!==document.getElementById('pin2').value.trim()){err.textContent='İki şifre aynı değil.';return}
