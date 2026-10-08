@@ -109,6 +109,7 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .cats::-webkit-scrollbar{display:none}
 .cats button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 15px;font-weight:600;white-space:nowrap}
 .cats button.act{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.itemw.nopkg{opacity:.4}
 .igrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .item{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px;min-height:82px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;gap:6px;position:relative}
 .item .nm{font-weight:600;line-height:1.2}
@@ -260,7 +261,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 77</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 78</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -531,6 +532,10 @@ function vTables(){
       </button>`}).join('')}</div></div>`;
 }
 
+/* paket olarak verilmeyen ürünler */
+const NO_PKG=['Çay','Türk Kahvesi'];
+const noPkg=it=>!!it&&(it.noPkg||NO_PKG.includes(baseName(it.name)));
+function pkgBlocked(it){if(ui.pkg&&noPkg(it)){toast(baseName(it.name)+' pakete eklenemez');return true}return false}
 function curT(){return S.tables[ui.table]||(S.tables[ui.table]={lines:[],openedAt:Date.now()})}
 function vOrder(){
   const cats=S.menu.cats; if(ui.cat&&!cats.find(c=>c.id===ui.cat))ui.cat=null;
@@ -546,9 +551,9 @@ function vOrder(){
         return `<button class="ctile ${n?'hasq':''}" data-act="cat" data-id="${c.id}">${n?`<span class="q">${n}</span>`:''}<span class="cn">${esc(c.name)}</span><span class="cc">${S.menu.items.filter(i=>i.cat===c.id).length} ürün</span></button>`}).join('')}</div>`:`
     <div class="catnav"><button class="btn" data-act="cat" data-id="">◀ Kategoriler</button><h3>${esc((cats.find(c=>c.id===ui.cat)||{}).name||'')}</h3></div>
     <div class="cats">${cats.map(c=>`<button class="${c.id===ui.cat?'act':''}" data-act="cat" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>`}
-    ${!ui.cat?'':cats.length?`<div class="igrid">${items.map(i=>{const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');return `<div class="itemw ${corner?'hashalf':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
+    ${!ui.cat?'':cats.length?`<div class="igrid">${items.map(i=>{const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');const np=ui.pkg&&noPkg(i);return `<div class="itemw ${corner?'hashalf':''} ${np?'nopkg':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
       ${hasB?`<span class="q">${b}</span>`:''}
-      <span class="nm">${esc(i.name)}</span><span class="pr num">${fmt(i.price)}</span></button>
+      <span class="nm">${esc(i.name)}</span>${np?'<span class="pr" style="font-size:14px">Pakete eklenmez</span>':`<span class="pr num">${fmt(i.price)}</span>`}</button>
       ${corner==='unit'?`<button class="halfb" data-act="addUnit" data-id="${i.id}" aria-label="1 tek ${esc(baseName(i.name))}, ${fmt(i.unitPrice)}">TEK</button>`:''}
       ${corner==='half'?`<button class="halfb" data-act="addHalf" data-id="${i.id}" aria-label="Az porsiyon ${esc(i.name)}, ${fmt(itemHalf(i))}">AZ</button>`:''}</div>`}).join('')||'<p class="muted">Bu kategoride ürün yok.</p>'}</div>`
     :`<div class="note">Menü boş. Menü sekmesinden ürün ekleyin.</div>`}`;
@@ -1224,17 +1229,17 @@ const A={
   togglePkg(){ui.pkg=!ui.pkg;vOrder();toast(ui.pkg?'Paket modu açık':'Paket modu kapandı')},
   openTable(d){ui.pkg=false;ui.cat=null;ui.lang='tr';ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
   cat(d){ui.cat=d.id||null;render();$main.scrollTop=0},
-  add(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;const t=curT();
+  add(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;if(pkgBlocked(it))return;const t=curT();
     let l=t.lines.find(x=>x.itemId===it.id&&!x.half&&!x.unit&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===it.price);
     if(!l){l={id:uid(),itemId:it.id,name:it.name,price:it.price,qty:0,sent:0,note:'',pkg:!!ui.pkg};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
     l.qty++;save();vOrder();toast((ui.pkg?'PAKET +1 ':'+1 ')+it.name,{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
-  addUnit(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it||!it.unitPrice)return;const t=curT();const pr=it.unitPrice;
+  addUnit(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it||!it.unitPrice)return;if(pkgBlocked(it))return;const t=curT();const pr=it.unitPrice;
     let l=t.lines.find(x=>x.itemId===it.id&&x.unit&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===pr);
     if(!l){l={id:uid(),itemId:it.id,name:baseName(it.name)+' (tek)',price:pr,qty:0,sent:0,note:'',unit:true,pkg:!!ui.pkg};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
     l.qty++;save();vOrder();toast('+1 tek '+baseName(it.name)+' · '+fmt(pr),{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
-  addHalf(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;const t=curT();const pr=itemHalf(it);
+  addHalf(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;if(pkgBlocked(it))return;const t=curT();const pr=itemHalf(it);
     let l=t.lines.find(x=>x.itemId===it.id&&x.half&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===pr);
     if(!l){l={id:uid(),itemId:it.id,name:it.name+' (az)',price:pr,qty:0,sent:0,note:'',half:true,pkg:!!ui.pkg};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
