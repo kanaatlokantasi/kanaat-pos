@@ -260,7 +260,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 75</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 76</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -268,7 +268,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
   <nav class="tabs" id="tabs">
     <button data-act="tab" data-v="tables" class="act"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Masalar</button>
     <button data-act="tab" data-v="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Rapor</button>
-    <button data-act="tab" data-v="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>Menü</button>
+    <button data-act="tab" data-v="tips"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M14.8 9.2c-.5-.9-1.6-1.4-2.8-1.4-1.6 0-2.8.8-2.8 2s1.1 1.7 2.8 2.1 2.8 1 2.8 2.2-1.2 2-2.8 2c-1.3 0-2.4-.6-2.9-1.5M12 6.3v1.5M12 16.7v1.5"/></svg>Bahşiş</button>
     <button data-act="tab" data-v="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V3h12v6M6 17H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v7H7z"/></svg>Ayarlar</button>
   </nav>
   <div class="cartbar" id="cartbar" hidden></div>
@@ -505,12 +505,12 @@ document.addEventListener('click',()=>touchAdmin(),true);
 function applyZoom(){const k=S.settings.uiZoom||'n',z={n:1,l:1.15,xl:1.3}[k]||1;const r=document.documentElement;r.style.zoom=z===1?'':String(z);r.dataset.zoom=k}
 function render(){
   applyZoom();
-  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('act',b.dataset.v===ui.view||(ui.view==='order'&&b.dataset.v==='tables')));
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('act',b.dataset.v===ui.view||(ui.view==='order'&&b.dataset.v==='tables')||(ui.view==='menu'&&b.dataset.v==='settings')));
   const inOrder=ui.view==='order';
   document.getElementById('tabs').hidden=inOrder;
   document.getElementById('cartbar').hidden=!inOrder;
   if(['report','menu'].includes(ui.view)&&!isAdmin())ui.view='tables';
-  ({tables:vTables,order:vOrder,report:vReport,menu:vMenu,settings:vSettings})[ui.view]();
+  ({tables:vTables,order:vOrder,report:vReport,menu:vMenu,settings:vSettings,tips:vTips})[ui.view]();
   renderAdmChip();
   renderChip();
 }
@@ -622,7 +622,7 @@ function vReport(){
    <div class="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
      <button class="btn pri" data-act="printZ">Gün sonu yazdır</button><button class="btn" data-act="csv">Excel'e aktar (CSV)</button></div>
    <div class="card"><h3>Garsonlara göre</h3>${r.waiters.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Garson</th><th class="r">Adisyon</th><th class="r">Satış</th><th class="r">Bahşiş</th></tr>
-     ${r.waiters.map(([w,v])=>`<tr><td>${esc(w)}</td><td class="r">${v.n}</td><td class="r">${fmt(v.t)}</td><td class="r"><b>${fmt(v.tip)}</b>${v.tip?`<br><small class="muted">N ${money(v.tc)} · K ${money(v.tk)}</small>`:''}</td></tr>`).join('')}</table></div>
+     ${r.waiters.map(([w,v])=>`<tr><td>${esc(w)}</td><td class="r">${v.n}</td><td class="r">${fmt(v.t)}</td><td class="r"><b>${fmt(v.tip)}</b>${v.tip?`<br><small class="muted">N ${money(v.tc)} · K ${money(v.tk)}</small><br><small>Net (%${Math.round(tipShare()*100)}) <b>${money(netOf(v.tip))}</b></small>`:''}</td></tr>`).join('')}</table></div>
      <p class="muted" style="margin:8px 0 0;font-size:12px">N: nakit bahşiş, K: kartla bırakılan bahşiş.</p>`:'<p class="muted">Bu gün satış yok.</p>'}</div>
    <div class="card"><h3>Satılan ürünler · masada</h3>${r.items.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
      ${r.items.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Masada satış yok.</p>'}</div>
@@ -641,10 +641,38 @@ function vReport(){
 }
 
 /* ---- menü ---- */
+/* ---- bahşiş sekmesi: garsonun net bahşişi ---- */
+const tipShare=()=>Math.max(0,Math.min(100,Number(S.settings.tipShare??50)))/100;
+const netOf=t=>Math.round((t||0)*tipShare()*100)/100;
+function myTipSales(day){const w=(S.settings.waiter||'').trim();
+  return salesOf(day).filter(s=>!s.void&&(s.tip||0)>0&&(!w||(s.waiter||'').trim()===w)).sort((a,b)=>a.at-b.at)}
+function vTips(){
+  const day=ui.tipDay||dayKey(Date.now()),list=myTipSales(day),w=(S.settings.waiter||'').trim(),pct=Math.round(tipShare()*100);
+  const tot=list.reduce((a,s)=>a+s.tip,0),net=Math.round(list.reduce((a,s)=>a+netOf(s.tip),0)*100)/100;
+  const nc=Math.round(list.reduce((a,s)=>a+saleSplit(s,'Nakit').tip,0)*tipShare()*100)/100,nk=Math.round((net-nc)*100)/100;
+  const days=[...new Set(S.sales.filter(s=>!s.void&&(s.tip||0)>0).map(s=>dayKey(s.at)))].sort().reverse().slice(0,10);
+  $main.innerHTML=`<div class="stack">
+   <div class="row" style="justify-content:space-between"><h2>Bahşişlerim</h2>
+     <label class="f" style="flex-direction:row"><input type="date" id="tipDay" value="${day}" style="width:auto;padding:7px 10px"></label></div>
+   ${w?`<p class="muted" style="margin:0">Garson: <b>${esc(w)}</b> · bu telefondan alınan ödemeler</p>`:`<div class="note">Bu telefona garson adı girilmemiş; bu telefondan alınan tüm bahşişler gösteriliyor. Yönetici Ayarlar'dan garson adını girebilir.</div>`}
+   <div class="kpis">
+     <div class="kpi big"><span>Net bahşişim</span><b class="num">${fmt(net)}</b><span class="num" style="text-transform:none;letter-spacing:0">Toplam gönüllü bahşiş ${fmt(tot)} × %${pct}</span></div>
+     <div class="kpi"><span>Nakit (net)</span><b class="num">${fmt(nc)}</b></div>
+     <div class="kpi"><span>Kart (net)</span><b class="num">${fmt(nk)}</b></div>
+   </div>
+   <div class="card"><h3>Adisyonlar</h3>${list.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Saat</th><th>Masa</th><th class="r">Bahşiş</th><th class="r">Net</th></tr>
+     ${list.map(s=>`<tr><td class="num">${hm(s.at)}</td><td>${esc(s.table)}${s.tipPct?` <small class="muted">%${s.tipPct}</small>`:''}</td><td class="r num">${money(s.tip)}</td><td class="r num"><b>${money(netOf(s.tip))}</b></td></tr>`).join('')}
+     <tr><td colspan="2"><b>Toplam (${list.length} adisyon)</b></td><td class="r num"><b>${money(tot)}</b></td><td class="r num"><b>${money(net)}</b></td></tr></table></div>`:'<p class="muted">Bu gün bahşişli adisyon yok.</p>'}</div>
+   ${days.length>1?`<div class="card"><h3>Son günler</h3><div style="overflow-x:auto"><table class="t"><tr><th>Gün</th><th class="r">Bahşiş</th><th class="r">Net</th></tr>
+     ${days.map(d=>{const l=myTipSales(d),t=l.reduce((a,s)=>a+s.tip,0),n=l.reduce((a,s)=>a+netOf(s.tip),0);return `<tr><td><button class="linkbtn" data-act="tipDay" data-d="${d}">${d.split('-').reverse().join('.')}</button></td><td class="r num">${money(t)}</td><td class="r num"><b>${money(n)}</b></td></tr>`}).join('')}</table></div></div>`:''}
+   <p class="muted" style="margin:0;font-size:13px">Net bahşiş = gönüllü bahşiş × %${pct}. Kayıtlar ${S.settings.keepDays||10} gün saklanır.</p>
+  </div>`;
+  document.getElementById('tipDay').onchange=e=>{ui.tipDay=e.target.value||dayKey(Date.now());render()};
+}
 function vMenu(){
   const m=S.menu;
   $main.innerHTML=`<div class="stack">
-   <h2>Menü</h2>
+   <div class="row" style="justify-content:space-between"><h2>Menü</h2><button class="btn" data-act="tab" data-v="settings">← Ayarlar</button></div>
    ${m.sample?`<div class="note">Bu bir <b>örnek menü</b>. Aşağıdaki kutuya kendi menünüzü yapıştırıp “Menüyü değiştir”e basın.</div>`:''}
    <div class="card stack">
      <h3 style="margin:0">Az (yarım) porsiyon</h3>
@@ -720,6 +748,12 @@ function vSettings(){
      ${s.fxAuto?'<button class="btn" data-act="fxNow">Kurları şimdi güncelle</button>':''}`:''}
    </div>
    <div class="card stack">
+     <h3 style="margin:0">Menü ve bahşiş paylaşımı</h3>
+     <button class="btn" data-act="tab" data-v="menu">Menüyü düzenle</button>
+     <label class="f">Garsona kalan bahşiş oranı (%)<input id="tipShare" type="number" min="0" max="100" inputmode="numeric" value="${S.settings.tipShare??50}"></label>
+     <p class="muted" style="margin:0;font-size:13px">Bahşiş sekmesinde net bahşiş = gönüllü bahşiş × bu oran.</p>
+   </div>
+   <div class="card stack">
      <h3 style="margin:0">Bu telefonun garsonu</h3>
      <p class="muted" style="margin:0;font-size:13px">Bu telefondan alınan ödemeler bu ada yazılır. Raporda garsona göre satış ve bahşiş görünür. Garson değişirse buradan değiştirin.</p>
      <label class="f">Garson adı<input id="waiter" value="${esc(s.waiter||'')}" placeholder="Örn. Ahmet" autocomplete="off"></label>
@@ -769,6 +803,7 @@ function vSettings(){
   bind('waiter',e=>{S.settings.waiter=e.value.trim();renderWaiterTag()});
   bind('revOn',e=>S.settings.reviewQr=e.checked);
   bind('revUrl',e=>S.settings.reviewUrl=e.value.trim());
+  bind('tipShare',e=>{const n=Math.max(0,Math.min(100,parseFloat(e.value)));S.settings.tipShare=isFinite(n)?n:50;e.value=S.settings.tipShare});
   const ta=document.getElementById('trustAdm');if(ta)ta.onchange=e=>{S.settings.trustedAdmin=e.target.checked;save();renderAdmChip();toast(e.target.checked?'Bu telefonda artık şifre sorulmayacak':'Bu telefon yine şifre soracak')};
   const fo=document.getElementById('fxOn');if(fo)fo.onchange=e=>{S.settings.fxOn=e.target.checked;save();render()};
   const fa=document.getElementById('fxAuto');if(fa)fa.onchange=async e=>{S.settings.fxAuto=e.target.checked;save();render();if(S.settings.fxAuto&&await fetchFx(true))render()};
@@ -832,7 +867,7 @@ function zDoc(day){
     ...(r.voids?[{k:'lr',l:'İptal edilen',r:String(r.voids)}]:[]),{k:'hr'},{k:'lr',l:'Masada',r:fmt(r.total-r.pkgTotal)},{k:'lr',l:'Paket',r:fmt(r.pkgTotal)},{k:'big',l:'CİRO',r:fmt(r.total)},
     ...(()=>{const f=foreignStats(r.valid);return f.of?[{k:'lr',l:'Yabancı müşteri (EN hesap)',r:`${f.n}/${f.of} · ${pctTxt(f.pct)}`}]:[]})(),
     ...(r.tip?[{k:'hr'},{k:'lr',l:'Bahşiş (nakit)',r:fmt(r.tipCash)},{k:'lr',l:'Bahşiş (kart)',r:fmt(r.tipCard)},{k:'lr',l:'Toplam bahşiş',r:fmt(r.tip),b:true}]:[]),{k:'hr'},
-    ...(r.waiters.length?[{k:'c',text:'Garsonlara göre bahşiş',b:true},...r.waiters.map(([w,v])=>({k:'lr',l:`${w} (${v.n} adisyon)`,r:fmt(v.tip)})),{k:'hr'}]:[]),
+    ...(r.waiters.length?[{k:'c',text:'Garsonlara göre bahşiş',b:true},...r.waiters.flatMap(([w,v])=>[{k:'lr',l:`${w} (${v.n} adisyon)`,r:fmt(v.tip)},...(v.tip?[{k:'lr',l:`   Net (%${Math.round(tipShare()*100)})`,r:fmt(netOf(v.tip)),small:true}]:[])]),{k:'hr'}]:[]),
     {k:'c',text:'Satılan ürünler · masada',b:true},...r.items.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)})),
     ...(r.pitems.length?[{k:'gap'},{k:'c',text:'Satılan ürünler · paket',b:true},...r.pitems.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)}))]:[]),{k:'hr'},
     {k:'c',text:'BİLGİ AMAÇLIDIR'}];
@@ -1180,6 +1215,7 @@ function findLine(id){return S.tables[ui.table]?.lines.find(l=>l.id===id)}
 function pruneTable(k){const t=S.tables[k];if(!t)return;t.lines=t.lines.filter(l=>l.qty>0||l.sent>0);if(!t.lines.length)delete S.tables[k]}
 const A={
   tab(d){const go=()=>{ui.view=d.v;closeLayer();render();$main.scrollTop=0};if(['report','menu'].includes(d.v))requireAdmin(go);else go()},
+  tipDay(d){ui.tipDay=d.d;render();$main.scrollTop=0},
   lock(){const t=isTrusted();S.settings.trustedAdmin=false;save();lockAdmin();toast(t?'Kilitlendi · bu telefon artık şifre soracak':'Kilitlendi')},
   adminUnlock(){requireAdmin(()=>render())},
   changePin(){requireAdmin(()=>requireAdmin(()=>render(),true))},
