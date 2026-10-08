@@ -129,8 +129,7 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .tipbox .tipseg button.act{background:#0d3f27;color:#fff}
 .tipfav{position:absolute;top:3px;left:0;right:0;font:700 9px/1 var(--body);letter-spacing:0;text-transform:uppercase;color:#b45309;white-space:nowrap;overflow:hidden}
 .tipbox .tipseg button.act .tipfav{color:#fde68a}
-@keyframes tipglow{0%,100%{box-shadow:0 0 0 0 rgba(31,138,85,0)}50%{box-shadow:0 0 0 8px rgba(31,138,85,.35),0 0 26px rgba(31,138,85,.55)}}
-@media (prefers-reduced-motion:reduce){.tipbox{animation:none}}
+@keyframes tipglow{0%,100%{filter:none;box-shadow:0 0 0 0 rgba(31,138,85,0)}50%{filter:brightness(1.45) saturate(1.25);box-shadow:0 0 0 6px rgba(31,138,85,.35)}}
 .tipseg{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .tipseg button{border:0;border-left:1px solid var(--line);background:var(--surface);padding:12px 4px;font-weight:700;min-height:48px}
 .tipseg button:first-child{border-left:0}
@@ -261,7 +260,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 68</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 69</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
