@@ -86,6 +86,24 @@ h3{font:600 18px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04e
 
 /* order */
 .ohead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+/* büyük ekran yazısı: taşmaları önle */
+html:not([data-zoom="n"]) .brand b{font-size:17px}
+html:not([data-zoom="n"]) .ohead h2{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+html:not([data-zoom="n"]) .ohead .btn{padding-inline:9px;font-size:15px}
+html:not([data-zoom="n"]) .ohead{gap:6px}
+html:not([data-zoom="n"]) .billv .bhead{flex-wrap:wrap;gap:8px}
+html:not([data-zoom="n"]) .billv .bhead>.muted{flex-basis:100%}
+html:not([data-zoom="n"]) .igrid{grid-template-columns:1fr}
+html:not([data-zoom="n"]) .tiptitle{font-size:24px}
+html:not([data-zoom="n"]) .tipbox .tipseg{grid-template-columns:repeat(3,1fr)}
+html:not([data-zoom="n"]) .tipbox .tipseg button:nth-child(4){border-left:0}
+html:not([data-zoom="n"]) .tipbox .tipseg button:nth-child(n+4){border-top:1px solid rgba(21,107,65,.25)}
+html:not([data-zoom="n"]) .paysum .grand{font-size:24px;white-space:nowrap}
+html:not([data-zoom="n"]) .tipbox .tipseg button:nth-child(5){grid-column:span 2}
+html:not([data-zoom="n"]) .splitrow{flex-wrap:wrap}
+html:not([data-zoom="n"]) .stepper{gap:6px}
+html:not([data-zoom="n"]) .ctile .cn{font-size:17px;overflow-wrap:anywhere;hyphens:auto}
+html:not([data-zoom="n"]) .item{min-height:70px}
 .back{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:44px;height:44px;display:grid;place-items:center}
 .cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin:0 -16px 6px;padding-inline:16px;scrollbar-width:none}
 .cats::-webkit-scrollbar{display:none}
@@ -243,7 +261,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 67</small></div>
+    <div class="brand"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 68</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -454,7 +472,9 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&isAdmin())
 setInterval(()=>{if(ADM.until&&!isAdmin()){lockAdmin();toast('Yönetici kilidi kapandı')}},20000);
 document.addEventListener('click',()=>touchAdmin(),true);
 
+function applyZoom(){const k=S.settings.uiZoom||'n',z={n:1,l:1.15,xl:1.3}[k]||1;const r=document.documentElement;r.style.zoom=z===1?'':String(z);r.dataset.zoom=k}
 function render(){
+  applyZoom();
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('act',b.dataset.v===ui.view||(ui.view==='order'&&b.dataset.v==='tables')));
   const inOrder=ui.view==='order';
   document.getElementById('tabs').hidden=inOrder;
@@ -620,7 +640,12 @@ function vMenu(){
 function vSettings(){
   const s=S.settings;const hasBT=!!navigator.bluetooth;
   $main.innerHTML=`<div class="stack">
-   <h2>Yazıcı ve ayarlar</h2>
+   <h2>Ayarlar</h2>
+   <div class="card stack">
+     <h3 style="margin:0">Ekran yazı boyutu</h3>
+     <div class="seg">${[['n','Normal'],['l','Büyük'],['xl','Çok büyük']].map(([v,t])=>`<button class="${(s.uiZoom||'n')===v?'act':''}" data-act="set" data-k="uiZoom" data-val="${v}">${t}</button>`).join('')}</div>
+     <p class="muted" style="margin:0;font-size:13px">Sadece bu telefonda geçerlidir. Gözlük kullanan garsonların telefonunda “Büyük” veya “Çok büyük” seçin.</p>
+   </div>
    ${(()=>{try{return window.top!==window}catch(e){return true}})()?`<div class="note warn"><b>Bu sayfa başka bir sayfanın içinde açılmış.</b> Bu şekilde Bluetooth yazıcı seçimi tamamlanmaz. Uygulamayı kendi linkinden (Netlify) Bluefy ile açın. Adisyon, ödeme ve rapor burada da çalışır.</div>`:''}
    ${hasBT?'':`<div class="note warn"><b>Bu tarayıcı Bluetooth yazıcıya bağlanamıyor.</b> iPhone'da Safari ve Chrome Bluetooth'a izin vermez. Bu sayfayı App Store'daki ücretsiz <b>Bluefy – Web BLE Browser</b> uygulamasıyla açın. O zamana kadar fişler ekranda görüntü olarak açılır.</div>`}
    <div class="card stack">
