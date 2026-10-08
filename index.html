@@ -269,7 +269,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 83</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 84</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -855,6 +855,7 @@ function headerRows(){const h=S.settings.header.split('\n').filter(x=>x.trim());
 function footerRows(){return S.settings.footer.split('\n').filter(x=>x.trim()).map(x=>({k:'c',text:x}))}
 /* bahşiş eklenmediyse fişte hatırlatma kutusu */
 function tipNudge(total,unpaid,en){const T=(a,b)=>en?b:a;
+  if(!en)return []; /* Türkçe fişte bahşiş notu yok; sadece İngilizce fişte */
   const rows=[{k:'bs'},{k:'inv',text:T('GÖNÜLLÜ BAHŞİŞ','VOLUNTARY TIP')}];
   if(unpaid){rows.push({k:'c',text:T('Hesaba dahil değildir.','Not included in the bill.'),b:true});
 }
