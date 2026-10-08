@@ -157,6 +157,14 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .pkgbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--warn);color:#fff;border-radius:10px;padding:10px 12px;margin:-2px 0 10px}
 .pkgbar span{flex:1;font-size:13px;opacity:.95;min-width:0}
 .pkgbar .linkbtn{color:#fff;text-decoration:underline}
+.btn.ikon{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.pkgbar.ikbar{background:#7c3aed}
+.billv .bsec.iksec{background:#7c3aed}
+.ohead h2{font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ohead .btn{padding:10px 9px;font-size:15px}
+.bl .ikt{font-weight:800;color:#7c3aed;letter-spacing:.04em}
+.lnik{border:1.5px solid #7c3aed;color:#7c3aed;background:#fff;border-radius:8px;padding:0 10px;height:44px;font-weight:700;font-size:14px;flex:none}
+.lnik.on{background:#7c3aed;color:#fff}
 .billv .bsec{margin-top:10px;padding:4px 8px;background:#111;color:#fff;font-weight:700;letter-spacing:.08em;font-size:13px;border-radius:4px;display:inline-block}
 #updBar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 74px);z-index:45;border:0;border-radius:12px;padding:14px;background:var(--accent);color:var(--accent-ink);font-size:16px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -261,7 +269,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 81</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 82</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -533,6 +541,9 @@ function vTables(){
 const NO_PKG=['Çay','Türk Kahvesi'];
 const noPkg=it=>!!it&&(it.noPkg||NO_PKG.includes(baseName(it.name)));
 function pkgBlocked(it){if(ui.pkg&&noPkg(it)){toast(baseName(it.name)+' pakete eklenemez');return true}return false}
+/* hesap satırlarını bölümlere ayır: normal, paket, ikram */
+function billSections(lines,lbl){const n=lines.filter(l=>!l.pkg&&!l.ikram),p=lines.filter(l=>l.pkg&&!l.ikram),k=lines.filter(l=>l.ikram);
+  return [...n,...(p.length?[{sec:lbl.pkg,kind:'pkg'}]:[]),...p,...(k.length?[{sec:lbl.ik,kind:'ik'}]:[]),...k]}
 function curT(){return S.tables[ui.table]||(S.tables[ui.table]={lines:[],openedAt:Date.now()})}
 function vOrder(){
   const cats=S.menu.cats; if(ui.cat&&!cats.find(c=>c.id===ui.cat))ui.cat=null;
@@ -542,8 +553,9 @@ function vOrder(){
   $main.innerHTML=`
     <div class="ohead"><button class="back" data-act="tab" data-v="tables" aria-label="Masalara dön"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
       <h2 style="flex:1">${esc(tName(ui.table))}</h2>
-      <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button><button class="btn" data-act="moveTable">Taşı</button></div>
+      <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button><button class="btn ${ui.ikram?'ikon':''}" data-act="toggleIkram" aria-pressed="${ui.ikram?'true':'false'}">İkram</button><button class="btn" data-act="moveTable">Taşı</button></div>
     ${ui.pkg?`<div class="pkgbar"><b>PAKET ekleniyor</b><span>Dokunduğunuz ürünler paket olarak yazılır.</span><button class="linkbtn" data-act="togglePkg">Bitir</button></div>`:''}
+    ${ui.ikram?`<div class="pkgbar ikbar"><b>İKRAM ekleniyor</b><span>Dokunduğunuz ürünler 0 ₺ ikram olarak yazılır.</span><button class="linkbtn" data-act="toggleIkram">Bitir</button></div>`:''}
     ${!ui.cat?`<div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
         return `<button class="ctile ${n?'hasq':''}" data-act="cat" data-id="${c.id}">${n?`<span class="q">${n}</span>`:''}<span class="cn">${esc(c.name)}</span><span class="cc">${S.menu.items.filter(i=>i.cat===c.id).length} ürün</span></button>`}).join('')}</div>`:`
     <div class="catnav"><button class="btn" data-act="cat" data-id="">◀ Kategoriler</button><h3>${esc((cats.find(c=>c.id===ui.cat)||{}).name||'')}</h3></div>
@@ -568,9 +580,9 @@ function openCart(){
    <div class="sb">
     ${lines.length?`<div class="billv">
       <div class="bhead"><span class="muted">${dmy(Date.now())} · ${hm(Date.now())}</span><span class="langsw" role="group" aria-label="Dil"><button data-act="lang" data-l="tr" class="${isEN()?'':'act'}">TR</button><button data-act="lang" data-l="en" class="${isEN()?'act':''}">EN</button></span><button class="linkbtn" data-act="toggleEdit">${ed?'Bitti':'Düzelt'}</button></div>
-      ${[...lines.filter(l=>!l.pkg),...(lines.some(l=>l.pkg)?[{sec:L('PAKET','TAKE AWAY')}]:[]),...lines.filter(l=>l.pkg)].map(l=>l.sec?`<div class="bsec">${l.sec}</div>`:`<div class="bl ${ed?'ed':''}">
+      ${billSections(lines,{pkg:L('PAKET','TAKE AWAY'),ik:L('İKRAM','COMPLIMENTARY')}).map(l=>l.sec?`<div class="bsec ${l.kind==='ik'?'iksec':''}">${l.sec}</div>`:`<div class="bl ${ed?'ed':''}">
         <div class="bn"><b class="num">${l.qty} x</b> ${esc(isEN()?enLine(l):l.name)}${l.qty>1?`<small class="num">${l.qty} x ${money(l.price)}</small>`:''}</div>
-        ${ed?`<div class="qty"><button data-act="dec" data-id="${l.id}" aria-label="Bir azalt">−</button><span class="num">${l.qty}</span><button data-act="inc" data-id="${l.id}" aria-label="Bir artır">+</button></div>`:`<div class="ba num">${money(l.qty*l.price)}</div>`}
+        ${ed?`<div style="display:flex;align-items:center;gap:6px;flex:none"><button class="lnik ${l.ikram?'on':''}" data-act="lineIkram" data-id="${l.id}" aria-pressed="${l.ikram?'true':'false'}">İkram</button><div class="qty"><button data-act="dec" data-id="${l.id}" aria-label="Bir azalt">−</button><span class="num">${l.qty}</span><button data-act="inc" data-id="${l.id}" aria-label="Bir artır">+</button></div></div>`:`${l.ikram?`<div class="ba ikt">${L('İKRAM','FREE')}</div>`:`<div class="ba num">${money(l.qty*l.price)}</div>`}`}
       </div>`).join('')}
       ${tipOfT(t)>0?`<div class="bl"><div class="bn">${L('Ara toplam','Subtotal')}</div><div class="ba num">${money(tTotal(t))}</div></div>
       <div class="bl"><div class="bn">${L('Gönüllü bahşiş','Voluntary tip')}${tipPctT(t)?(isEN()?` (${tipPctT(t)}%)`:` (%${tipPctT(t)})`):''}</div><div class="ba num">${money(tipOfT(t))}</div></div>`:''}
@@ -601,12 +613,13 @@ function summary(day){
   const list=salesOf(day),valid=list.filter(s=>!s.void);
   const sum=(f)=>valid.filter(f).reduce((a,s)=>a+s.total,0);
   const items={},pitems={};let pkgTotal=0,pkgSales=0;
-  valid.forEach(s=>{let hasP=false;s.lines.forEach(l=>{const m=l.pkg?pitems:items,k=l.name;m[k]=m[k]||{q:0,t:0};m[k].q+=l.qty;m[k].t+=l.qty*l.price;if(l.pkg){pkgTotal+=l.qty*l.price;hasP=true}});if(hasP)pkgSales++});
+  const iks={};let ikTotal=0;
+  valid.forEach(s=>{let hasP=false;s.lines.forEach(l=>{if(l.ikram){const v=l.qty*(l.op||0);iks[l.name]=iks[l.name]||{q:0,t:0};iks[l.name].q+=l.qty;iks[l.name].t+=v;ikTotal+=v;return}const m=l.pkg?pitems:items,k=l.name;m[k]=m[k]||{q:0,t:0};m[k].q+=l.qty;m[k].t+=l.qty*l.price;if(l.pkg){pkgTotal+=l.qty*l.price;hasP=true}});if(hasP)pkgSales++});
   const tsum=f=>valid.filter(f).reduce((a,s)=>a+(s.tip||0),0);
   const ms=(m,k)=>Math.round(valid.reduce((a,s)=>a+saleSplit(s,m)[k],0)*100)/100;
   return{list,valid,total:sum(()=>1),cash:ms('Nakit','food'),card:ms('Kart','food'),tip:tsum(()=>1),tipCash:ms('Nakit','tip'),tipCard:ms('Kart','tip'),
-    items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),pitems:Object.entries(pitems).sort((a,b)=>b[1].t-a[1].t),pkgTotal,pkgSales,voids:list.length-valid.length,
-    waiters:Object.entries(valid.reduce((m,s)=>{const w=s.waiter||'(adsız)';m[w]=m[w]||{n:0,t:0,tip:0,tc:0,tk:0};m[w].n++;m[w].t+=s.total;m[w].tip+=s.tip||0;m[w].tc+=saleSplit(s,'Nakit').tip;m[w].tk+=saleSplit(s,'Kart').tip;return m},{})).sort((a,b)=>b[1].tip-a[1].tip)}
+    items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),pitems:Object.entries(pitems).sort((a,b)=>b[1].t-a[1].t),pkgTotal,pkgSales,iks:Object.entries(iks).sort((a,b)=>b[1].t-a[1].t),ikTotal,voids:list.length-valid.length,
+    waiters:Object.entries(valid.reduce((m,s)=>{const w=s.waiter||'(adsız)';m[w]=m[w]||{n:0,t:0,tip:0,tc:0,tk:0,ik:0};m[w].n++;m[w].ik+=s.lines.reduce((a,l)=>a+(l.ikram?l.qty*(l.op||0):0),0);m[w].t+=s.total;m[w].tip+=s.tip||0;m[w].tc+=saleSplit(s,'Nakit').tip;m[w].tk+=saleSplit(s,'Kart').tip;return m},{})).sort((a,b)=>b[1].tip-a[1].tip)}
 }
 function vReport(){
   const r=summary(ui.reportDay);
@@ -619,16 +632,19 @@ function vReport(){
      <div class="kpi"><span>Ortalama</span><b class="num">${fmt(r.valid.length?r.total/r.valid.length:0)}</b></div>
      <div class="kpi"><span>Masada</span><b class="num">${fmt(r.total-r.pkgTotal)}</b></div>
      <div class="kpi"><span>Paket</span><b class="num">${fmt(r.pkgTotal)}</b><span class="num" style="text-transform:none;letter-spacing:0">${r.pkgSales} adisyonda</span></div>
+     <div class="kpi"><span>İkram</span><b class="num">${fmt(r.ikTotal)}</b><span class="num" style="text-transform:none;letter-spacing:0">${r.iks.reduce((a,[,v])=>a+v.q,0)} ürün · ciroya dahil değil</span></div>
      <div class="kpi" style="grid-column:1/-1"><span>Gönüllü bahşiş (ciroya dahil değil)</span><b class="num">${fmt(r.tip)}</b><span class="num" style="text-transform:none;letter-spacing:0">Garsonlara ödenecek net (%${Math.round(tipShare()*100)}): ${fmt(netOf(r.tip))}</span></div>
      ${(()=>{const f=foreignStats(r.valid),fp=foreignPeriod(ui.reportDay);return `<div class="kpi" style="grid-column:1/-1"><span>Yabancı müşteri (İngilizce hesap)</span><b class="num">${f.n} / ${f.of} hesap · ${pctTxt(f.pct)}</b><span class="num" style="text-transform:none;letter-spacing:0">Ciro payı ${pctTxt(f.ciroPct)} (${fmt(f.ciro)}) · Son ${fp.days} gün: ${fp.n}/${fp.of} hesap, ${pctTxt(fp.pct)}</span></div>`})()}
    </div>
    <div class="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
      <button class="btn pri" data-act="printZ">Gün sonu yazdır</button><button class="btn" data-act="csv">Excel'e aktar (CSV)</button></div>
    <div class="card"><h3>Garsonlara göre</h3>${r.waiters.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Garson</th><th class="r">Adisyon</th><th class="r">Satış</th><th class="r">Bahşiş</th></tr>
-     ${r.waiters.map(([w,v])=>`<tr><td>${esc(w)}</td><td class="r">${v.n}</td><td class="r">${fmt(v.t)}</td><td class="r"><b>${fmt(v.tip)}</b>${v.tip?`<br><small>Net (%${Math.round(tipShare()*100)}) <b>${money(netOf(v.tip))}</b></small>`:''}</td></tr>`).join('')}</table></div>
+     ${r.waiters.map(([w,v])=>`<tr><td>${esc(w)}${v.ik?`<br><small style="color:#7c3aed">İkram ${money(v.ik)}</small>`:''}</td><td class="r">${v.n}</td><td class="r">${fmt(v.t)}</td><td class="r"><b>${fmt(v.tip)}</b>${v.tip?`<br><small>Net (%${Math.round(tipShare()*100)}) <b>${money(netOf(v.tip))}</b></small>`:''}</td></tr>`).join('')}</table></div>
 `:'<p class="muted">Bu gün satış yok.</p>'}</div>
    <div class="card"><h3>Satılan ürünler · masada</h3>${r.items.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
      ${r.items.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Masada satış yok.</p>'}</div>
+   ${r.iks.length?`<div class="card"><h3>İkram edilenler</h3><div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Menü değeri</th></tr>
+     ${r.iks.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div></div>`:''}
    <div class="card"><h3>Satılan ürünler · paket</h3>${r.pitems.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
      ${r.pitems.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Paket satış yok.</p>'}</div>
    <div class="card"><h3>Adisyonlar</h3>${r.list.length?`<input id="saleQ" type="search" inputmode="search" autocomplete="off" placeholder="Ara: saat (14:30), tutar (1750), masa, ürün…" style="margin-bottom:6px">
@@ -847,7 +863,7 @@ function billDoc(tableName,lines,total,opts={}){
   const w=opts.waiter??S.settings.waiter;
   return [...headerRows(),{k:'gap'},
     {k:'lr',l:dmy(at),r:hm(at)},{k:'lr',l:en?enTable(tableName):tableName,r:opts.no?('No: '+opts.no):'',b:true},...(w?[{k:'l',text:T('Garson: ','Server: ')+w,small:true}]:[]),{k:'hr'},
-    ...[...lines.filter(l=>!l.pkg),...(lines.some(l=>l.pkg)?[{sec:1}]:[]),...lines.filter(l=>l.pkg)].flatMap(l=>l.sec?[{k:'gap'},{k:'l',text:T('— PAKET —','— TAKE AWAY —'),b:true}]:[{k:'lr',l:`${l.qty} x ${en?(l.en||enLine(l)):l.name}`,r:money(l.qty*l.price)},...(l.qty>1?[{k:'l',text:`   ${l.qty} x ${money(l.price)}`,small:true}]:[])]),
+    ...billSections(lines,{pkg:T('— PAKET —','— TAKE AWAY —'),ik:T('— İKRAM —','— COMPLIMENTARY —')}).flatMap(l=>l.sec?[{k:'gap'},{k:'l',text:l.sec,b:true}]:[{k:'lr',l:`${l.qty} x ${en?(l.en||enLine(l)):l.name}`,r:l.ikram?T('İKRAM','FREE'):money(l.qty*l.price),b:!!l.ikram},...(l.qty>1&&!l.ikram?[{k:'l',text:`   ${l.qty} x ${money(l.price)}`,small:true}]:[])]),
     {k:'hr'},...(opts.tip>0?[{k:'lr',l:T('Ara toplam','Subtotal'),r:fmt(total)},{k:'lr',l:T('Gönüllü bahşiş','Voluntary tip')+(opts.tipPct?(en?` (${opts.tipPct}%)`:` (%${opts.tipPct})`):''),r:fmt(opts.tip)},{k:'big',l:T('TOPLAM','TOTAL'),r:fmt(total+opts.tip)}]:[{k:'big',l:T('TOPLAM','TOTAL'),r:fmt(total)}]),
     ...(en&&fxReady()?[{k:'l',text:'Approx. in other currencies:',small:true},...fxList(total+(opts.tip>0?opts.tip:0)).map(x=>({k:'lr',l:`${x.n} (${x.sym})`,r:`${x.v} ${x.c}`,small:true})),{k:'l',text:S.settings.fx.src==='TCMB'?`Central Bank of Türkiye rates, ${S.settings.fx.date}. Payment in TL.`:`Rates of ${dmy(S.settings.fx.at||at)}. Payment in TL.`,small:true}]:[]),
     ...(opts.payments&&opts.payments.length>1?[{k:'lr',l:T(`Kişi başı (${opts.payments.length} kişi)`,`Per person (${opts.payments.length} people)`),r:fmt(opts.payments[0].amount)},...opts.payments.map((p,i)=>({k:'lr',l:T(`${i+1}. kişi · ${p.pay}`,`Person ${i+1} · ${P(p.pay)}`),r:money(p.amount),small:true}))]:opts.pay?[{k:'lr',l:T('Ödeme','Payment'),r:P(opts.pay)}]:[]),
@@ -871,7 +887,8 @@ function zDoc(day){
     ...(r.tip?[{k:'hr'},{k:'lr',l:'Toplam bahşiş',r:fmt(r.tip),b:true},{k:'lr',l:`Garsonlara net (%${Math.round(tipShare()*100)})`,r:fmt(netOf(r.tip))}]:[]),{k:'hr'},
     ...(r.waiters.length?[{k:'c',text:'Garsonlara göre bahşiş',b:true},...r.waiters.flatMap(([w,v])=>[{k:'lr',l:`${w} (${v.n} adisyon)`,r:fmt(v.tip)},...(v.tip?[{k:'lr',l:`   Net (%${Math.round(tipShare()*100)})`,r:fmt(netOf(v.tip)),small:true}]:[])]),{k:'hr'}]:[]),
     {k:'c',text:'Satılan ürünler · masada',b:true},...r.items.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)})),
-    ...(r.pitems.length?[{k:'gap'},{k:'c',text:'Satılan ürünler · paket',b:true},...r.pitems.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)}))]:[]),{k:'hr'},
+    ...(r.pitems.length?[{k:'gap'},{k:'c',text:'Satılan ürünler · paket',b:true},...r.pitems.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)}))]:[]),
+    ...(r.iks.length?[{k:'gap'},{k:'c',text:'İkram edilenler (menü değeri)',b:true},...r.iks.map(([n,v])=>({k:'lr',l:`${v.q} x ${n}`,r:money(v.t)})),{k:'lr',l:'Toplam ikram',r:fmt(r.ikTotal),b:true}]:[]),{k:'hr'},
     {k:'c',text:'BİLGİ AMAÇLIDIR'}];
 }
 
@@ -1223,24 +1240,32 @@ const A={
   adminUnlock(){requireAdmin(()=>render())},
   changePin(){requireAdmin(()=>requireAdmin(()=>render(),true))},
   printerChip(){ui.view='settings';render()},
-  togglePkg(){ui.pkg=!ui.pkg;vOrder();toast(ui.pkg?'Paket modu açık':'Paket modu kapandı')},
-  openTable(d){ui.pkg=false;ui.cat=null;ui.lang='tr';ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
+  togglePkg(){ui.pkg=!ui.pkg;if(ui.pkg)ui.ikram=false;vOrder();toast(ui.pkg?'Paket modu açık':'Paket modu kapandı')},
+  toggleIkram(){ui.ikram=!ui.ikram;if(ui.ikram)ui.pkg=false;vOrder();toast(ui.ikram?'İkram modu açık':'İkram modu kapandı')},
+  lineIkram(d){const l=findLine(d.id);if(!l)return;
+    if(l.ikram){const it=S.menu.items.find(i=>i.id===l.itemId);l.price=l.op!=null?l.op:(it?(l.half?itemHalf(it):l.unit?it.unitPrice:it.price):0);delete l.ikram;delete l.op}
+    else{l.op=l.price;l.price=0;l.ikram=true}
+    save();openCart();vOrder()},
+  openTable(d){ui.pkg=false;ui.ikram=false;ui.cat=null;ui.lang='tr';ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
   cat(d){ui.cat=d.id||null;render();$main.scrollTop=0},
   add(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;if(pkgBlocked(it))return;const t=curT();
-    let l=t.lines.find(x=>x.itemId===it.id&&!x.half&&!x.unit&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===it.price);
-    if(!l){l={id:uid(),itemId:it.id,name:it.name,price:it.price,qty:0,sent:0,note:'',pkg:!!ui.pkg};t.lines.push(l)}
+    const ik=!!ui.ikram,pr0=ik?0:it.price;
+    let l=t.lines.find(x=>x.itemId===it.id&&!x.half&&!x.unit&&!!x.pkg===!!ui.pkg&&!!x.ikram===ik&&!x.note&&x.price===pr0);
+    if(!l){l={id:uid(),itemId:it.id,name:it.name,price:pr0,qty:0,sent:0,note:'',pkg:!!ui.pkg,...(ik?{ikram:true,op:it.price}:{})};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
-    l.qty++;save();vOrder();toast((ui.pkg?'PAKET +1 ':'+1 ')+it.name,{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
+    l.qty++;save();vOrder();toast((ui.ikram?'İKRAM +1 ':ui.pkg?'PAKET +1 ':'+1 ')+it.name,{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
   addUnit(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it||!it.unitPrice)return;if(pkgBlocked(it))return;const t=curT();const pr=it.unitPrice;
-    let l=t.lines.find(x=>x.itemId===it.id&&x.unit&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===pr);
-    if(!l){l={id:uid(),itemId:it.id,name:baseName(it.name)+' (tek)',price:pr,qty:0,sent:0,note:'',unit:true,pkg:!!ui.pkg};t.lines.push(l)}
+    const ik=!!ui.ikram,pp=ik?0:pr;
+    let l=t.lines.find(x=>x.itemId===it.id&&x.unit&&!!x.pkg===!!ui.pkg&&!!x.ikram===ik&&!x.note&&x.price===pp);
+    if(!l){l={id:uid(),itemId:it.id,name:baseName(it.name)+' (tek)',price:pp,qty:0,sent:0,note:'',unit:true,pkg:!!ui.pkg,...(ik?{ikram:true,op:pr}:{})};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
-    l.qty++;save();vOrder();toast('+1 tek '+baseName(it.name)+' · '+fmt(pr),{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
+    l.qty++;save();vOrder();toast((ui.ikram?'İKRAM ':'')+'+1 tek '+baseName(it.name)+(ui.ikram?'':' · '+fmt(pr)),{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
   addHalf(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;if(pkgBlocked(it))return;const t=curT();const pr=itemHalf(it);
-    let l=t.lines.find(x=>x.itemId===it.id&&x.half&&!!x.pkg===!!ui.pkg&&!x.note&&x.price===pr);
-    if(!l){l={id:uid(),itemId:it.id,name:it.name+' (az)',price:pr,qty:0,sent:0,note:'',half:true,pkg:!!ui.pkg};t.lines.push(l)}
+    const ik=!!ui.ikram,pp=ik?0:pr;
+    let l=t.lines.find(x=>x.itemId===it.id&&x.half&&!!x.pkg===!!ui.pkg&&!!x.ikram===ik&&!x.note&&x.price===pp);
+    if(!l){l={id:uid(),itemId:it.id,name:it.name+' (az)',price:pp,qty:0,sent:0,note:'',half:true,pkg:!!ui.pkg,...(ik?{ikram:true,op:pr}:{})};t.lines.push(l)}
     if(!tCount(t))t.openedAt=Date.now();
-    l.qty++;save();vOrder();toast('+1 az '+it.name+' · '+fmt(pr),{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
+    l.qty++;save();vOrder();toast((ui.ikram?'İKRAM ':'')+'+1 az '+it.name+(ui.ikram?'':' · '+fmt(pr)),{k:ui.table,id:l.id});if(navigator.vibrate)navigator.vibrate(10)},
   undoAdd(){const u=ui.undo;if(!u)return;const t=S.tables[u.k];const l=t&&t.lines.find(x=>x.id===u.id);
     if(!l||l.qty<=l.sent||l.qty<1){toast('Geri alınacak bir şey yok');return}
     l.qty--;const nm=l.name;pruneTable(u.k);save();if(ui.view==='order'&&ui.table===u.k)vOrder();
@@ -1309,7 +1334,7 @@ const A={
   async doPay(d){const g=payGrand();await A.finishPay([{pay:d.p,amount:g}])},
   async finishPay(payments,splitN){const t=S.tables[ui.table];if(!t)return;const pr=document.getElementById('payPrint')?.checked;
     const lang=ui.lang==='en'?'en':'tr';ui.lang='tr';
-    const lines=t.lines.filter(l=>l.qty>0).map(l=>({name:l.name,price:l.price,qty:l.qty,...(l.pkg?{pkg:true}:{}),...(lang==='en'?{en:enLine(l)}:{})}));
+    const lines=t.lines.filter(l=>l.qty>0).map(l=>({name:l.name,price:l.price,qty:l.qty,...(l.pkg?{pkg:true}:{}),...(l.ikram?{ikram:true,op:l.op||0}:{}),...(lang==='en'?{en:enLine(l)}:{})}));
     const tip=tipAmount(tTotal(t));
     const tipPct=(tip>0&&typeof ui.tip?.mode==='number')?ui.tip.mode:null;
     const methods=[...new Set(payments.map(p=>p.pay))];const payLbl=methods.length===1?methods[0]:'Karışık';
