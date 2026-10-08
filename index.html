@@ -269,7 +269,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 82</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 83</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -542,6 +542,8 @@ const NO_PKG=['Çay','Türk Kahvesi'];
 const noPkg=it=>!!it&&(it.noPkg||NO_PKG.includes(baseName(it.name)));
 function pkgBlocked(it){if(ui.pkg&&noPkg(it)){toast(baseName(it.name)+' pakete eklenemez');return true}return false}
 /* hesap satırlarını bölümlere ayır: normal, paket, ikram */
+/* ikram özelliği şimdilik kapalı (kod duruyor; açmak için true yapın) */
+const IKRAM_ON=false;
 function billSections(lines,lbl){const n=lines.filter(l=>!l.pkg&&!l.ikram),p=lines.filter(l=>l.pkg&&!l.ikram),k=lines.filter(l=>l.ikram);
   return [...n,...(p.length?[{sec:lbl.pkg,kind:'pkg'}]:[]),...p,...(k.length?[{sec:lbl.ik,kind:'ik'}]:[]),...k]}
 function curT(){return S.tables[ui.table]||(S.tables[ui.table]={lines:[],openedAt:Date.now()})}
@@ -553,7 +555,7 @@ function vOrder(){
   $main.innerHTML=`
     <div class="ohead"><button class="back" data-act="tab" data-v="tables" aria-label="Masalara dön"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
       <h2 style="flex:1">${esc(tName(ui.table))}</h2>
-      <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button><button class="btn ${ui.ikram?'ikon':''}" data-act="toggleIkram" aria-pressed="${ui.ikram?'true':'false'}">İkram</button><button class="btn" data-act="moveTable">Taşı</button></div>
+      <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button>${IKRAM_ON?`<button class="btn ${ui.ikram?'ikon':''}" data-act="toggleIkram" aria-pressed="${ui.ikram?'true':'false'}">İkram</button>`:''}<button class="btn" data-act="moveTable">Taşı</button></div>
     ${ui.pkg?`<div class="pkgbar"><b>PAKET ekleniyor</b><span>Dokunduğunuz ürünler paket olarak yazılır.</span><button class="linkbtn" data-act="togglePkg">Bitir</button></div>`:''}
     ${ui.ikram?`<div class="pkgbar ikbar"><b>İKRAM ekleniyor</b><span>Dokunduğunuz ürünler 0 ₺ ikram olarak yazılır.</span><button class="linkbtn" data-act="toggleIkram">Bitir</button></div>`:''}
     ${!ui.cat?`<div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
@@ -582,7 +584,7 @@ function openCart(){
       <div class="bhead"><span class="muted">${dmy(Date.now())} · ${hm(Date.now())}</span><span class="langsw" role="group" aria-label="Dil"><button data-act="lang" data-l="tr" class="${isEN()?'':'act'}">TR</button><button data-act="lang" data-l="en" class="${isEN()?'act':''}">EN</button></span><button class="linkbtn" data-act="toggleEdit">${ed?'Bitti':'Düzelt'}</button></div>
       ${billSections(lines,{pkg:L('PAKET','TAKE AWAY'),ik:L('İKRAM','COMPLIMENTARY')}).map(l=>l.sec?`<div class="bsec ${l.kind==='ik'?'iksec':''}">${l.sec}</div>`:`<div class="bl ${ed?'ed':''}">
         <div class="bn"><b class="num">${l.qty} x</b> ${esc(isEN()?enLine(l):l.name)}${l.qty>1?`<small class="num">${l.qty} x ${money(l.price)}</small>`:''}</div>
-        ${ed?`<div style="display:flex;align-items:center;gap:6px;flex:none"><button class="lnik ${l.ikram?'on':''}" data-act="lineIkram" data-id="${l.id}" aria-pressed="${l.ikram?'true':'false'}">İkram</button><div class="qty"><button data-act="dec" data-id="${l.id}" aria-label="Bir azalt">−</button><span class="num">${l.qty}</span><button data-act="inc" data-id="${l.id}" aria-label="Bir artır">+</button></div></div>`:`${l.ikram?`<div class="ba ikt">${L('İKRAM','FREE')}</div>`:`<div class="ba num">${money(l.qty*l.price)}</div>`}`}
+        ${ed?`<div style="display:flex;align-items:center;gap:6px;flex:none">${IKRAM_ON||l.ikram?`<button class="lnik ${l.ikram?'on':''}" data-act="lineIkram" data-id="${l.id}" aria-pressed="${l.ikram?'true':'false'}">İkram</button>`:''}<div class="qty"><button data-act="dec" data-id="${l.id}" aria-label="Bir azalt">−</button><span class="num">${l.qty}</span><button data-act="inc" data-id="${l.id}" aria-label="Bir artır">+</button></div></div>`:`${l.ikram?`<div class="ba ikt">${L('İKRAM','FREE')}</div>`:`<div class="ba num">${money(l.qty*l.price)}</div>`}`}
       </div>`).join('')}
       ${tipOfT(t)>0?`<div class="bl"><div class="bn">${L('Ara toplam','Subtotal')}</div><div class="ba num">${money(tTotal(t))}</div></div>
       <div class="bl"><div class="bn">${L('Gönüllü bahşiş','Voluntary tip')}${tipPctT(t)?(isEN()?` (${tipPctT(t)}%)`:` (%${tipPctT(t)})`):''}</div><div class="ba num">${money(tipOfT(t))}</div></div>`:''}
