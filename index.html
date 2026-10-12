@@ -270,7 +270,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 103</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 104</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -394,7 +394,7 @@ const CAT_ORDER={'Çorbalar':['Mercimek Çorbası','Ezogelin Çorbası','Yayla �
   'Zeytinyağlılar':['Yaprak Sarma','Lahana Sarma','Zeytinyağlı Enginar','Arnavut Ciğeri','Pazı Kavurma','Yoğurtlu Pazı Salatası','Barbunya Pilaki','Çalı Fasulye','Biber Dolma','Patlıcan Dolma','Nohut Pilaki','Semizotu','Ispanak Kökü','Çerkez Tavuğu','Zeytinyağlı Kereviz','Bakla','Patlıcan Paça','Kabak Kızartma','Patlıcan Kızartma','Zeytinyağlı Enginar Dolma','Zeytinyağlı Pırasa','Zeytinyağlı Bezelye','Kereviz Dolma','Fava','İmam Bayıldı','Zeytinyağlı Bamya','Haydari','Fasulye Pilaki','Amerikan Salata'],
   'Izgaralar':['Izgara Köfte','Kuzu Şiş','Kuzu Pirzola','Bonfile','Karışık Izgara','Tavuk Bonfile'],
   'Pilav ve Makarnalar':['Pirinç Pilavı','Kuzu Etli Özbek Pilavı','Bulgur Pilavı','Fırın Makarna','İç Pilav','Zeytinyağlı Patlıcanlı Pilav','Kuzu Etli Tekke Pilavı','Zeytinyağlı Baklalı Pilav'],
-  'Et Yemekleri':['Tas Kebabı','Patlıcanlı Kebap','Sac Kavurma','Kuzu Haşlama','Döner Kebap','Çömlek Kebabı','Kağıt Kebap','Hünkar Beğendi','Elbasan Tava','Kuzu Ciğer Sarma','Talaş Kebabı','Çiftlik Kebabı','Kuzu Kaburga Dolma','Tavuk Kızartma','Fırında Tavuk Şiş','Şehriyeli Tavuk','Mantarlı Tavuk','Dana Rosto','Sebzeli Kebap','Soğanlı Kebap','Yoğurtlu Kebap','Orman Kebabı','Et Güveç','Kuzu Kızartma','Güveçte Parmak Kebabı','Kuzu Fırın','Çoban Kavurma','Kuzu Kapama','Kuzu Etli Talaş Böreği','Hindi Dolma','Kuzu Keşkek','Kuzu Büryan','Kuzu Tandır','Fırın Bonfile veya Pirzola','Palamut Pilaki'],
+  'Et Yemekleri':['Tas Kebabı','Patlıcanlı Kebap','Sac Kavurma','Kuzu Haşlama','Döner Kebap','Çömlek Kebabı','Kağıt Kebap','Hünkar Beğendi','Elbasan Tava','Kuzu Ciğer Sarma','Talaş Kebabı','Çiftlik Kebabı','Kuzu Kaburga Dolma','Tavuk Kızartma','Fırında Tavuk Şiş','Fırın Bonfile veya Pirzola','Güveçte Parmak Kebabı','Kuzu Kızartma','Kuzu Fırın','Kuzu Kapama','Kuzu Keşkek','Şehriyeli Tavuk','Mantarlı Tavuk','Dana Rosto','Sebzeli Kebap','Soğanlı Kebap','Yoğurtlu Kebap','Orman Kebabı','Et Güveç','Çoban Kavurma','Kuzu Etli Talaş Böreği','Hindi Dolma','Kuzu Tandır','Kuzu Büryan','Palamut Pilaki'],
   'Sıcak Sebze Yemekleri':['Kuru Fasulye','Nohut','Patlıcan Musakka','Taze Fasulye','Türlü','Etli Yaprak Sarma','Etli Lahana Sarma','Etli Dolma','Ispanak','Kapuska','Karnıyarık','Etsiz Beğendi','Püre','Terbiyeli Kereviz','Pırasalı Kereviz','Güveç Türlü','Kıymalı Yumurta','Bamya']};
 function applyCatOrder(){const sig=JSON.stringify(CAT_ORDER);if(S.settings.orderSig===sig)return;
   for(const [cn,order] of Object.entries(CAT_ORDER)){const c=S.menu.cats.find(x=>x.name===cn);if(!c)continue;
