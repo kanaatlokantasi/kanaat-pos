@@ -270,7 +270,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 99</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 100</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -407,6 +407,7 @@ if(!S.settings.sebzeNewV1){const c=S.menu.cats.find(x=>x.name==='Sıcak Sebze Ye
   S.settings.sebzeNewV1=true;save()}
 if(!S.settings.amerikanV1){const c=S.menu.cats.find(x=>x.name==='Zeytinyağlılar');if(c&&!S.menu.items.some(i=>i.name==='Amerikan Salata')){const last=S.menu.items.map((it,k)=>it.cat===c.id?k:-1).filter(k=>k>=0).pop();S.menu.items.splice(last+1,0,{id:uid(),cat:c.id,name:'Amerikan Salata',price:320})}S.settings.amerikanV1=true;save()}
 if(!S.settings.etCatV1){const C=S.menu.cats,ei=C.findIndex(c=>c.name==='Et Yemekleri');if(ei>=0){const [e]=C.splice(ei,1);const si=C.findIndex(c=>c.name==='Sıcak Sebze Yemekleri');C.splice(si>=0?si+1:C.length,0,e)}S.settings.etCatV1=true;save()}
+if(!S.settings.pilavCatV1){const C=S.menu.cats,pi=C.findIndex(c=>c.name==='Pilav ve Makarnalar');if(pi>=0){const [x]=C.splice(pi,1);const ei=C.findIndex(c=>c.name==='Et Yemekleri');C.splice(ei>=0?ei+1:C.length,0,x)}S.settings.pilavCatV1=true;save()}
 if(!S.settings.yogurtluV1){S.menu.items.forEach(i=>{if(i.name==='Yoğurlu Pazı Salatası')i.name='Yoğurtlu Pazı Salatası'});S.settings.yogurtluV1=true;save()}
 if(!S.settings.domatesV1){const c=S.menu.cats.find(x=>x.name==='Çorbalar');if(c&&!S.menu.items.some(i=>i.name==='Domates Çorbası')){const k=S.menu.items.findIndex(i=>i.name==='Şehriye Çorbası');S.menu.items.splice(k>=0?k:S.menu.items.length,0,{id:uid(),cat:c.id,name:'Domates Çorbası',price:180})}S.settings.domatesV1=true;save()}
 applyCatOrder();
