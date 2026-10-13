@@ -185,6 +185,13 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .ctile .cc{font-size:12px;color:var(--muted)}
 .ctile .q{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);border-radius:999px;min-width:24px;height:24px;display:grid;place-items:center;font-size:13px;font-weight:700;padding:0 6px}
 .ctile:active{background:var(--accent-soft)}
+.osrch{position:relative;display:flex;align-items:center;margin-bottom:10px}
+.osrch svg{position:absolute;left:12px;color:var(--muted,#777);pointer-events:none}
+.osrch input{width:100%;font-size:18px;padding:12px 44px 12px 42px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;min-height:50px;-webkit-appearance:none;appearance:none}
+.osrch input::-webkit-search-cancel-button{display:none}
+.osrch input:focus{outline:none;border-color:#111}
+.osrch .sx{position:absolute;right:6px;width:38px;height:38px;border:0;border-radius:50%;background:var(--line);font-size:16px;font-weight:700}
+#sres:not(:empty){margin-bottom:10px}
 .catnav{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .catnav h3{margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .catnav .btn{min-height:40px;padding:8px 12px}
@@ -280,7 +287,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 108</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 109</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -595,6 +602,25 @@ const IKRAM_ON=false;
 function billSections(lines,lbl){const n=lines.filter(l=>!l.pkg&&!l.ikram),p=lines.filter(l=>l.pkg&&!l.ikram),k=lines.filter(l=>l.ikram);
   return [...n,...(p.length?[{sec:lbl.pkg,kind:'pkg'}]:[]),...p,...(k.length?[{sec:lbl.ik,kind:'ik'}]:[]),...k]}
 function curT(){return S.tables[ui.table]||(S.tables[ui.table]={lines:[],openedAt:Date.now()})}
+function itemTile(i,qmap,hmap,umap,catHalf){const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');const np=ui.pkg&&noPkg(i);return `<div class="itemw ${corner?'hashalf':''} ${np?'nopkg':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
+      ${hasB?`<span class="q">${b}</span>`:''}
+      <span class="nm">${esc(i.name)}</span>${np?'<span class="pr" style="font-size:14px">Pakete eklenmez</span>':`<span class="pr num">${fmt(i.price)}</span>`}</button>
+      ${corner==='unit'?`<button class="halfb" data-act="addUnit" data-id="${i.id}" aria-label="1 tek ${esc(baseName(i.name))}, ${fmt(i.unitPrice)}">TEK</button>`:''}
+      ${corner==='half'?`<button class="halfb" data-act="addHalf" data-id="${i.id}" aria-label="Az porsiyon ${esc(i.name)}, ${fmt(itemHalf(i))}">AZ</button>`:''}</div>`}
+/* ürün arama: Türkçe harf duyarsız, kelime başından eşleşir */
+const fold=x=>String(x).toLocaleLowerCase('tr').replace(/[çğıöşüâîû]/g,c=>({ç:'c',ğ:'g',ı:'i',ö:'o',ş:'s',ü:'u',â:'a',î:'i',û:'u'})[c]).replace(/[^a-z0-9 ]+/g,' ').trim();
+function searchItems(q){const qs=fold(q).split(/\s+/).filter(Boolean);if(!qs.length)return[];
+  const co=Object.fromEntries(S.menu.cats.map((c,k)=>[c.id,k]));
+  return S.menu.items.map((it,k)=>{const n=fold(it.name),w=n.split(/\s+/);let sc=0;
+      const used=new Set(),hit=p=>{const j=w.findIndex((x,i)=>!used.has(i)&&x.startsWith(p));if(j<0)return false;used.add(j);return true};
+      for(const t of qs){if(hit(t))sc+=2;else if(t.length>=4&&hit(t.slice(0,-1)))sc+=1;else return null}
+      if(n.startsWith(qs[0]))sc+=3;return{it,sc,k,c:co[it.cat]??99}}).filter(Boolean)
+    .sort((a,b)=>b.sc-a.sc||a.c-b.c||a.k-b.k).slice(0,40).map(x=>x.it)}
+function renderSearch(qmap,hmap,umap){const el=document.getElementById('sres');if(!el)return;const q=ui.q||'';
+  document.getElementById('cgridw').hidden=!!q.trim();
+  if(!q.trim()){el.innerHTML='';return}
+  const r=searchItems(q),half=Object.fromEntries(S.menu.cats.map(c=>[c.id,!!c.half]));
+  el.innerHTML=r.length?`<div class="igrid">${r.map(i=>itemTile(i,qmap,hmap,umap,half[i.cat])).join('')}</div>`:`<p class="muted" style="text-align:center;padding:14px 0">“${esc(q.trim())}” bulunamadı</p>`}
 function vOrder(){
   const cats=S.menu.cats; if(ui.cat&&!cats.find(c=>c.id===ui.cat))ui.cat=null;
   const t=S.tables[ui.table]; const qmap={},hmap={},umap={}; (t?.lines||[]).forEach(l=>{const m=l.unit?umap:(l.half?hmap:qmap);m[l.itemId]=(m[l.itemId]||0)+l.qty});
@@ -606,17 +632,16 @@ function vOrder(){
       <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button>${IKRAM_ON?`<button class="btn ${ui.ikram?'ikon':''}" data-act="toggleIkram" aria-pressed="${ui.ikram?'true':'false'}">İkram</button>`:''}<button class="btn" data-act="moveTable">Taşı</button></div>
     ${ui.pkg?`<div class="pkgbar"><b>PAKET ekleniyor</b><span>Dokunduğunuz ürünler paket olarak yazılır.</span><button class="linkbtn" data-act="togglePkg">Bitir</button></div>`:''}
     ${ui.ikram?`<div class="pkgbar ikbar"><b>İKRAM ekleniyor</b><span>Dokunduğunuz ürünler 0 ₺ ikram olarak yazılır.</span><button class="linkbtn" data-act="toggleIkram">Bitir</button></div>`:''}
-    ${!ui.cat?`<div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
-        return `<button class="ctile ${n?'hasq':''}" data-act="cat" data-id="${c.id}">${n?`<span class="q">${n}</span>`:''}<span class="cn">${esc(c.name)}</span><span class="cc">${S.menu.items.filter(i=>i.cat===c.id).length} ürün</span></button>`}).join('')}</div>`:`
+    ${!ui.cat?`<div class="osrch"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="osearch" type="search" enterkeyhint="search" placeholder="Ürün ara… (ör. mer, tas, köf)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(ui.q||'')}">${ui.q?'<button class="sx" data-act="clrQ" aria-label="Aramayı temizle">✕</button>':''}</div><div id="sres"></div><div id="cgridw"><div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
+        return `<button class="ctile ${n?'hasq':''}" data-act="cat" data-id="${c.id}">${n?`<span class="q">${n}</span>`:''}<span class="cn">${esc(c.name)}</span><span class="cc">${S.menu.items.filter(i=>i.cat===c.id).length} ürün</span></button>`}).join('')}</div></div>`:`
     <div class="catnav"><button class="btn" data-act="cat" data-id="">◀ Kategoriler</button><h3>${esc((cats.find(c=>c.id===ui.cat)||{}).name||'')}</h3></div>
     <div class="cats">${cats.map(c=>`<button class="${c.id===ui.cat?'act':''}" data-act="cat" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>`}
-    ${!ui.cat?'':cats.length?`<div class="igrid">${items.map(i=>{const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');const np=ui.pkg&&noPkg(i);return `<div class="itemw ${corner?'hashalf':''} ${np?'nopkg':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
-      ${hasB?`<span class="q">${b}</span>`:''}
-      <span class="nm">${esc(i.name)}</span>${np?'<span class="pr" style="font-size:14px">Pakete eklenmez</span>':`<span class="pr num">${fmt(i.price)}</span>`}</button>
-      ${corner==='unit'?`<button class="halfb" data-act="addUnit" data-id="${i.id}" aria-label="1 tek ${esc(baseName(i.name))}, ${fmt(i.unitPrice)}">TEK</button>`:''}
-      ${corner==='half'?`<button class="halfb" data-act="addHalf" data-id="${i.id}" aria-label="Az porsiyon ${esc(i.name)}, ${fmt(itemHalf(i))}">AZ</button>`:''}</div>`}).join('')||'<p class="muted">Bu kategoride ürün yok.</p>'}</div>`
+    ${!ui.cat?'':cats.length?`<div class="igrid">${items.map(i=>itemTile(i,qmap,hmap,umap,catHalf)).join('')||'<p class="muted">Bu kategoride ürün yok.</p>'}</div>`
     :`<div class="note">Menü boş. Menü sekmesinden ürün ekleyin.</div>`}`;
   renderCartBar();
+  if(!ui.cat){renderSearch(qmap,hmap,umap);const si=document.getElementById('osearch');
+    si.oninput=()=>{const had=!!ui.q;ui.q=si.value;renderSearch(qmap,hmap,umap);if(had!==!!ui.q){const w=si.parentNode;let x=w.querySelector('.sx');if(ui.q&&!x)w.insertAdjacentHTML('beforeend','<button class="sx" data-act="clrQ" aria-label="Aramayı temizle">✕</button>');else if(!ui.q&&x)x.remove()}};
+    si.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();si.blur()}}}
 }
 function renderCartBar(){
   const t=S.tables[ui.table];
@@ -1303,8 +1328,9 @@ const A={
     if(l.ikram){const it=S.menu.items.find(i=>i.id===l.itemId);l.price=l.op!=null?l.op:(it?(l.half?itemHalf(it):l.unit?it.unitPrice:it.price):0);delete l.ikram;delete l.op}
     else{l.op=l.price;l.price=0;l.ikram=true}
     save();openCart();vOrder()},
-  openTable(d){ui.pkg=false;ui.ikram=false;ui.cat=null;ui.lang='tr';ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
-  cat(d){ui.cat=d.id||null;render();$main.scrollTop=0},
+  openTable(d){ui.pkg=false;ui.ikram=false;ui.cat=null;ui.q='';ui.lang='tr';ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
+  cat(d){ui.cat=d.id||null;ui.q='';render();$main.scrollTop=0},
+  clrQ(){ui.q='';vOrder();const si=document.getElementById('osearch');if(si)si.focus()},
   add(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;if(pkgBlocked(it))return;const t=curT();
     const ik=!!ui.ikram,pr0=ik?0:it.price;
     let l=t.lines.find(x=>x.itemId===it.id&&!x.half&&!x.unit&&!!x.pkg===!!ui.pkg&&!!x.ikram===ik&&!x.note&&x.price===pr0);
