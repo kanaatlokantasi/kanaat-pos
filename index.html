@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 114</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 115</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -821,7 +821,7 @@ function vSettings(){
      <p class="muted" style="margin:0;font-size:13px">Görüntü modu ı, ş, ğ, ₺ gibi karakterleri doğru basar ve yazı boyutu ayarı tam çalışır. Yazıcı anlamsız karakter basarsa veya çok yavaşsa “Metin”e geçin (Türkçe harfler sadeleşir: ş→s).</p>
      <div class="f">Fişteki yazı boyutu<div class="seg">${[['n','Normal'],['l','Büyük'],['xl','Çok büyük']].map(([v,t])=>`<button class="${(s.fontSize||'xl')===v?'act':''}" data-act="set" data-k="fontSize" data-val="${v}">${t}</button>`).join('')}</div></div>
      <label class="f">Fişteki yazı tipi<select data-hand style="font-size:17px;min-height:46px">${Object.entries(HAND_FONTS).map(([k,v])=>`<option value="${k}" ${(s.handFont||'plain')===k?'selected':''}>${esc(v.t)}${k==='plain'?'':' · el yazısı'}</option>`).join('')}</select></label>
-     <p class="muted" style="margin:0;font-size:13px">El yazısı sadece hesap fişinde ürünlere, tutarlara ve tarih/masa satırlarına uygulanır. Logo, KDV satırı ve “Bilgi fişidir” düz kalır. Arapça fişler (ve Kiril harfi olmayan yazı tiplerinde Rusça fişler) düz yazıyla basılır. Seçtikten sonra “Deneme fişi” ile kâğıtta deneyin.</p>
+     <p class="muted" style="margin:0;font-size:13px">El yazısı sadece hesap fişinde ürünlere, tutarlara ve tarih/masa satırlarına uygulanır. Logo, KDV satırı ve “Bilgi fişidir” düz kalır. Arapça fişler (ve Kiril harfi olmayan yazı tiplerinde Rusça fişler) düz yazıyla basılır. El yazısı seçiliyken hesap fişi “Metin” modunda olsa bile görüntü olarak basılır (Türkçe harfler tam çıkar). Yazı tipi ilk seferde internetten indirilir. Seçtikten sonra “Deneme fişi” ile kâğıtta deneyin.</p>
      <div class="f">Baskı hızı<div class="seg"><button class="${s.speed!=='safe'?'act':''}" data-act="set" data-k="speed" data-val="fast">Hızlı</button><button class="${s.speed==='safe'?'act':''}" data-act="set" data-k="speed" data-val="safe">Güvenli</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Fişte kayma, eksik satır veya bozuk görüntü olursa “Güvenli”ye geçin.</p>
      <label class="row" style="font-weight:600"><input type="checkbox" id="cutter" ${s.cutter?'checked':''}> Yazıcıda kağıt kesici var</label>`}
@@ -1040,11 +1040,15 @@ const HAND_FONTS={plain:{t:'Düz (şu anki)'},patrick:{t:'Patrick Hand',fam:'Pat
   mali:{t:'Mali',fam:'Mali',w:[500,700],z:.95},kalam:{t:'Kalam',fam:'Kalam',w:[400,700],z:1},caveat:{t:'Caveat',fam:'Caveat',w:[500,700],z:1.25,cyr:true},itim:{t:'Itim',fam:'Itim',w:[400,400],z:1.05}};
 const handOf=k=>{const h=HAND_FONTS[k||'plain'];return h&&h.fam?h:null};
 function handFor(lg){const h=handOf(S.settings.handFont);if(!h)return null;if(lg==='ar')return null;if(lg==='ru'&&!h.cyr)return null;return S.settings.handFont}
-let handLink=false;
-async function handReady(k){const h=handOf(k===undefined?S.settings.handFont:k);if(!h)return;
-  if(!handLink){handLink=true;const l=document.createElement('link');l.rel='stylesheet';
-    l.href='https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Balsamiq+Sans:wght@400;700&family=Mali:wght@500;700&family=Kalam:wght@400;700&family=Caveat:wght@500;700&family=Itim&display=block';document.head.appendChild(l)}
-  try{await Promise.race([Promise.all([...new Set(h.w)].map(w=>document.fonts.load(`${w} 24px "${h.fam}"`,'ğşıİüöçĞŞ0123'))),new Promise(r=>setTimeout(r,4000))])}catch(e){}}
+let handCss=null;
+function handCssReady(){if(!handCss)handCss=new Promise(res=>{const l=document.createElement('link');l.rel='stylesheet';
+    l.href='https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Balsamiq+Sans:wght@400;700&family=Mali:wght@500;700&family=Kalam:wght@400;700&family=Caveat:wght@500;700&family=Itim&display=block';
+    l.onload=()=>res(true);l.onerror=()=>{handCss=null;res(false)};document.head.appendChild(l)});return handCss}
+/* yazı tipi gerçekten yüklenene kadar bekle (en çok 8 sn); yüklenemezse false döner */
+async function handReady(k){const h=handOf(k===undefined?S.settings.handFont:k);if(!h)return true;
+  try{const ok=await Promise.race([handCssReady(),new Promise(r=>setTimeout(()=>r(false),6000))]);if(!ok)return false;
+    await Promise.race([Promise.all([...new Set(h.w)].map(w=>document.fonts.load(`${w} 24px "${h.fam}"`,'ğşıİüöçĞŞ0123'))),new Promise(r=>setTimeout(r,4000))]);
+    return [...new Set(h.w)].every(w=>document.fonts.check(`${w} 24px "${h.fam}"`,'ğşıİ'))}catch(e){return false}}
 function renderCanvas(doc){
   const W=S.settings.printer==='niimbot'?Math.min(384,Math.floor(S.settings.labelW*8/8)*8):(S.settings.paper==80?576:384);
   const FZ={n:1,l:1.15,xl:1.3}[S.settings.fontSize||'xl']||1.3;
@@ -1227,7 +1231,7 @@ async function sendBytes(bytes){
     else await BT.char.writeValue(part);}
   blog(`Gönderildi: ${(bytes.length/1024).toFixed(1)} KB, ${((Date.now()-t0)/1000).toFixed(1)} sn (${safe?'güvenli':'hızlı'}, ${BT.noResp?'yanıtsız':'yanıtlı'} yazma)`);
 }
-function jobFor(doc){const nonLatin=/[\u0370-\u1FFF\u2C00-\uFFFF]/.test(docText(doc).replace(/[₺—–·≈€]/g,''));return S.settings.mode==='text'&&!nonLatin?textJob(doc):rasterJob(renderCanvas(doc))}
+function jobFor(doc){const nonLatin=/[\u0370-\u1FFF\u2C00-\uFFFF]/.test(docText(doc).replace(/[₺—–·≈€]/g,''));const hand=doc.some(r=>r.k==='hand');return S.settings.mode==='text'&&!nonLatin&&!hand?textJob(doc):rasterJob(renderCanvas(doc))}
 
 /* ---- Niimbot B1 protokolü (açık kaynak niimbluelib'e göre) ---- */
 const u16=n=>[(n>>8)&255,n&255];
@@ -1299,7 +1303,7 @@ async function niimPrint(canvas){
 }
 let printing=false;
 async function printDoc(doc,label){
-  const hk=(doc.find(r=>r.k==='hand')||{}).f;if(hk)await handReady(hk);
+  const hk=(doc.find(r=>r.k==='hand')||{}).f;if(hk&&!(await handReady(hk))){doc=doc.filter(r=>r.k!=='hand');toast('El yazısı yüklenemedi (internet?), düz yazıyla basılıyor')}
   if(await ensureBT()){
     if(printing){toast('Yazıcı meşgul, biraz bekleyin');return false}
     printing=true;toast(label+' yazdırılıyor…');
@@ -1635,6 +1639,7 @@ async function custView(){
   if(o.f&&HAND_FONTS[o.f]){S.settings.handFont=o.f;await handReady(o.f)}else S.settings.handFont='plain';
   const go=()=>draw();if(LOGO_IMG.complete)go();else{LOGO_IMG.onload=LOGO_IMG.onerror=go;setTimeout(()=>{if(!url)go()},1500)}
 }
+if(!VIEW&&handOf(S.settings.handFont))setTimeout(()=>handReady(),1500);
 if(VIEW)custView();
 else{render();
 if(!(S.settings.waiter||'').trim())askWaiter(false)}
