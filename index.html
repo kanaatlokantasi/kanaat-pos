@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 113</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 114</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -434,6 +434,7 @@ if(!S.settings.etCatV1){const C=S.menu.cats,ei=C.findIndex(c=>c.name==='Et Yemek
 if(!S.settings.pilavCatV1){const C=S.menu.cats,pi=C.findIndex(c=>c.name==='Pilav ve Makarnalar');if(pi>=0){const [x]=C.splice(pi,1);const ei=C.findIndex(c=>c.name==='Et Yemekleri');C.splice(ei>=0?ei+1:C.length,0,x)}S.settings.pilavCatV1=true;save()}
 if(!S.settings.kofteCatV1){const C=S.menu.cats,ki=C.findIndex(c=>c.name==='Köfteler');if(ki>=0){const [x]=C.splice(ki,1);const pi=C.findIndex(c=>c.name==='Pilav ve Makarnalar');C.splice(pi>=0?pi+1:C.length,0,x)}S.settings.kofteCatV1=true;save()}
 if(!S.settings.eksiliV1){S.menu.items.forEach(i=>{if(i.name==='Ekişili Köfte')i.name='Ekşili Köfte'});S.settings.eksiliV1=true;save()}
+if(!S.settings.handKalamV1){if(!S.settings.handFont||S.settings.handFont==='plain')S.settings.handFont='kalam';S.settings.handKalamV1=true;save()}
 if(!S.settings.yogurtluV1){S.menu.items.forEach(i=>{if(i.name==='Yoğurlu Pazı Salatası')i.name='Yoğurtlu Pazı Salatası'});S.settings.yogurtluV1=true;save()}
 if(!S.settings.domatesV1){const c=S.menu.cats.find(x=>x.name==='Çorbalar');if(c&&!S.menu.items.some(i=>i.name==='Domates Çorbası')){const k=S.menu.items.findIndex(i=>i.name==='Şehriye Çorbası');S.menu.items.splice(k>=0?k:S.menu.items.length,0,{id:uid(),cat:c.id,name:'Domates Çorbası',price:180})}S.settings.domatesV1=true;save()}
 applyCatOrder();
@@ -819,6 +820,8 @@ function vSettings(){
      <div class="f">Yazdırma şekli<div class="seg"><button class="${s.mode==='image'?'act':''}" data-act="set" data-k="mode" data-val="image">Görüntü (Türkçe tam)</button><button class="${s.mode==='text'?'act':''}" data-act="set" data-k="mode" data-val="text">Metin (hızlı)</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Görüntü modu ı, ş, ğ, ₺ gibi karakterleri doğru basar ve yazı boyutu ayarı tam çalışır. Yazıcı anlamsız karakter basarsa veya çok yavaşsa “Metin”e geçin (Türkçe harfler sadeleşir: ş→s).</p>
      <div class="f">Fişteki yazı boyutu<div class="seg">${[['n','Normal'],['l','Büyük'],['xl','Çok büyük']].map(([v,t])=>`<button class="${(s.fontSize||'xl')===v?'act':''}" data-act="set" data-k="fontSize" data-val="${v}">${t}</button>`).join('')}</div></div>
+     <label class="f">Fişteki yazı tipi<select data-hand style="font-size:17px;min-height:46px">${Object.entries(HAND_FONTS).map(([k,v])=>`<option value="${k}" ${(s.handFont||'plain')===k?'selected':''}>${esc(v.t)}${k==='plain'?'':' · el yazısı'}</option>`).join('')}</select></label>
+     <p class="muted" style="margin:0;font-size:13px">El yazısı sadece hesap fişinde ürünlere, tutarlara ve tarih/masa satırlarına uygulanır. Logo, KDV satırı ve “Bilgi fişidir” düz kalır. Arapça fişler (ve Kiril harfi olmayan yazı tiplerinde Rusça fişler) düz yazıyla basılır. Seçtikten sonra “Deneme fişi” ile kâğıtta deneyin.</p>
      <div class="f">Baskı hızı<div class="seg"><button class="${s.speed!=='safe'?'act':''}" data-act="set" data-k="speed" data-val="fast">Hızlı</button><button class="${s.speed==='safe'?'act':''}" data-act="set" data-k="speed" data-val="safe">Güvenli</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Fişte kayma, eksik satır veya bozuk görüntü olursa “Güvenli”ye geçin.</p>
      <label class="row" style="font-weight:600"><input type="checkbox" id="cutter" ${s.cutter?'checked':''}> Yazıcıda kağıt kesici var</label>`}
@@ -930,19 +933,20 @@ const logoOn=()=>S.settings.logo&&LOGO_IMG.complete&&LOGO_IMG.naturalWidth>0;
 function headerRows(){const h=S.settings.header.split('\n').filter(x=>x.trim());
   if(logoOn())return [{k:'logo'},...h.slice(1).map((x,i)=>({k:'c',text:x,b:i===0}))];
   return h.map((x,i)=>i===0?{k:'title',text:x}:{k:'c',text:x})}
-function footerRows(){return S.settings.footer.split('\n').filter(x=>x.trim()).map(x=>({k:'c',text:x}))}
+function footerRows(){return S.settings.footer.split('\n').filter(x=>x.trim()).map(x=>({k:'c',text:x,plain:true}))}
 /* bahşiş eklenmediyse fişte hatırlatma kutusu */
 function tipNudge(total,unpaid,lg){const en=!!lg&&lg!=='tr',T=(a,b)=>en?tx(b,lg):a;
   if(!en)return []; /* Türkçe fişte bahşiş notu yok; sadece İngilizce fişte */
   const rows=[{k:'bs'},{k:'inv',text:T('GÖNÜLLÜ BAHŞİŞ','VOLUNTARY TIP')}];
-  if(unpaid){rows.push({k:'c',text:T('Hesaba dahil değildir.','Not included in the bill.'),b:true});
+  if(unpaid){rows.push({k:'c',text:T('Hesaba dahil değildir.','Not included in the bill.'),b:true,plain:true});
 }
   else return en?[{k:'gap'},{k:'inv',text:tx('No tip or service is added to your bill.',lg)},{k:'gap'}]:[];
   rows.push({k:'be'});return rows}
 function billDoc(tableName,lines,total,opts={}){
   const at=opts.at||Date.now(),LG=opts.lang&&opts.lang!=='tr'?opts.lang:'tr',en=LG!=='tr',T=(a,b)=>en?tx(b,LG):a,P=p=>en?enPay(p,LG):p;
   const w=opts.waiter??S.settings.waiter;
-  return [...headerRows(),{k:'gap'},
+  const hf=opts.hand!==undefined?opts.hand:handFor(LG);
+  return [...headerRows(),...(hf?[{k:'hand',f:hf}]:[]),{k:'gap'},
     {k:'lr',l:dmy(at),r:hm(at)},...(isRTL(LG)?[{k:'dir',rtl:true}]:[]),{k:'lr',l:en?enTable(tableName,LG):tableName,r:opts.no?('No: '+opts.no):'',b:true},...(w?[{k:'l',text:T('Garson: ','Server: ')+w,small:true}]:[]),{k:'hr'},
     ...billSections(lines,{pkg:T('— PAKET —','— TAKE AWAY —'),ik:T('— İKRAM —','— COMPLIMENTARY —')}).flatMap(l=>l.sec?[{k:'gap'},{k:'l',text:l.sec,b:true}]:[{k:'lr',l:`${l.qty} x ${en?(l.en||enLine(l,LG)):l.name}`,r:l.ikram?T('İKRAM','FREE'):money(l.qty*l.price),b:!!l.ikram},...(l.qty>1&&!l.ikram?[{k:'l',text:`   ${l.qty} x ${money(l.price)}`,small:true}]:[])]),
     {k:'hr'},...(opts.tip>0?[{k:'lr',l:T('Ara toplam','Subtotal'),r:fmt(total)},{k:'lr',l:T('Gönüllü bahşiş','Voluntary tip')+(opts.tipPct?` (${pctLbl(opts.tipPct,LG)})`:''),r:fmt(opts.tip)},{k:'big',l:T('TOPLAM','TOTAL'),r:fmt(total+opts.tip)}]:[{k:'big',l:T('TOPLAM','TOTAL'),r:fmt(total)}]),
@@ -950,8 +954,8 @@ function billDoc(tableName,lines,total,opts={}){
     ...(opts.payments&&opts.payments.length>1?[{k:'lr',l:perPersonLbl(opts.payments.length,LG),r:fmt(opts.payments[0].amount)},...opts.payments.map((p,i)=>({k:'lr',l:en?`#${i+1} · ${P(p.pay)}`:`${i+1}. kişi · ${p.pay}`,r:money(p.amount),small:true}))]:opts.pay?[{k:'lr',l:T('Ödeme','Payment'),r:P(opts.pay)}]:[]),
     ...(opts.splitN>1?[{k:'lr',l:perPersonLbl(opts.splitN,LG),r:fmt(splitSharesN(total+(opts.tip>0?opts.tip:0),opts.splitN)[0])}]:[]),
     ...(opts.tip>0?[]:tipNudge(total,!(opts.closed||opts.pay||(opts.payments&&opts.payments.length)),LG)),
-    {k:'c',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true},
-    {k:'gap'},...(en?[{k:'c',text:tx('INFORMATION SLIP - NOT A FISCAL RECEIPT',LG)}]:footerRows()),
+    {k:'c',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true,plain:true},
+    {k:'gap'},...(en?[{k:'c',text:tx('INFORMATION SLIP - NOT A FISCAL RECEIPT',LG),plain:true}]:footerRows()),
     ...(S.settings.reviewQr&&S.settings.reviewUrl?[{k:'gap'},{k:'c',text:T('Bizi Google\'da değerlendirin','Rate us on Google'),b:true},{k:'qr',data:S.settings.reviewUrl}]:[])];
 }
 
@@ -1031,31 +1035,43 @@ function qrMatrix(text,ecLevel){
   apply(best);fmt(best);return M}
 
 /* ============ fiş çizimi (görüntü) ============ */
+/* fişte el yazısı (logo, KDV ve sabit bilgi satırları düz kalır) */
+const HAND_FONTS={plain:{t:'Düz (şu anki)'},patrick:{t:'Patrick Hand',fam:'Patrick Hand',w:[400,400],z:1.12},balsamiq:{t:'Balsamiq Sans',fam:'Balsamiq Sans',w:[400,700],z:1,cyr:true},
+  mali:{t:'Mali',fam:'Mali',w:[500,700],z:.95},kalam:{t:'Kalam',fam:'Kalam',w:[400,700],z:1},caveat:{t:'Caveat',fam:'Caveat',w:[500,700],z:1.25,cyr:true},itim:{t:'Itim',fam:'Itim',w:[400,400],z:1.05}};
+const handOf=k=>{const h=HAND_FONTS[k||'plain'];return h&&h.fam?h:null};
+function handFor(lg){const h=handOf(S.settings.handFont);if(!h)return null;if(lg==='ar')return null;if(lg==='ru'&&!h.cyr)return null;return S.settings.handFont}
+let handLink=false;
+async function handReady(k){const h=handOf(k===undefined?S.settings.handFont:k);if(!h)return;
+  if(!handLink){handLink=true;const l=document.createElement('link');l.rel='stylesheet';
+    l.href='https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Balsamiq+Sans:wght@400;700&family=Mali:wght@500;700&family=Kalam:wght@400;700&family=Caveat:wght@500;700&family=Itim&display=block';document.head.appendChild(l)}
+  try{await Promise.race([Promise.all([...new Set(h.w)].map(w=>document.fonts.load(`${w} 24px "${h.fam}"`,'ğşıİüöçĞŞ0123'))),new Promise(r=>setTimeout(r,4000))])}catch(e){}}
 function renderCanvas(doc){
   const W=S.settings.printer==='niimbot'?Math.min(384,Math.floor(S.settings.labelW*8/8)*8):(S.settings.paper==80?576:384);
   const FZ={n:1,l:1.15,xl:1.3}[S.settings.fontSize||'xl']||1.3;
   const fs=Math.round((W===576?28:Math.max(15,Math.round(W*0.06)))*FZ), pad=6;
-  const F=(sz,b)=>`${b?700:500} ${sz}px Figtree, "Helvetica Neue", Arial, sans-serif`;
+  let hand=null;const F0=(sz,b)=>`${b?700:500} ${sz}px Figtree, "Helvetica Neue", Arial, sans-serif`;
+  const F=(sz,b,plain)=>hand&&!plain?`${b?hand.w[1]:hand.w[0]} ${Math.round(sz*hand.z)}px "${hand.fam}", Figtree, Arial, sans-serif`:F0(sz,b);
   const m=document.createElement('canvas').getContext('2d');
   const wrap=(text,font,maxW)=>{m.font=font;const words=String(text).split(' ');const out=[];let cur='';
     for(const w of words){const t=cur?cur+' '+w:w;if(m.measureText(t).width<=maxW||!cur)cur=t;else{out.push(cur);cur=w}}out.push(cur);return out};
   const ops=[];let y=10,px=pad,boxY=0,rtl=false;
   for(const r of doc){
     if(r.k==='dir'){rtl=!!r.rtl;continue}
+    if(r.k==='hand'){hand=handOf(r.f);continue}
     if(r.k==='gap'){y+=fs*0.5;continue}
     if(r.k==='qr'){const Q=qrMatrix(r.data);if(!Q)continue;const n=Q.length,sc=Math.max(3,Math.floor(Math.min(W*0.42,240)/n)),x0=Math.round((W-n*sc)/2);
       ops.push({qr:Q,x:x0,y:y+8,sc});y+=n*sc+16;continue}
     if(r.k==='bs'){y+=fs*0.3;boxY=y;y+=6;px=pad+12;continue}
     if(r.k==='be'){y+=fs*0.35;ops.push({rect:true,y0:boxY,y1:y});px=pad;y+=fs*0.3;continue}
-    if(r.k==='inv'){const sz=Math.round(fs*1.15),font=F(sz,true),lns=wrap(r.text,font,W-pad*2-28),h=Math.round(sz*0.45)*2+lns.length*Math.round(sz*1.25);
+    if(r.k==='inv'){const sz=Math.round(fs*1.15),font=F(sz,true,true),lns=wrap(r.text,font,W-pad*2-28),h=Math.round(sz*0.45)*2+lns.length*Math.round(sz*1.25);
       ops.push({band:true,y:y,h});lns.forEach((ln,i)=>ops.push({t:ln,font,x:W/2,y:y+Math.round(sz*0.45)+Math.round(sz*1.25)*i+Math.round(sz*0.98),align:'center',white:true}));y+=h+fs*0.35;continue}
     if(r.k==='logo'){const lw=Math.round(W*0.82),lh=Math.round(LOGO_IMG.naturalHeight*lw/LOGO_IMG.naturalWidth);ops.push({img:true,x:Math.round((W-lw)/2),y:y+4,w:lw,h:lh});y+=lh+10;continue}
     if(r.k==='hr'){ops.push({hr:true,y:y+fs*0.4});y+=fs*0.9;continue}
-    if(r.k==='title'||r.k==='c'){const sz=r.k==='title'?Math.round(fs*1.45):(r.small?Math.round(fs*.85):fs);const font=F(sz,r.k==='title'||r.b);
+    if(r.k==='title'||r.k==='c'){const sz=r.k==='title'?Math.round(fs*1.45):(r.small?Math.round(fs*.85):fs);const font=F(sz,r.k==='title'||r.b,r.plain);
       for(const ln of wrap(r.text,font,W-px*2)){ops.push({t:ln,font,x:W/2,y:y+sz,align:'center',rtl});y+=sz*1.25}continue}
-    if(r.k==='l'||r.k==='kl'){const sz=r.k==='kl'?Math.round(fs*1.25):(r.small?Math.round(fs*.85):fs);const font=F(sz,r.k==='kl'||r.b);
+    if(r.k==='l'||r.k==='kl'){const sz=r.k==='kl'?Math.round(fs*1.25):(r.small?Math.round(fs*.85):fs);const font=F(sz,r.k==='kl'||r.b,r.plain);
       for(const ln of wrap(r.text,font,W-px*2)){ops.push(rtl?{t:ln,font,x:W-px,y:y+sz,align:'right',rtl}:{t:ln,font,x:px,y:y+sz,align:'left'});y+=sz*1.25}continue}
-    if(r.k==='lr'||r.k==='big'){const sz=r.k==='big'?Math.round(fs*1.4):fs;const font=F(sz,r.k==='big'||r.b);
+    if(r.k==='lr'||r.k==='big'){const sz=r.k==='big'?Math.round(fs*1.4):fs;const font=F(sz,r.k==='big'||r.b,r.plain);
       m.font=font;const rw=r.r?m.measureText(r.r).width+12:0;const lines=wrap(r.l,font,W-px*2-rw);
       lines.forEach((ln,i)=>{if(rtl){ops.push({t:ln,font,x:W-px,y:y+sz,align:'right',rtl});if(i===0&&r.r)ops.push({t:r.r,font,x:px,y:y+sz,align:'left'})}else{ops.push({t:ln,font,x:px,y:y+sz,align:'left'});if(i===0&&r.r)ops.push({t:r.r,font,x:W-px,y:y+sz,align:'right'})}y+=sz*1.25});continue}
   }
@@ -1283,6 +1299,7 @@ async function niimPrint(canvas){
 }
 let printing=false;
 async function printDoc(doc,label){
+  const hk=(doc.find(r=>r.k==='hand')||{}).f;if(hk)await handReady(hk);
   if(await ensureBT()){
     if(printing){toast('Yazıcı meşgul, biraz bekleyin');return false}
     printing=true;toast(label+' yazdırılıyor…');
@@ -1475,7 +1492,8 @@ const A={
   async connect(){try{await connectBT();toast('Yazıcı bağlandı');render()}catch(e){if(isCancel(e)){blog('Seçim iptal edildi');return}blog('Hata: '+errText(e));toast(errText(e));render()}},
   async copyLog(){const t=BLOG.join('\n')||'(kayıt yok)';try{await navigator.clipboard.writeText(t);toast('Kayıt kopyalandı')}catch(e){const el=document.getElementById('btlog');const r=document.createRange();r.selectNodeContents(el);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast('Metin seçildi, Kopyala deyin')}},
   disconnect(){try{BT.device?.gatt?.disconnect()}catch(e){}BT.char=null;BT.device=null;render()},
-  async testPrint(){await printDoc([...headerRows(),{k:'gap'},{k:'c',text:'Deneme fişi',b:true},{k:'c',text:'Türkçe: ıİşŞğĞüÜöÖçÇ ₺'},{k:'hr'},{k:'lr',l:'2 x Mercimek Çorbası',r:money(240)},{k:'big',l:'TOPLAM',r:fmt(240)},{k:'gap'},...footerRows()],'Deneme fişi')},
+  async testPrint(){const L=[{name:'Mercimek Çorbası',price:180,qty:2},{name:'Kuru Fasulye',price:320,qty:1},{name:'Pirinç Pilavı (az)',price:90,qty:1},{name:'Çay',price:30,qty:3}];
+    await printDoc(billDoc('Deneme',L,L.reduce((a,l)=>a+l.price*l.qty,0),{closed:true}),'Deneme fişi')},
   backup(){download(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}),'kanaat-pos-yedek-'+dayKey(Date.now())+'.json')},
   restore(){document.getElementById('restoreFile').click()},
   pickLogo(){document.getElementById('logoFile').click()},
@@ -1501,6 +1519,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(
 document.addEventListener('change',e=>{const el=e.target;
   if(el.dataset.itemhalf){const i=S.menu.items.find(x=>x.id===el.dataset.itemhalf);if(i){i.noHalf=!el.checked;save();toast(i.name+': az '+(i.noHalf?'yok':'var'))}}
   if(el.dataset.cathalf){const c=S.menu.cats.find(x=>x.id===el.dataset.cathalf);if(c){c.half=el.checked;save();toast(c.name+': az porsiyon '+(c.half?'açık':'kapalı'))}}
+  if(el.dataset.hand!==undefined){S.settings.handFont=HAND_FONTS[el.value]?el.value:'plain';save();handReady();toast('Fiş yazı tipi: '+HAND_FONTS[S.settings.handFont].t)}
   if(el.id==='halfPct'){const n=Math.max(30,Math.min(100,parseInt(el.value)||50));S.settings.halfPct=n;save();vMenu()}
   if(el.dataset.note){const l=findLine(el.dataset.note);if(l){l.note=el.value.trim();save()}}
   if(el.dataset.catname){const c=S.menu.cats.find(x=>x.id===el.dataset.catname);if(c){c.name=el.value.trim()||c.name;S.menu.sample=false;save()}}
@@ -1561,7 +1580,7 @@ A.qrBill=async()=>{const k=ui.table,t=S.tables[k];if(!t)return;const lines=t.lin
   const fx=S.settings.fx||{};
   const o={v:1,t:tName(k),w:S.settings.waiter||'',a:Math.round(Date.now()/6e4),g:ui.lang||'tr',
     l:lines.map(l=>{const it=l.itemId&&S.menu.items.find(i=>i.id===l.itemId);const r=[l.name,l.price,l.qty,(l.pkg?1:0)|(l.ikram?2:0)];if(it&&it.en)r.push(it.en);return r}),
-    p:tipOfT(t)||0,pp:tipPctT(t)||0,s:t.split||1,x:fxReady()?{e:fx.EUR||0,u:fx.USD||0,d:fx.date||'',r:fx.src||'',at:fx.at||0}:0};
+    p:tipOfT(t)||0,pp:tipPctT(t)||0,s:t.split||1,f:handOf(S.settings.handFont)?S.settings.handFont:0,x:fxReady()?{e:fx.EUR||0,u:fx.USD||0,d:fx.date||'',r:fx.src||'',at:fx.at||0}:0};
   const url=location.origin+location.pathname+'#h='+await packBill(o);const svg=qrSvg(url);
   if(!svg){toast('Hesap çok uzun, QR\'a sığmadı. Fişi yazdırın.');return}
   const tp=tipOfT(t),LN=Object.fromEntries(LANGS);
@@ -1613,6 +1632,7 @@ async function custView(){
     box.querySelector('#cvSave').onclick=()=>c.toBlob(async b=>{const f=new File([b],'kanaat-hesap.png',{type:'image/png'});
       try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Kanaat Lokantası'});return}}catch(e){if(e.name==='AbortError')return}
       const a=document.createElement('a');a.href=url;a.download='kanaat-hesap.png';document.body.appendChild(a);a.click();a.remove()})};
+  if(o.f&&HAND_FONTS[o.f]){S.settings.handFont=o.f;await handReady(o.f)}else S.settings.handFont='plain';
   const go=()=>draw();if(LOGO_IMG.complete)go();else{LOGO_IMG.onload=LOGO_IMG.onerror=go;setTimeout(()=>{if(!url)go()},1500)}
 }
 if(VIEW)custView();
