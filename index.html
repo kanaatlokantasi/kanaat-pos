@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 121</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 122</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1362,8 +1362,8 @@ function showPreview(doc,label){
         try{await navigator.share({files:[f],title,text});return}catch(e){if(e.name==='AbortError')return;await navigator.share({files:[f],title});return}}}catch(e){if(e.name==='AbortError')return}
     toast('Görüntüye basılı tutup kaydedebilirsiniz')});
 }
-function renderChip(){const c=document.getElementById('prChip');const on=!!(BT.char&&BT.device?.gatt?.connected);
-  c.classList.toggle('on',on);c.querySelector('span').textContent='Yazıcı';c.title=on?('Bağlı: '+(BT.device.name||'yazıcı')):'Yazıcı bağlı değil'}
+function renderChip(){const c=document.getElementById('prChip');const on=S.settings.printer==='system'||!!(BT.char&&BT.device?.gatt?.connected);
+  c.classList.toggle('on',on);c.querySelector('span').textContent='Yazıcı';c.title=S.settings.printer==='system'?'Bilgisayar yazıcısı':on?('Bağlı: '+(BT.device.name||'yazıcı')):'Yazıcı bağlı değil'}
 
 /* ============ eylemler ============ */
 function findLine(id){return S.tables[ui.table]?.lines.find(l=>l.id===id)}
@@ -1522,7 +1522,7 @@ const A={
     if(d.k==='printer'&&S.settings.printer!==d.val){try{BT.device?.gatt?.disconnect()}catch(e){}BT.char=null;BT.device=null}
     S.settings[d.k]=(d.k==='paper'||d.k==='density')?Number(d.val):d.val;save();render()},
   label(d){S.settings.labelW=Number(d.w);S.settings.labelH=Number(d.h);save();render();toast('Etiket: '+d.w+'×'+d.h+' mm')},
-  async connect(){try{await connectBT();toast('Yazıcı bağlandı');render()}catch(e){if(isCancel(e)){blog('Seçim iptal edildi');return}blog('Hata: '+errText(e));toast(errText(e));render()}},
+  async connect(){if(S.settings.printer==='system'){toast('Bilgisayar yazıcısı seçili; Bluetooth gerekmez');return}try{await connectBT();toast('Yazıcı bağlandı');render()}catch(e){if(isCancel(e)){blog('Seçim iptal edildi');return}blog('Hata: '+errText(e));toast(errText(e));render()}},
   async copyLog(){const t=BLOG.join('\n')||'(kayıt yok)';try{await navigator.clipboard.writeText(t);toast('Kayıt kopyalandı')}catch(e){const el=document.getElementById('btlog');const r=document.createRange();r.selectNodeContents(el);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast('Metin seçildi, Kopyala deyin')}},
   disconnect(){try{BT.device?.gatt?.disconnect()}catch(e){}BT.char=null;BT.device=null;render()},
   async testPrint(){const L=[{name:'Mercimek Çorbası',price:180,qty:2},{name:'Kuru Fasulye',price:320,qty:1},{name:'Pirinç Pilavı (az)',price:90,qty:1},{name:'Çay',price:30,qty:3}];
