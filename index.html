@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 128</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 129</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -778,6 +778,7 @@ function vMenu(){
   const m=S.menu;
   $main.innerHTML=`<div class="stack">
    <div class="row" style="justify-content:space-between"><h2>Menü</h2><button class="btn" data-act="tab" data-v="settings">← Ayarlar</button></div>
+   ${CL&&CL.on?`<div class="note">Ortak menü: burada yaptığınız fiyat, ürün, az porsiyon ve sıralama değişiklikleri <b>bütün telefonlara</b> birkaç saniye içinde geçer.</div>`:''}
    ${m.sample?`<div class="note">Bu bir <b>örnek menü</b>. Aşağıdaki kutuya kendi menünüzü yapıştırıp “Menüyü değiştir”e basın.</div>`:''}
    <div class="card stack">
      <h3 style="margin:0">Az (yarım) porsiyon</h3>
@@ -1725,7 +1726,7 @@ function cloudInit(){if(VIEW)return Promise.resolve(false);if(CL.loading)return 
       return true}catch(e){CL.loading=null;CL.status='err';CL.err=errText(e);renderCloud();return false}})();
   return CL.loading}
 function localSave(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
-function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.status='sync';CL.known={t:{},s:{}};
+function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.menuReady=false;CL.status='sync';CL.known={t:{},s:{}};
   if(S.settings.cloudMigrated)S.sales.forEach(x=>CL.known.s[x.id]=JSON.stringify(x));
   const db=CL.db;
   CL.unsub.push(db.collection('tables').onSnapshot({includeMetadataChanges:false},snap=>{
@@ -1746,16 +1747,27 @@ function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.status='sync'
     snap.docChanges().forEach(c=>{if(c.type==='removed'||c.doc.metadata.hasPendingWrites)return;const d=c.doc.data();if(!d||!d.id)return;
       const i=S.sales.findIndex(x=>x.id===d.id);if(i>=0)S.sales[i]=d;else S.sales.push(d);CL.known.s[d.id]=JSON.stringify(d);ch=true});
     if(ch){S.sales.sort((a,b)=>a.at-b.at);localSave();if(['report','tips'].includes(ui.view)&&!$layer.innerHTML)render()}},e=>{}));
+  /* ortak menü: tek belge; sadece yönetici cihazı değiştirir */
+  CL.unsub.push(db.collection('meta').doc('menu').onSnapshot(doc=>{if(doc.metadata&&doc.metadata.hasPendingWrites)return;
+    const d=doc.exists?doc.data():null;
+    if(d&&d.menu&&Array.isArray(d.menu.items)){const j=JSON.stringify(d.menu);CL.known.menu=j;
+      if(JSON.stringify(S.menu)!==j){S.menu=d.menu;if(d.halfPct)S.settings.halfPct=d.halfPct;remapLines();localSave();if(CL.menuReady)toast('Menü güncellendi');remoteRender()}}
+    else CL.known.menu=null;
+    CL.menuReady=true;cloudFlush()},e=>{}));
   /* çalışan garsonlar: devir listesi için */
   const ping=()=>{const n=(S.settings.waiter||'').trim();if(n&&CL.on)db.collection('staff').doc(fid(n)).set({n,at:Date.now()}).catch(()=>{})};
   ping();CL.ping=setInterval(ping,10*60e3);
   CL.unsub.push(db.collection('staff').onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(c.type==='removed'||!d)return;CL.staff[d.n]=d.at})},()=>{}));
   renderCloud()}
 function cloudStop(){clearInterval(CL.ping);CL.unsub.forEach(f=>{try{f()}catch(e){}});CL.unsub=[];CL.on=false;CL.ready=false;CL.status=CL.user?'off':'out'}
+/* menü başka cihazdan gelince açık masalardaki ürünleri yeni menüye isimden eşle */
+function remapLines(){const ids=new Set(S.menu.items.map(i=>i.id)),byName={};S.menu.items.forEach(i=>byName[baseName(i.name)]=i.id);
+  Object.values(S.tables).forEach(t=>(t&&t.lines||[]).forEach(l=>{if(l.itemId&&!ids.has(l.itemId)){const n=baseName(String(l.name).replace(/ \((az|tek)\)$/,''));if(byName[n])l.itemId=byName[n]}}))}
 function cloudQueue(){if(!CL||!CL.on||!CL.ready)return;clearTimeout(CL.timer);CL.timer=setTimeout(cloudFlush,60)}
 function cloudFlush(){if(!CL.on||!CL.ready)return;const db=CL.db,ops=[];
   for(const [k,t] of Object.entries(S.tables)){if(!t)continue;const j=JSON.stringify(t);if(CL.known.t[k]!==j){CL.known.t[k]=j;ops.push(b=>b.set(db.collection('tables').doc(fid(k)),{k,t:JSON.parse(j),u:Date.now(),by:S.settings.waiter||''}))}}
   for(const k of Object.keys(CL.known.t))if(!(k in S.tables)){delete CL.known.t[k];ops.push(b=>b.delete(db.collection('tables').doc(fid(k))))}
+  if(CL.menuReady&&isAdmin()){const j=JSON.stringify(S.menu);if(j!==CL.known.menu){CL.known.menu=j;ops.push(b=>b.set(db.collection('meta').doc('menu'),{menu:JSON.parse(j),halfPct:S.settings.halfPct||50,u:Date.now(),by:S.settings.waiter||''}))}}
   for(const x of S.sales){const j=JSON.stringify(x);if(CL.known.s[x.id]!==j){CL.known.s[x.id]=j;ops.push(b=>b.set(db.collection('sales').doc(x.id),JSON.parse(j)))}}
   for(let i=0;i<ops.length;i+=400){const b=db.batch();ops.slice(i,i+400).forEach(f=>f(b));b.commit().catch(e=>{CL.status='err';CL.err=errText(e);renderCloud()})}}
 /* adisyon numarası: ortak sayaç (çevrimdışıysa telefonun kendi numarası kalır) */
