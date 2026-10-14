@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 115</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 116</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -824,7 +824,9 @@ function vSettings(){
      <p class="muted" style="margin:0;font-size:13px">El yazısı sadece hesap fişinde ürünlere, tutarlara ve tarih/masa satırlarına uygulanır. Logo, KDV satırı ve “Bilgi fişidir” düz kalır. Arapça fişler (ve Kiril harfi olmayan yazı tiplerinde Rusça fişler) düz yazıyla basılır. El yazısı seçiliyken hesap fişi “Metin” modunda olsa bile görüntü olarak basılır (Türkçe harfler tam çıkar). Yazı tipi ilk seferde internetten indirilir. Seçtikten sonra “Deneme fişi” ile kâğıtta deneyin.</p>
      <div class="f">Baskı hızı<div class="seg"><button class="${s.speed!=='safe'?'act':''}" data-act="set" data-k="speed" data-val="fast">Hızlı</button><button class="${s.speed==='safe'?'act':''}" data-act="set" data-k="speed" data-val="safe">Güvenli</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Fişte kayma, eksik satır veya bozuk görüntü olursa “Güvenli”ye geçin.</p>
-     <label class="row" style="font-weight:600"><input type="checkbox" id="cutter" ${s.cutter?'checked':''}> Yazıcıda kağıt kesici var</label>`}
+     <label class="row" style="font-weight:600"><input type="checkbox" id="cutter" ${s.cutter?'checked':''}> Yazıcıda kağıt kesici var</label>
+     <label class="row" style="font-weight:600"><input type="checkbox" id="shareBT" ${s.shareBT!==false?'checked':''}> Yazıcıyı paylaş (bas ve bırak)</label>
+     <p class="muted" style="margin:0;font-size:13px">Açıkken telefon yazıcıya sadece basarken bağlanır, bitince bırakır; böylece birden fazla garson aynı yazıcıyı kullanabilir. Her baskıya birkaç saniye eklenir. Yazıcıyı tek telefon kullanıyorsa kapatabilirsiniz.</p>`}
      <label class="row" style="font-weight:600"><input type="checkbox" id="kitchenOn" ${s.kitchen?'checked':''}> Mutfak fişi kullan</label>
      <div class="f">Bağlantı kayıtları<pre id="btlog" style="margin:0;max-height:180px;overflow:auto;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;font:12px/1.45 ui-monospace,Menlo,monospace;color:var(--ink);white-space:pre-wrap;font-weight:400">${esc(BLOG.join('\n')||'Henüz kayıt yok. “Yazıcıya bağlan”a basın.')}</pre></div>
      <button class="btn" data-act="copyLog">Kayıtları kopyala</button>
@@ -894,6 +896,7 @@ function vSettings(){
    </div></div>`;
   const bind=(id,fn)=>{const el=document.getElementById(id);if(!el)return;el.onchange=()=>{fn(el);save();}};
   if(document.getElementById('cutter'))bind('cutter',e=>S.settings.cutter=e.checked);
+  if(document.getElementById('shareBT'))bind('shareBT',e=>{S.settings.shareBT=e.checked;if(e.checked)releaseBT()});
   bind('kitchenOn',e=>S.settings.kitchen=e.checked);
   bind('hdr',e=>S.settings.header=e.value);
   const lo=document.getElementById('logoOn');if(lo)lo.onchange=e=>{S.settings.logo=e.target.checked;save();render()};
@@ -1207,7 +1210,7 @@ async function connectBT(){
   let dev;try{dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:SERVICES})}finally{clearTimeout(waitT)}
   blog('Seçilen cihaz: '+(dev.name||'(adsız)'));
   if(BT.device&&BT.device!==dev){try{BT.device.gatt.disconnect()}catch(e){}}
-  BT.device=dev;
+  BT.device=dev;if(dev.name&&S.settings.btName!==dev.name){S.settings.btName=dev.name;save()}
   if(!dev._kanaat){dev.addEventListener('gattserverdisconnected',()=>{blog('Bağlantı koptu');BT.char=null;renderChip()});dev._kanaat=true}
   let server;
   try{server=await dev.gatt.connect()}catch(e){blog('Bağlanamadı: '+errText(e));throw new Error('Yazıcıya bağlanılamadı. Yazıcı açık mı, Niimbot uygulaması kapalı mı? ('+errText(e)+')')}
@@ -1215,11 +1218,20 @@ async function connectBT(){
   return true;
 }
 async function ensureBT(){
+  clearTimeout(btIdle);
   if(BT.char&&BT.device?.gatt?.connected&&BT.niim===isNiim())return true;
-  if(BT.device){blog('Yeniden bağlanılıyor: '+(BT.device.name||''));
-    try{await attach(await BT.device.gatt.connect());return true}catch(e){blog('Yeniden bağlanamadı: '+errText(e))}}
+  if(!BT.device&&navigator.bluetooth?.getDevices&&S.settings.btName){try{const ds=await navigator.bluetooth.getDevices();BT.device=ds.find(d=>d.name===S.settings.btName)||null;
+    if(BT.device&&!BT.device._kanaat){BT.device.addEventListener('gattserverdisconnected',()=>{blog('Bağlantı kapandı');BT.char=null;renderChip()});BT.device._kanaat=true}}catch(e){}}
+  if(BT.device){const tries=S.settings.shareBT!==false?4:1;
+    for(let i=0;i<tries;i++){blog('Yazıcıya bağlanılıyor: '+(BT.device.name||'')+(i?` (deneme ${i+1})`:''));
+      try{await attach(await BT.device.gatt.connect());return true}catch(e){blog('Bağlanamadı: '+errText(e))}
+      if(i<tries-1){toast('Yazıcı başka telefonda olabilir, tekrar deneniyor…');await sleep(2500)}}}
   return false;
 }
+/* yazıcıyı paylaş: baskı bitince bağlantıyı bırak ki diğer telefonlar da basabilsin */
+let btIdle=null;
+function releaseBT(){clearTimeout(btIdle);if(S.settings.shareBT===false||BT.niim)return;
+  btIdle=setTimeout(()=>{if(printing||!BT.device?.gatt?.connected)return;try{BT.device.gatt.disconnect();blog('Yazıcı bırakıldı (paylaşım açık)')}catch(e){}BT.char=null;renderChip()},3000)}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function sendBytes(bytes){
   /* hızlı: büyük paket, kısa bekleme; güvenli: küçük paket, uzun bekleme (kâğıtta bozukluk olursa) */
@@ -1309,7 +1321,7 @@ async function printDoc(doc,label){
     printing=true;toast(label+' yazdırılıyor…');
     try{if(BT.niim)await niimPrint(renderCanvas(doc));else await sendBytes(jobFor(doc));toast(label+' yazdırıldı'+(BT.niim&&niimLabels>1?` (${niimLabels} etiket)`:''));return true}
     catch(e){blog('Baskı hatası: '+errText(e));toast('Yazdırılamadı: '+errText(e));showPreview(doc,label);return false}
-    finally{printing=false}
+    finally{printing=false;releaseBT()}
   }
   showPreview(doc,label);return false;
 }
