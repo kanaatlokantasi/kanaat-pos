@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 123</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 124</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1451,7 +1451,7 @@ const A={
     await printDoc(kitchenDoc(tName(ui.table),items),'Mutfak fişi');
     items.forEach(x=>x.l.sent=x.l.qty);pruneTable(ui.table);save();if(document.querySelector('.sheet'))openCart();vOrder()},
   async bill(){const t=S.tables[ui.table];if(!t)return;const k=ui.table;
-    await printDoc(billDoc(tName(k),t.lines.filter(l=>l.qty>0).map(l=>({...l,en:enLine(l)})),tTotal(t),{lang:ui.lang,tip:tipOfT(t),tipPct:tipPctT(t),splitN:t.split||1}),'Hesap fişi');
+    await printDoc(billDoc(tName(k),t.lines.filter(l=>l.qty>0).map(l=>({...l,en:enLine(l)})),tTotal(t),{lang:ui.lang,tip:tipOfT(t),tipPct:tipPctT(t),splitN:t.split||1,waiter:t.waiter||S.settings.waiter||''}),'Hesap fişi');
     if(ui.table!==k||!S.tables[k])return;
     const tp=tipOfT(t);
     const html=`<h2>Ödeme alındı mı?</h2>
@@ -1622,7 +1622,7 @@ function askWaiter(change){
     ${change?'<button class="btn" data-act="close">Vazgeç</button>':''}`);
   const i=document.getElementById('wname');setTimeout(()=>i.focus(),80);
   const go=()=>{const v=i.value.replace(/\s+/g,' ').trim();
-    if(v.split(' ').length<2||v.length<4){document.getElementById('wErr').textContent='Lütfen ad ve soyad yazın.';return}
+    if(!(isAdmin()&&v.length>=2)&&(v.split(' ').length<2||v.length<4)){document.getElementById('wErr').textContent='Lütfen ad ve soyad yazın.';return}
     S.settings.waiter=v.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');save();closeLayer();renderWaiterTag();render();toast('Garson: '+S.settings.waiter);if(CL&&CL.on)CL.db.collection('staff').doc(fid(S.settings.waiter)).set({n:S.settings.waiter,at:Date.now()}).catch(()=>{})};
   document.getElementById('wOk').onclick=go;i.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
   if(!change){const sc=$layer.querySelector('[data-scrim]');if(sc)sc.removeAttribute('data-scrim')}
@@ -1642,7 +1642,7 @@ function qrSvg(text){const M=qrMatrix(text,'L');if(!M)return '';const n=M.length
   return `<svg viewBox="0 0 ${n+2*q} ${n+2*q}" shape-rendering="crispEdges" role="img" aria-label="Hesap QR kodu"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`}
 A.qrBill=async()=>{const k=ui.table,t=S.tables[k];if(!t)return;const lines=t.lines.filter(l=>l.qty>0);if(!lines.length)return;
   const fx=S.settings.fx||{};
-  const o={v:1,t:tName(k),w:S.settings.waiter||'',a:Math.round(Date.now()/6e4),g:ui.lang||'tr',
+  const o={v:1,t:tName(k),w:t.waiter||S.settings.waiter||'',a:Math.round(Date.now()/6e4),g:ui.lang||'tr',
     l:lines.map(l=>{const it=l.itemId&&S.menu.items.find(i=>i.id===l.itemId);const r=[l.name,l.price,l.qty,(l.pkg?1:0)|(l.ikram?2:0)];if(it&&it.en)r.push(it.en);return r}),
     p:tipOfT(t)||0,pp:tipPctT(t)||0,s:t.split||1,f:handOf(S.settings.handFont)?S.settings.handFont:0,x:fxReady()?{e:fx.EUR||0,u:fx.USD||0,d:fx.date||'',r:fx.src||'',at:fx.at||0}:0};
   const url=location.origin+location.pathname+'#h='+await packBill(o);const svg=qrSvg(url);
