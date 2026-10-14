@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 118</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 119</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -888,8 +888,8 @@ function vSettings(){
    <div class="card stack">
      <h3 style="margin:0">Yönetici</h3>
      <p class="muted" style="margin:0;font-size:13px">Rapor, Menü, masa boşaltma ve bu ayarlar yönetici şifresiyle açılır. Uygulamadan çıkınca ya da 15 dakika işlem yapılmayınca kendiliğinden kilitlenir.</p>
-     <label class="row" style="font-weight:600;align-items:flex-start"><input type="checkbox" id="trustAdm" ${s.trustedAdmin?'checked':''} style="margin-top:3px"> Bu benim telefonum: şifre sorma</label>
-     <p class="muted" style="margin:0;font-size:13px">Sadece yöneticinin kendi telefonunda açın; garson telefonlarında açmayın. Telefonunuzun ekran kilidi (Face ID / şifre) açık olsun. “Kilitle”ye basarsanız bu ayar kapanır.</p>
+     <label class="row" style="font-weight:600;align-items:flex-start"><input type="checkbox" id="trustAdm" ${s.trustedAdmin?'checked':''} style="margin-top:3px"> Bu yönetici cihazı (kasa bilgisayarı / yönetici telefonu): şifre sorma, tüm masaları göster</label>
+     <p class="muted" style="margin:0;font-size:13px">Sadece kasadaki bilgisayarda ve yöneticinin kendi telefonunda açın; garson telefonlarında açmayın. Telefonunuzun ekran kilidi (Face ID / şifre) açık olsun. “Kilitle”ye basarsanız bu ayar kapanır.</p>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="changePin">Şifreyi değiştir</button><button class="btn pri" data-act="lock">Kilitle</button></div>
    </div>`:`
    <div class="card stack">
