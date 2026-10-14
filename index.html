@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 119</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 120</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -807,15 +807,17 @@ function vSettings(){
      <p class="muted" style="margin:0;font-size:13px">Sadece bu telefonda geçerlidir. Gözlük kullanan garsonların telefonunda “Büyük” veya “Çok büyük” seçin.</p>
    </div>
    ${(()=>{try{return window.top!==window}catch(e){return true}})()?`<div class="note warn"><b>Bu sayfa başka bir sayfanın içinde açılmış.</b> Bu şekilde Bluetooth yazıcı seçimi tamamlanmaz. Uygulamayı kendi linkinden (Netlify) Bluefy ile açın. Adisyon, ödeme ve rapor burada da çalışır.</div>`:''}
-   ${hasBT?'':`<div class="note warn"><b>Bu tarayıcı Bluetooth yazıcıya bağlanamıyor.</b> iPhone'da Safari ve Chrome Bluetooth'a izin vermez. Bu sayfayı App Store'daki ücretsiz <b>Bluefy – Web BLE Browser</b> uygulamasıyla açın. O zamana kadar fişler ekranda görüntü olarak açılır.</div>`}
+   ${hasBT||s.printer==='system'?'':`<div class="note warn"><b>Bu tarayıcı Bluetooth yazıcıya bağlanamıyor.</b> iPhone'da Safari ve Chrome Bluetooth'a izin vermez. Bu sayfayı App Store'daki ücretsiz <b>Bluefy – Web BLE Browser</b> uygulamasıyla açın. O zamana kadar fişler ekranda görüntü olarak açılır.</div>`}
    <div class="card stack">
-     <h3 style="margin:0">Bluetooth yazıcı</h3>
-     <div class="f">Yazıcı türü<div class="seg"><button class="${s.printer==='niimbot'?'act':''}" data-act="set" data-k="printer" data-val="niimbot">Niimbot B1</button><button class="${s.printer!=='niimbot'?'act':''}" data-act="set" data-k="printer" data-val="escpos">Fiş yazıcısı</button></div></div>
+     <h3 style="margin:0">Yazıcı</h3>
+     <div class="f">Yazıcı türü<div class="seg"><button class="${s.printer==='escpos'||!s.printer?'act':''}" data-act="set" data-k="printer" data-val="escpos">Bluetooth fiş yazıcısı</button><button class="${s.printer==='system'?'act':''}" data-act="set" data-k="printer" data-val="system">Bilgisayar yazıcısı (USB)</button><button class="${s.printer==='niimbot'?'act':''}" data-act="set" data-k="printer" data-val="niimbot">Niimbot B1</button></div></div>
+     ${s.printer==='system'?`<p class="muted" style="margin:0;font-size:13px">Fiş, bilgisayara bağlı yazıcıdan (ör. Rongta) basılır. Rongta'yı Windows'ta <b>varsayılan yazıcı</b> yapın. Her baskıda yazdırma penceresi çıkmasın istiyorsanız Chrome'u <b>--kiosk-printing</b> ayarıyla açın.</p>
+     <button class="btn" data-act="testPrint">Deneme fişi</button>`:`
      <div class="row"><span class="chip ${BT.char?'on':''}"><i></i>${BT.char?esc(BT.device?.name||'Bağlı'):'Bağlı değil'}</span></div>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
        <button class="btn pri" data-act="connect" ${hasBT?'':'disabled'}>${BT.char?'Yeniden bağlan':'Yazıcıya bağlan'}</button>
        <button class="btn" data-act="testPrint">Deneme fişi</button></div>
-     ${BT.char?'<button class="btn danger" data-act="disconnect">Bağlantıyı kes</button>':''}
+     ${BT.char?'<button class="btn danger" data-act="disconnect">Bağlantıyı kes</button>':''}`}
      ${s.printer==='niimbot'?`
      <div class="f">Takılı etiket boyutu (en × boy)<div class="seg" style="grid-auto-flow:row;grid-template-columns:repeat(3,1fr)">${[[50,30],[50,50],[50,80],[50,100],[40,30],[40,60]].map(([w,h])=>`<button class="${s.labelW==w&&s.labelH==h?'act':''}" data-act="label" data-w="${w}" data-h="${h}">${w}×${h}</button>`).join('')}</div></div>
      <div class="f">Baskı koyuluğu<div class="seg">${[1,2,3,4,5].map(n=>`<button class="${s.density==n?'act':''}" data-act="set" data-k="density" data-val="${n}">${n}</button>`).join('')}</div></div>
@@ -1319,6 +1321,7 @@ async function niimPrint(canvas){
 }
 let printing=false;
 async function printDoc(doc,label){
+  if(S.settings.printer==='system')return sysPrint(doc,label);
   const hk=(doc.find(r=>r.k==='hand')||{}).f;if(hk&&!(await handReady(hk))){doc=doc.filter(r=>r.k!=='hand');toast('El yazısı yüklenemedi (internet?), düz yazıyla basılıyor')}
   if(await ensureBT()){
     if(printing){toast('Yazıcı meşgul, biraz bekleyin');return false}
@@ -1329,6 +1332,15 @@ async function printDoc(doc,label){
   }
   showPreview(doc,label);return false;
 }
+/* bilgisayara bağlı yazıcı (USB/Windows): fişi görüntü olarak tarayıcının yazdırmasıyla bas */
+async function sysPrint(doc,label){
+  const hk=(doc.find(r=>r.k==='hand')||{}).f;if(hk&&!(await handReady(hk)))doc=doc.filter(r=>r.k!=='hand');
+  const url=renderCanvas(doc).toDataURL('image/png');
+  return new Promise(res=>{const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);
+    const d=f.contentDocument;d.open();d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(label)}</title><style>@page{margin:0}html,body{margin:0;padding:0;background:#fff}img{width:72mm;display:block;margin:0 auto}</style></head><body><img id="r" src="${url}"></body></html>`);d.close();
+    const img=d.getElementById('r');let done=false;
+    const go=()=>{if(done)return;done=true;toast(label+' yazıcıya gönderildi');try{f.contentWindow.focus();f.contentWindow.print()}catch(e){toast('Yazdırılamadı: '+errText(e))}setTimeout(()=>{f.remove();res(true)},1500)};
+    if(img.complete)go();else{img.onload=go;img.onerror=go}})}
 function docText(doc){return doc.map(r=>{if(r.k==='logo')return 'KANAAT LOKANTASI';if(r.k==='hr')return '----------------';if(r.k==='bs'||r.k==='be')return '================';if(r.k==='qr')return r.data;if(r.k==='gap')return '';
   if(r.k==='lr'||r.k==='big')return r.l+(r.r?'  '+r.r:'');return r.text||''}).filter((x,i,a)=>!(x===''&&a[i-1]==='')).join('\n').trim()}
 function showPreview(doc,label){
