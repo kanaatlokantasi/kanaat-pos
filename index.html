@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 127</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 128</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -321,7 +321,7 @@ const hm=t=>new Date(t).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-dig
 const dmy=t=>new Date(t).toLocaleDateString('tr-TR');
 
 const HALF_CATS=['Çorbalar','Sıcak Sebze Yemekleri','Zeytinyağlılar','Izgaralar','Salatalar','Pilav ve Makarnalar','Köfteler','Et Yemekleri','Tatlılar'];
-const NO_HALF=['Elbasan Tava','Kuzu Fırın','Kuzu Kızartma','Kuzu Büryan','Kuzu Etli Özbek Pilavı','Çiftlik Kebabı','Kuzu Kapama','Talaş Kebabı','Kuzu Etli Talaş Böreği','İmam Bayıldı','Zeytinyağlı Enginar Dolma','Zeytinyağlı Enginar','Karnıyarık','Güveçte Parmak Kebabı','Tavuk Kızartma','Şehriyeli Tavuk','Dalyan Köfte','Dana Rosto',
+const NO_HALF=['Kaymaklı Ayva Tatlısı','Sade Ayva Tatlısı','Elbasan Tava','Kuzu Fırın','Kuzu Kızartma','Kuzu Büryan','Kuzu Etli Özbek Pilavı','Çiftlik Kebabı','Kuzu Kapama','Talaş Kebabı','Kuzu Etli Talaş Böreği','İmam Bayıldı','Zeytinyağlı Enginar Dolma','Zeytinyağlı Enginar','Karnıyarık','Güveçte Parmak Kebabı','Tavuk Kızartma','Şehriyeli Tavuk','Dalyan Köfte','Dana Rosto',
   'Kuzu Ayak Paça','Güveç Türlü','Kereviz Dolma','Tavuk Bonfile','Bonfile','Karışık Izgara','Kase Yoğurdu','Cacık','Fırın Makarna',
   'Kuzu Ciğer Sarma','Kağıt Kebap','Kuzu Keşkek','Kuzu Haşlama','Kuzu Kaburga Dolma','Fırın Bonfile veya Pirzola','Palamut Pilaki',
   'Sütlaç','Aşure','Tavuk Göğsü','Kazandibi','Zerde','Yassı Kadayıf','Şekerpare','Tel Kadayıf','Keşkül','Krem Şokola'];
@@ -438,6 +438,7 @@ if(!S.settings.handKalamV1){if(!S.settings.handFont||S.settings.handFont==='plai
 if(!S.settings.shareOffV1){S.settings.shareBT=false;S.settings.shareOffV1=true;save()}
 if(!S.settings.elbasanNoHalfV1){S.menu.items.forEach(i=>{if(i.name==='Elbasan Tava')i.noHalf=true});S.settings.elbasanNoHalfV1=true;save()}
 if(!S.settings.kuzuNoHalfV1){S.menu.items.forEach(i=>{if(['Kuzu Fırın','Kuzu Kızartma','Kuzu Büryan'].includes(i.name))i.noHalf=true});S.settings.kuzuNoHalfV1=true;save()}
+if(!S.settings.ayvaNoHalfV1){S.menu.items.forEach(i=>{if(['Kaymaklı Ayva Tatlısı','Sade Ayva Tatlısı'].includes(i.name))i.noHalf=true});S.settings.ayvaNoHalfV1=true;save()}
 if(!S.settings.yogurtluV1){S.menu.items.forEach(i=>{if(i.name==='Yoğurlu Pazı Salatası')i.name='Yoğurtlu Pazı Salatası'});S.settings.yogurtluV1=true;save()}
 if(!S.settings.domatesV1){const c=S.menu.cats.find(x=>x.name==='Çorbalar');if(c&&!S.menu.items.some(i=>i.name==='Domates Çorbası')){const k=S.menu.items.findIndex(i=>i.name==='Şehriye Çorbası');S.menu.items.splice(k>=0?k:S.menu.items.length,0,{id:uid(),cat:c.id,name:'Domates Çorbası',price:180})}S.settings.domatesV1=true;save()}
 applyCatOrder();
