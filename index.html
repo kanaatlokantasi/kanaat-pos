@@ -187,6 +187,7 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .ctile .q{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);border-radius:999px;min-width:24px;height:24px;display:grid;place-items:center;font-size:13px;font-weight:700;padding:0 6px}
 .ctile:active{background:var(--accent-soft)}
 .vbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;margin-bottom:10px;font-size:16px}
+.vbtn.on{background:#b42318!important;border-color:#b42318!important}
 .vtabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}.vtabs button{min-height:46px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);font-weight:800;font-size:17px;color:inherit}.vtabs button.on{background:#1d4fa3;color:#fff;border-color:#1d4fa3}.vtabs button.busy{opacity:.35}
 .vrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
 .vrow select{font:inherit;font-size:16px;min-height:42px;width:100%;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;padding:0 6px}
@@ -295,7 +296,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 131</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 132</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -601,7 +602,7 @@ function vTables(){
   const openSum=open.reduce((a,t)=>a+tTotal(S.tables[t.key]),0);
   $main.innerHTML=`<div class="stack">
     ${sampleBanner()}
-    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}<button class="btn pri vbtn" data-act="voice"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>Sesli sipariş</button>
+    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}${voiceBtn()}
     <div class="tgrid">${list.map(t=>{const o=S.tables[t.key];const n=tCount(o);
       if(n&&!mineT(o))return `<div class="tile" aria-disabled="true" style="opacity:.45;border-style:dashed;cursor:not-allowed"><span class="n">${esc(t.short)}</span><span class="m">Dolu</span></div>`;
       const mins=o&&n?Math.max(0,Math.round((Date.now()-o.openedAt)/60000)):0;
@@ -1731,12 +1732,35 @@ function vRender(){const el=document.getElementById('vList');if(!el)return;const
       ${noPkg(it)?'<span></span>':`<button class="vt pk ${pk?'on':''}" data-act="vPkg" data-i="${i}" aria-label="Paket">P</button>`}
       <button class="vt" data-act="vDel" data-i="${i}" aria-label="Sil">✕</button></div>`}).join(''):'<p class="muted" style="margin:6px 0">Söyledikleriniz burada ürün olarak görünecek.</p>';
   const n=L.filter(v=>S.menu.items.some(x=>x.id===v.sel)).reduce((a,v)=>a+v.qty,0);const b=document.getElementById('vOk');if(b){b.disabled=!n;b.textContent=n?(ui.vTable?`${tName(ui.vTable)} hesabına ekle (${n} ürün)`:`Masa seçin (${n} ürün)`):'Hesaba ekle'}}
-const V_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||/Bluefy/i.test(navigator.userAgent);
+const V_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+/* Bluefy (iPhone'da Bluetooth'lu tarayıcı) konuşma tanımayı desteklemiyor; orada klavye mikrofonu kullanılır */
+const SR_CLS=window.SpeechRecognition||window.webkitSpeechRecognition;
+const SR_OK=!!SR_CLS&&!(V_IOS&&navigator.bluetooth)&&(()=>{try{return localStorage.getItem('kSrBroken')!=='1'}catch(e){return true}})();
+const MIC_SVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>';
+function voiceBtn(){return SR_OK?`<button class="btn pri vbtn" id="vHold" style="touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none">${MIC_SVG}<span>Basılı tut, konuş</span></button>`
+  :`<button class="btn pri vbtn" data-act="voice">${MIC_SVG}<span>Sesli sipariş</span></button>`}
+/* bas-konuş: basılı tutarken dinler, bırakınca onay penceresi açılır */
+let vRec=null,vTxt='',vStarted=false,vWatch=null,vDownAt=0;
+function vHoldStart(btn){if(vRec)return;vTxt='';vStarted=false;vDownAt=Date.now();
+  btn.classList.add('on');btn.querySelector('span').textContent='Dinliyorum… bırakınca biter';
+  try{vRec=new SR_CLS();vRec.lang='tr-TR';vRec.interimResults=true;vRec.continuous=true;
+    vRec.onstart=()=>{vStarted=true;clearTimeout(vWatch)};
+    vRec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript+' ';vTxt=t.trim();const sp=btn.querySelector('span');if(sp)sp.textContent=vTxt.slice(-40)||'Dinliyorum…'};
+    vRec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){toast('Mikrofon izni yok · klavye mikrofonunu kullanın')}};
+    vRec.onend=()=>{const t=vTxt;vRec=null;clearTimeout(vWatch);const b=document.getElementById('vHold');if(b){b.classList.remove('on');b.querySelector('span').textContent='Basılı tut, konuş'}
+      if(t||Date.now()-vDownAt<450)A.voice(t)};
+    vRec.start();
+    vWatch=setTimeout(()=>{if(!vStarted){try{vRec&&vRec.abort()}catch(e){}vRec=null;try{localStorage.setItem('kSrBroken','1')}catch(e){}toast('Bu telefonda bas-konuş çalışmıyor, klavye mikrofonu açılıyor');A.voice('')}},2500);
+  }catch(e){vRec=null;A.voice('')}}
+function vHoldEnd(){if(vRec){try{vRec.stop()}catch(e){}}}
+document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('#vHold');if(!b)return;e.preventDefault();vHoldStart(b)});
+['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,e=>{if(vRec&&e.target.closest&&(e.target.closest('#vHold')||t!=='pointerleave'))vHoldEnd()}));
+document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('#vHold'))e.preventDefault()});
 function vTabs(){const el=document.getElementById('vTabs');if(!el)return;
   el.innerHTML=tableList().filter(x=>x.key.startsWith('M')||!S.tables[x.key]||mineT(S.tables[x.key])).map(x=>{const t=S.tables[x.key],busy=t&&tCount(t)&&!mineT(t);
     return `<button class="${ui.vTable===x.key?'on':''} ${busy?'busy':''}" data-act="vTab" data-k="${esc(x.key)}" ${busy?'disabled':''}>${esc(x.short)}</button>`}).join('')}
 A.vTab=d=>{ui.vTable=d.k;vTabs();vRender()};
-A.voice=()=>{ui.voice=[];ui.vTable=ui.view==='order'&&ui.table?ui.table:null;const SR=!V_IOS&&(window.SpeechRecognition||window.webkitSpeechRecognition);
+A.voice=(pre)=>{const prefill=typeof pre==='string'?pre:'';ui.voice=[];ui.vTable=ui.view==='order'&&ui.table?ui.table:null;const SR=null;
   modal(`<div class="row" style="justify-content:space-between"><h2>Sesli sipariş</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
     <p class="muted" style="margin:0">Klavyedeki <b>mikrofon</b> tuşuna basıp söyleyin. Örnek: <i>“masa üç, iki mercimek, bir az pilav, üç ayran”</i></p>
     <textarea id="vText" rows="3" style="width:100%;font:inherit;font-size:18px;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;box-sizing:border-box" placeholder="Söyleyin ya da yazın…" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
@@ -1744,9 +1768,9 @@ A.voice=()=>{ui.voice=[];ui.vTable=ui.view==='order'&&ui.table?ui.table:null;con
     <div><b style="font-size:14px">Masa</b><div class="vtabs" id="vTabs" style="margin-top:6px"></div></div>
     <div id="vList"></div>
     <button class="btn pri block" id="vOk" style="min-height:54px;font-size:18px" disabled>Hesaba ekle</button>`);
-  const ta=document.getElementById('vText');setTimeout(()=>ta.focus(),80);
+  const ta=document.getElementById('vText');ta.value=prefill;if(!prefill)setTimeout(()=>ta.focus(),80);
   let tm=null;const upd=()=>{clearTimeout(tm);tm=setTimeout(()=>{ui.voice=vParse(ta.value);if(vParse.table&&tableList().some(x=>x.key===vParse.table)&&mineT(S.tables[vParse.table])){ui.vTable=vParse.table;vTabs()}vRender()},250)};
-  ta.addEventListener('input',upd);vTabs();vRender();
+  ta.addEventListener('input',upd);vTabs();vRender();if(prefill)upd();
   if(SR){const b=document.getElementById('vMic');let rec=null;b.onclick=()=>{if(rec){try{rec.stop()}catch(e){}return}
     try{rec=new SR();rec.lang='tr-TR';rec.interimResults=true;rec.continuous=true;const base=ta.value?ta.value+', ':'';
       rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript+' ';ta.value=base+t.trim();upd()};
