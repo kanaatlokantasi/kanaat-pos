@@ -187,6 +187,7 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .ctile .q{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);border-radius:999px;min-width:24px;height:24px;display:grid;place-items:center;font-size:13px;font-weight:700;padding:0 6px}
 .ctile:active{background:var(--accent-soft)}
 .vbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;margin-bottom:10px;font-size:16px}
+.vtabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}.vtabs button{min-height:46px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);font-weight:800;font-size:17px;color:inherit}.vtabs button.on{background:#1d4fa3;color:#fff;border-color:#1d4fa3}.vtabs button.busy{opacity:.35}
 .vrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
 .vrow select{font:inherit;font-size:16px;min-height:42px;width:100%;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;padding:0 6px}
 .vrow .vq{display:flex;align-items:center;gap:2px}.vrow .vq button,.vrow .vt{min-width:38px;min-height:40px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font-weight:800;font-size:15px;color:inherit}
@@ -294,7 +295,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 130</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 131</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -600,7 +601,7 @@ function vTables(){
   const openSum=open.reduce((a,t)=>a+tTotal(S.tables[t.key]),0);
   $main.innerHTML=`<div class="stack">
     ${sampleBanner()}
-    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}
+    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}<button class="btn pri vbtn" data-act="voice"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>Sesli sipariş</button>
     <div class="tgrid">${list.map(t=>{const o=S.tables[t.key];const n=tCount(o);
       if(n&&!mineT(o))return `<div class="tile" aria-disabled="true" style="opacity:.45;border-style:dashed;cursor:not-allowed"><span class="n">${esc(t.short)}</span><span class="m">Dolu</span></div>`;
       const mins=o&&n?Math.max(0,Math.round((Date.now()-o.openedAt)/60000)):0;
@@ -650,7 +651,7 @@ function vOrder(){
       <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button>${IKRAM_ON?`<button class="btn ${ui.ikram?'ikon':''}" data-act="toggleIkram" aria-pressed="${ui.ikram?'true':'false'}">İkram</button>`:''}<button class="btn" data-act="moveTable">Taşı</button>${CL.on?'<button class="btn" data-act="handover">Devret</button>':''}</div>
     ${ui.pkg?`<div class="pkgbar"><b>PAKET ekleniyor</b><span>Dokunduğunuz ürünler paket olarak yazılır.</span><button class="linkbtn" data-act="togglePkg">Bitir</button></div>`:''}
     ${ui.ikram?`<div class="pkgbar ikbar"><b>İKRAM ekleniyor</b><span>Dokunduğunuz ürünler 0 ₺ ikram olarak yazılır.</span><button class="linkbtn" data-act="toggleIkram">Bitir</button></div>`:''}
-    ${!ui.cat?`<div class="osrch"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="osearch" type="search" enterkeyhint="search" placeholder="Ürün ara… (ör. mer, tas, köf)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(ui.q||'')}">${ui.q?'<button class="sx" data-act="clrQ" aria-label="Aramayı temizle">✕</button>':''}</div><button class="btn vbtn" data-act="voice"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>Sesli sipariş</button><div id="sres"></div><div id="cgridw"><div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
+    ${!ui.cat?`<div class="osrch"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="osearch" type="search" enterkeyhint="search" placeholder="Ürün ara… (ör. mer, tas, köf)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(ui.q||'')}">${ui.q?'<button class="sx" data-act="clrQ" aria-label="Aramayı temizle">✕</button>':''}</div><div id="sres"></div><div id="cgridw"><div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
         return `<button class="ctile ${n?'hasq':''}" data-act="cat" data-id="${c.id}">${n?`<span class="q">${n}</span>`:''}<span class="cn">${esc(c.name)}</span><span class="cc">${S.menu.items.filter(i=>i.cat===c.id).length} ürün</span></button>`}).join('')}<button class="ctile freet" data-act="freeAmt"><span class="cn">Paket</span><span class="cc">Tutarı elle yaz</span></button></div></div>`:`
     <div class="catnav"><button class="btn" data-act="cat" data-id="">◀ Kategoriler</button><h3>${esc((cats.find(c=>c.id===ui.cat)||{}).name||'')}</h3></div>
     <div class="cats">${cats.map(c=>`<button class="${c.id===ui.cat?'act':''}" data-act="cat" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>`}
@@ -1703,17 +1704,20 @@ function vMatch(words){const q=words.join(' ');if(!q)return[];
 function vParse(text){
   const segs=[];let cur=null;const flush=()=>{if(cur&&cur.words.length)segs.push(cur);cur=null};
   const norm=String(text).replace(/[,.;\n]+/g,' | ').replace(/\bve\b/gi,' | ');
+  let table=null,wantT=false;
   for(const raw of norm.split(/\s+/).filter(Boolean)){
     if(raw==='|'){flush();continue}
     const t=fold(raw);if(!t)continue;
     for(const w of t.split(' ')){
+      if(w==='masa'||w==='masaya'||w==='masanin'){wantT=true;continue}
+      if(wantT){wantT=false;const n=/^\d+$/.test(w)?+w:V_NUM[w];if(n){table='M'+n;continue}}
       if(/^\d+$/.test(w)||(w in V_NUM&&w!=='yarim')){const n=/^\d+$/.test(w)?+w:V_NUM[w];if(cur&&cur.words.length)flush();cur=cur||{qty:0,words:[],half:false,pkg:false};cur.qty=(cur.qty||0)+n;continue}
       cur=cur||{qty:0,words:[],half:false,pkg:false};
       if(w==='az'||w==='yarim'){cur.half=true;continue}
       if(w==='paket'||w==='paketli'||w==='paketle'){cur.pkg=true;continue}
       if(V_SKIP.has(w))continue;
       cur.words.push(w)}}
-  flush();
+  flush();vParse.table=table;
   return segs.map(sg=>{const opts=vMatch(sg.words);return{qty:Math.max(1,sg.qty||1),half:sg.half,pkg:sg.pkg,said:sg.words.join(' '),opts:opts.map(i=>i.id),sel:opts[0]?.id||''}})}
 function vCanHalf(it){const c=S.menu.cats.find(x=>x.id===it.cat);return !!(c&&c.half&&!it.noHalf)}
 function vRender(){const el=document.getElementById('vList');if(!el)return;const L=ui.voice||[];
@@ -1726,28 +1730,39 @@ function vRender(){const el=document.getElementById('vList');if(!el)return;const
       ${ch?`<button class="vt ${v.half?'on':''}" data-act="vHalf" data-i="${i}">AZ</button>`:'<span></span>'}
       ${noPkg(it)?'<span></span>':`<button class="vt pk ${pk?'on':''}" data-act="vPkg" data-i="${i}" aria-label="Paket">P</button>`}
       <button class="vt" data-act="vDel" data-i="${i}" aria-label="Sil">✕</button></div>`}).join(''):'<p class="muted" style="margin:6px 0">Söyledikleriniz burada ürün olarak görünecek.</p>';
-  const n=L.filter(v=>S.menu.items.some(x=>x.id===v.sel)).reduce((a,v)=>a+v.qty,0);const b=document.getElementById('vOk');if(b){b.disabled=!n;b.textContent=n?`Hesaba ekle (${n} ürün)`:'Hesaba ekle'}}
-A.voice=()=>{if(!ui.table)return;ui.voice=[];const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const n=L.filter(v=>S.menu.items.some(x=>x.id===v.sel)).reduce((a,v)=>a+v.qty,0);const b=document.getElementById('vOk');if(b){b.disabled=!n;b.textContent=n?(ui.vTable?`${tName(ui.vTable)} hesabına ekle (${n} ürün)`:`Masa seçin (${n} ürün)`):'Hesaba ekle'}}
+const V_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||/Bluefy/i.test(navigator.userAgent);
+function vTabs(){const el=document.getElementById('vTabs');if(!el)return;
+  el.innerHTML=tableList().filter(x=>x.key.startsWith('M')||!S.tables[x.key]||mineT(S.tables[x.key])).map(x=>{const t=S.tables[x.key],busy=t&&tCount(t)&&!mineT(t);
+    return `<button class="${ui.vTable===x.key?'on':''} ${busy?'busy':''}" data-act="vTab" data-k="${esc(x.key)}" ${busy?'disabled':''}>${esc(x.short)}</button>`}).join('')}
+A.vTab=d=>{ui.vTable=d.k;vTabs();vRender()};
+A.voice=()=>{ui.voice=[];ui.vTable=ui.view==='order'&&ui.table?ui.table:null;const SR=!V_IOS&&(window.SpeechRecognition||window.webkitSpeechRecognition);
   modal(`<div class="row" style="justify-content:space-between"><h2>Sesli sipariş</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
-    <p class="muted" style="margin:0">Klavyedeki <b>mikrofon</b> tuşuna basıp söyleyin. Örnek: <i>“iki mercimek, bir az pilav, üç ayran, bir paket sütlaç”</i></p>
-    <textarea id="vText" rows="3" style="width:100%;font:inherit;font-size:18px;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;box-sizing:border-box" placeholder="Söyleyin ya da yazın…" autocapitalize="off" autocomplete="off"></textarea>
+    <p class="muted" style="margin:0">Klavyedeki <b>mikrofon</b> tuşuna basıp söyleyin. Örnek: <i>“masa üç, iki mercimek, bir az pilav, üç ayran”</i></p>
+    <textarea id="vText" rows="3" style="width:100%;font:inherit;font-size:18px;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;box-sizing:border-box" placeholder="Söyleyin ya da yazın…" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
     ${SR?'<button class="btn" id="vMic" style="min-height:46px">🎤 Dinlemeye başla</button>':''}
+    <div><b style="font-size:14px">Masa</b><div class="vtabs" id="vTabs" style="margin-top:6px"></div></div>
     <div id="vList"></div>
     <button class="btn pri block" id="vOk" style="min-height:54px;font-size:18px" disabled>Hesaba ekle</button>`);
   const ta=document.getElementById('vText');setTimeout(()=>ta.focus(),80);
-  const upd=()=>{ui.voice=vParse(ta.value);vRender()};ta.addEventListener('input',upd);vRender();
-  if(SR){const b=document.getElementById('vMic');let rec=null;b.onclick=()=>{if(rec){rec.stop();return}
-    rec=new SR();rec.lang='tr-TR';rec.interimResults=true;rec.continuous=true;const base=ta.value?ta.value+', ':'';
-    rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript+' ';ta.value=base+t.trim();upd()};
-    rec.onend=()=>{rec=null;b.textContent='🎤 Dinlemeye başla'};rec.onerror=e=>{toast('Mikrofon: '+(e.error||'hata'))};
-    try{rec.start();b.textContent='■ Dinlemeyi bitir'}catch(e){rec=null;toast('Mikrofon açılamadı')}}}
-  document.getElementById('vOk').onclick=()=>{const t=curT();let n=0;
+  let tm=null;const upd=()=>{clearTimeout(tm);tm=setTimeout(()=>{ui.voice=vParse(ta.value);if(vParse.table&&tableList().some(x=>x.key===vParse.table)&&mineT(S.tables[vParse.table])){ui.vTable=vParse.table;vTabs()}vRender()},250)};
+  ta.addEventListener('input',upd);vTabs();vRender();
+  if(SR){const b=document.getElementById('vMic');let rec=null;b.onclick=()=>{if(rec){try{rec.stop()}catch(e){}return}
+    try{rec=new SR();rec.lang='tr-TR';rec.interimResults=true;rec.continuous=true;const base=ta.value?ta.value+', ':'';
+      rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript+' ';ta.value=base+t.trim();upd()};
+      rec.onend=()=>{rec=null;b.textContent='🎤 Dinlemeye başla'};rec.onerror=e=>{rec=null;b.textContent='🎤 Dinlemeye başla';toast('Mikrofon: '+(e.error||'hata')+' · klavyedeki mikrofonu kullanın')};
+      rec.start();b.textContent='■ Dinlemeyi bitir'}catch(e){rec=null;toast('Mikrofon açılamadı, klavyedeki mikrofonu kullanın')}}}
+  document.getElementById('vOk').onclick=()=>{const k=ui.vTable;if(!k){toast('Önce masayı seçin');return}if(!mineT(S.tables[k])){toast('Bu masa başka garsonda');return}
+    const prev=ui.table;ui.table=k;const t=curT();let n=0;
     for(const v of ui.voice||[]){const it=S.menu.items.find(x=>x.id===v.sel);if(!it)continue;
       const half=v.half&&vCanHalf(it),pkg=v.pkg&&!noPkg(it),pr=half?itemHalf(it):it.price;
       let l=t.lines.find(x=>x.itemId===it.id&&!!x.half===half&&!x.unit&&!!x.pkg===pkg&&!x.ikram&&!x.note&&x.price===pr);
       if(!l){l={id:uid(),itemId:it.id,name:half?it.name+' (az)':it.name,price:pr,qty:0,sent:0,note:'',pkg,...(half?{half:true}:{})};t.lines.push(l)}
       l.qty+=v.qty;n+=v.qty}
-    if(!n)return;if(!t.openedAt)t.openedAt=Date.now();ui.voice=[];save();closeLayer();vOrder();toast(n+' ürün eklendi')}};
+    if(!n){ui.table=prev;return}if(!t.openedAt)t.openedAt=Date.now();ui.voice=[];save();closeLayer();
+    if(ui.view==='order'){vOrder()}else{ui.table=prev;render()}
+    toast(`${tName(k)}: ${n} ürün eklendi`)};
+  vRender()};
 A.vQty=d=>{const v=ui.voice[+d.i];if(!v)return;v.qty=Math.max(1,v.qty+(+d.d));vRender()};
 A.vHalf=d=>{const v=ui.voice[+d.i];if(v){v.half=!v.half;vRender()}};
 A.vPkg=d=>{const v=ui.voice[+d.i];if(v){v.pkg=!v.pkg;vRender()}};
