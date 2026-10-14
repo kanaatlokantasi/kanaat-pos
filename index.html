@@ -186,6 +186,12 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .ctile .cc{font-size:12px;color:var(--muted)}
 .ctile .q{position:absolute;top:8px;right:8px;background:var(--accent);color:var(--accent-ink);border-radius:999px;min-width:24px;height:24px;display:grid;place-items:center;font-size:13px;font-weight:700;padding:0 6px}
 .ctile:active{background:var(--accent-soft)}
+.vbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;margin-bottom:10px;font-size:16px}
+.vrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.vrow select{font:inherit;font-size:16px;min-height:42px;width:100%;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;padding:0 6px}
+.vrow .vq{display:flex;align-items:center;gap:2px}.vrow .vq button,.vrow .vt{min-width:38px;min-height:40px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font-weight:800;font-size:15px;color:inherit}
+.vrow .vt.on{background:#1d4fa3;color:#fff;border-color:#1d4fa3}.vrow .vt.pk.on{background:#a15c00;border-color:#a15c00}
+.vrow .vq b{min-width:22px;text-align:center}.vrow.miss{color:var(--danger)}
 .osrch{position:relative;display:flex;align-items:center;margin-bottom:10px}
 .osrch svg{position:absolute;left:12px;color:var(--muted,#777);pointer-events:none}
 .osrch input{width:100%;font-size:18px;padding:12px 44px 12px 42px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;min-height:50px;-webkit-appearance:none;appearance:none}
@@ -288,7 +294,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 129</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 130</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -644,7 +650,7 @@ function vOrder(){
       <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button>${IKRAM_ON?`<button class="btn ${ui.ikram?'ikon':''}" data-act="toggleIkram" aria-pressed="${ui.ikram?'true':'false'}">İkram</button>`:''}<button class="btn" data-act="moveTable">Taşı</button>${CL.on?'<button class="btn" data-act="handover">Devret</button>':''}</div>
     ${ui.pkg?`<div class="pkgbar"><b>PAKET ekleniyor</b><span>Dokunduğunuz ürünler paket olarak yazılır.</span><button class="linkbtn" data-act="togglePkg">Bitir</button></div>`:''}
     ${ui.ikram?`<div class="pkgbar ikbar"><b>İKRAM ekleniyor</b><span>Dokunduğunuz ürünler 0 ₺ ikram olarak yazılır.</span><button class="linkbtn" data-act="toggleIkram">Bitir</button></div>`:''}
-    ${!ui.cat?`<div class="osrch"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="osearch" type="search" enterkeyhint="search" placeholder="Ürün ara… (ör. mer, tas, köf)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(ui.q||'')}">${ui.q?'<button class="sx" data-act="clrQ" aria-label="Aramayı temizle">✕</button>':''}</div><div id="sres"></div><div id="cgridw"><div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
+    ${!ui.cat?`<div class="osrch"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="osearch" type="search" enterkeyhint="search" placeholder="Ürün ara… (ör. mer, tas, köf)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(ui.q||'')}">${ui.q?'<button class="sx" data-act="clrQ" aria-label="Aramayı temizle">✕</button>':''}</div><button class="btn vbtn" data-act="voice"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>Sesli sipariş</button><div id="sres"></div><div id="cgridw"><div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
         return `<button class="ctile ${n?'hasq':''}" data-act="cat" data-id="${c.id}">${n?`<span class="q">${n}</span>`:''}<span class="cn">${esc(c.name)}</span><span class="cc">${S.menu.items.filter(i=>i.cat===c.id).length} ürün</span></button>`}).join('')}<button class="ctile freet" data-act="freeAmt"><span class="cn">Paket</span><span class="cc">Tutarı elle yaz</span></button></div></div>`:`
     <div class="catnav"><button class="btn" data-act="cat" data-id="">◀ Kategoriler</button><h3>${esc((cats.find(c=>c.id===ui.cat)||{}).name||'')}</h3></div>
     <div class="cats">${cats.map(c=>`<button class="${c.id===ui.cat?'act':''}" data-act="cat" data-id="${c.id}">${esc(c.name)}</button>`).join('')}</div>`}
@@ -1678,6 +1684,75 @@ A.freeAmt=()=>{if(!ui.table)return;
     const t=curT();const l={id:uid(),itemId:null,name:nm,price:v,qty:1,sent:0,note:'',pkg:pk,free:true};t.lines.push(l);
     if(tCount(t)===1)t.openedAt=Date.now();save();closeLayer();vOrder();toast('PAKET +1 · '+fmt(v),{k:ui.table,id:l.id})};
   document.getElementById('faOk').onclick=go;a.addEventListener('keydown',e=>{if(e.key==='Enter')go()})};
+
+/* ===== sesli sipariş: klavye dikte ya da tarayıcının konuşma tanıması → ürün listesi → onay ===== */
+const V_NUM={bir:1,iki:2,uc:3,dort:4,bes:5,alti:6,yedi:7,sekiz:8,dokuz:9,on:10,onbir:11,oniki:12,yarim:0};
+const V_SKIP=new Set(['tane','adet','porsiyon','tabak','bardak','de','da','ile','lutfen','bize','getir','getirir','misin','musun','ver','daha','bi','sonra','bir de','icin','olsun','tamam']);
+const V_ALIAS={ezo:'ezogelin',pilav:'pirinc pilavi',su:'sise su',soda:'maden suyu',kahve:'turk kahvesi',iskembe:'terbiyeli iskembe',paca:'kuzu ayak paca',fasulye:'kuru fasulye',kuru:'kuru fasulye',salata:'mevsim salata',coban:'coban salata',kola:'kola',yaprak:'yaprak sarma',dolma:'etli dolma',musakka:'patlican musakka',karniyarik:'karniyarik',sutlac:'sutlac'};
+function vMatch(words){const q=words.join(' ');if(!q)return[];
+  const al=V_ALIAS[q];const toks=(al||q).split(' ');
+  const cp=(a,b)=>{let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;return i};
+  const co=Object.fromEntries(S.menu.cats.map((c,k)=>[c.id,k]));
+  const res=S.menu.items.map((it,k)=>{const w=fold(it.name).split(/\s+/);let sc=0;const used=new Set();
+    for(const t of toks){let best=-1,bs=0;w.forEach((x,i)=>{if(used.has(i))return;const c=cp(t,x),need=Math.min(4,t.length,x.length);
+        if((t.length<=3?x.startsWith(t):c>=need)){const v=c===x.length&&c===t.length?3:2;if(v>bs){bs=v;best=i}}});
+      if(best<0)return null;used.add(best);sc+=bs}
+    sc-=Math.max(0,w.length-toks.length)*0.3;if(fold(it.name).startsWith(toks[0]))sc+=0.5;return{it,sc,k,c:co[it.cat]??99}}).filter(Boolean)
+    .sort((a,b)=>b.sc-a.sc||a.c-b.c||a.k-b.k);
+  return res.slice(0,6).map(x=>x.it)}
+function vParse(text){
+  const segs=[];let cur=null;const flush=()=>{if(cur&&cur.words.length)segs.push(cur);cur=null};
+  const norm=String(text).replace(/[,.;\n]+/g,' | ').replace(/\bve\b/gi,' | ');
+  for(const raw of norm.split(/\s+/).filter(Boolean)){
+    if(raw==='|'){flush();continue}
+    const t=fold(raw);if(!t)continue;
+    for(const w of t.split(' ')){
+      if(/^\d+$/.test(w)||(w in V_NUM&&w!=='yarim')){const n=/^\d+$/.test(w)?+w:V_NUM[w];if(cur&&cur.words.length)flush();cur=cur||{qty:0,words:[],half:false,pkg:false};cur.qty=(cur.qty||0)+n;continue}
+      cur=cur||{qty:0,words:[],half:false,pkg:false};
+      if(w==='az'||w==='yarim'){cur.half=true;continue}
+      if(w==='paket'||w==='paketli'||w==='paketle'){cur.pkg=true;continue}
+      if(V_SKIP.has(w))continue;
+      cur.words.push(w)}}
+  flush();
+  return segs.map(sg=>{const opts=vMatch(sg.words);return{qty:Math.max(1,sg.qty||1),half:sg.half,pkg:sg.pkg,said:sg.words.join(' '),opts:opts.map(i=>i.id),sel:opts[0]?.id||''}})}
+function vCanHalf(it){const c=S.menu.cats.find(x=>x.id===it.cat);return !!(c&&c.half&&!it.noHalf)}
+function vRender(){const el=document.getElementById('vList');if(!el)return;const L=ui.voice||[];
+  el.innerHTML=L.length?L.map((v,i)=>{const it=S.menu.items.find(x=>x.id===v.sel);
+    if(!it)return `<div class="vrow miss"><span></span><span>“${esc(v.said)}” bulunamadı</span><span></span><span></span><button class="vt" data-act="vDel" data-i="${i}" aria-label="Sil">✕</button></div>`;
+    const ch=vCanHalf(it),pk=v.pkg&&!noPkg(it),pr=(v.half&&ch?itemHalf(it):it.price)*v.qty;
+    return `<div class="vrow"><select data-vsel="${i}" aria-label="Ürün" style="grid-column:1/-1">${v.opts.map(id=>{const x=S.menu.items.find(y=>y.id===id);return x?`<option value="${id}" ${id===v.sel?'selected':''}>${esc(x.name)}</option>`:''}).join('')}</select>
+      <span class="vq"><button data-act="vQty" data-i="${i}" data-d="-1" aria-label="Azalt">−</button><b class="num">${v.qty}</b><button data-act="vQty" data-i="${i}" data-d="1" aria-label="Artır">+</button></span>
+      <small class="muted num" style="font-size:15px">${fmt(pr)}</small>
+      ${ch?`<button class="vt ${v.half?'on':''}" data-act="vHalf" data-i="${i}">AZ</button>`:'<span></span>'}
+      ${noPkg(it)?'<span></span>':`<button class="vt pk ${pk?'on':''}" data-act="vPkg" data-i="${i}" aria-label="Paket">P</button>`}
+      <button class="vt" data-act="vDel" data-i="${i}" aria-label="Sil">✕</button></div>`}).join(''):'<p class="muted" style="margin:6px 0">Söyledikleriniz burada ürün olarak görünecek.</p>';
+  const n=L.filter(v=>S.menu.items.some(x=>x.id===v.sel)).reduce((a,v)=>a+v.qty,0);const b=document.getElementById('vOk');if(b){b.disabled=!n;b.textContent=n?`Hesaba ekle (${n} ürün)`:'Hesaba ekle'}}
+A.voice=()=>{if(!ui.table)return;ui.voice=[];const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  modal(`<div class="row" style="justify-content:space-between"><h2>Sesli sipariş</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
+    <p class="muted" style="margin:0">Klavyedeki <b>mikrofon</b> tuşuna basıp söyleyin. Örnek: <i>“iki mercimek, bir az pilav, üç ayran, bir paket sütlaç”</i></p>
+    <textarea id="vText" rows="3" style="width:100%;font:inherit;font-size:18px;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;box-sizing:border-box" placeholder="Söyleyin ya da yazın…" autocapitalize="off" autocomplete="off"></textarea>
+    ${SR?'<button class="btn" id="vMic" style="min-height:46px">🎤 Dinlemeye başla</button>':''}
+    <div id="vList"></div>
+    <button class="btn pri block" id="vOk" style="min-height:54px;font-size:18px" disabled>Hesaba ekle</button>`);
+  const ta=document.getElementById('vText');setTimeout(()=>ta.focus(),80);
+  const upd=()=>{ui.voice=vParse(ta.value);vRender()};ta.addEventListener('input',upd);vRender();
+  if(SR){const b=document.getElementById('vMic');let rec=null;b.onclick=()=>{if(rec){rec.stop();return}
+    rec=new SR();rec.lang='tr-TR';rec.interimResults=true;rec.continuous=true;const base=ta.value?ta.value+', ':'';
+    rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript+' ';ta.value=base+t.trim();upd()};
+    rec.onend=()=>{rec=null;b.textContent='🎤 Dinlemeye başla'};rec.onerror=e=>{toast('Mikrofon: '+(e.error||'hata'))};
+    try{rec.start();b.textContent='■ Dinlemeyi bitir'}catch(e){rec=null;toast('Mikrofon açılamadı')}}}
+  document.getElementById('vOk').onclick=()=>{const t=curT();let n=0;
+    for(const v of ui.voice||[]){const it=S.menu.items.find(x=>x.id===v.sel);if(!it)continue;
+      const half=v.half&&vCanHalf(it),pkg=v.pkg&&!noPkg(it),pr=half?itemHalf(it):it.price;
+      let l=t.lines.find(x=>x.itemId===it.id&&!!x.half===half&&!x.unit&&!!x.pkg===pkg&&!x.ikram&&!x.note&&x.price===pr);
+      if(!l){l={id:uid(),itemId:it.id,name:half?it.name+' (az)':it.name,price:pr,qty:0,sent:0,note:'',pkg,...(half?{half:true}:{})};t.lines.push(l)}
+      l.qty+=v.qty;n+=v.qty}
+    if(!n)return;if(!t.openedAt)t.openedAt=Date.now();ui.voice=[];save();closeLayer();vOrder();toast(n+' ürün eklendi')}};
+A.vQty=d=>{const v=ui.voice[+d.i];if(!v)return;v.qty=Math.max(1,v.qty+(+d.d));vRender()};
+A.vHalf=d=>{const v=ui.voice[+d.i];if(v){v.half=!v.half;vRender()}};
+A.vPkg=d=>{const v=ui.voice[+d.i];if(v){v.pkg=!v.pkg;vRender()}};
+A.vDel=d=>{ui.voice.splice(+d.i,1);vRender()};
+document.addEventListener('change',e=>{const i=e.target.dataset&&e.target.dataset.vsel;if(i!==undefined&&ui.voice&&ui.voice[+i]){ui.voice[+i].sel=e.target.value;vRender()}});
 const CV_TXT={tr:['Hesabınız','Kaydet / Paylaş','Görüntüye basılı tutarak da kaydedebilirsiniz.','Hesap açılamadı. Garsondan QR kodu tekrar göstermesini isteyin.','Bilgi amaçlıdır; ödeme Türk Lirası ile alınır.'],
   en:['Your bill','Save / Share','You can also press and hold the image to save it.','The bill could not be opened. Please ask your server to show the QR code again.','For information only; payment is taken in Turkish Lira.'],
   ar:['فاتورتك','حفظ / مشاركة','يمكنك أيضًا الضغط مطولًا على الصورة لحفظها.','تعذّر فتح الفاتورة. يرجى أن تطلب من النادل عرض رمز QR مرة أخرى.','للعلم فقط؛ يتم الدفع بالليرة التركية.'],
