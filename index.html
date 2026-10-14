@@ -188,6 +188,11 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .ctile:active{background:var(--accent-soft)}
 .vbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;margin-bottom:10px;font-size:16px}
 .vbtn.on{background:#b42318!important;border-color:#b42318!important}
+.vinl{position:relative;margin-bottom:10px}
+#vInline{width:100%;box-sizing:border-box;font:inherit;font-size:19px;font-weight:600;min-height:56px;padding:14px 46px 14px 14px;border:2px solid #1d4fa3;border-radius:14px;background:var(--surface);color:inherit;resize:none;display:block}
+#vInline::placeholder{color:#1d4fa3;opacity:.85}
+.vinl .vclr{position:absolute;right:8px;top:9px;width:38px;height:38px;border:0;border-radius:50%;background:var(--line);font-weight:800}
+#vPanel{display:grid;gap:10px;margin-bottom:12px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}#vPanel[hidden]{display:none}
 .vtabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}.vtabs button{min-height:46px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);font-weight:800;font-size:17px;color:inherit}.vtabs button.on{background:#1d4fa3;color:#fff;border-color:#1d4fa3}.vtabs button.busy{opacity:.35}
 .vrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
 .vrow select{font:inherit;font-size:16px;min-height:42px;width:100%;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;padding:0 6px}
@@ -296,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 133</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 134</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1611,7 +1616,7 @@ document.getElementById('logoFile').onchange=e=>{const f=e.target.files[0];e.tar
     const d=g.getImageData(0,0,w,h);for(let i=0;i<d.data.length;i+=4){const v=d.data[i]*.299+d.data[i+1]*.587+d.data[i+2]*.114<150?0:255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}
     g.putImageData(d,0,0);S.settings.logoData=c.toDataURL('image/png');save();loadLogo();setTimeout(render,50);toast('Logo değişti');URL.revokeObjectURL(img.src)};
   img.onerror=()=>toast('Bu görsel açılamadı');img.src=URL.createObjectURL(f)};
-setInterval(()=>{if(ui.view==='tables')vTables()},60000);
+setInterval(()=>{if(ui.view==='tables'&&!vBusy())vTables()},60000);
 /* güncelleme kontrolü */
 const MY_VER=parseInt((document.querySelector('.brand small')?.textContent.match(/Sürüm (\d+)/)||[])[1]||'0');
 let NEW_VER=0;
@@ -1622,7 +1627,7 @@ async function checkUpdate(){
     if(v>MY_VER){NEW_VER=v;if(!autoUpdate())document.getElementById('updBar').hidden=false}}catch(e){}
 }
 /* yeni sürüm: masalar ekranında boşta duruluyorsa kendiliğinden yenile; değilse çubuk göster ve boşa çıkınca yenile */
-function autoUpdate(){if(!NEW_VER||VIEW)return false;const a=document.activeElement;
+function autoUpdate(){if(!NEW_VER||VIEW||vBusy())return false;const a=document.activeElement;
   let last='';try{last=sessionStorage.getItem('kAutoUpd')||''}catch(e){}
   const [lv,lt]=last.split('|');if(+lv===NEW_VER&&Date.now()-(+lt||0)<180000)return false;/* aynı sürüme az önce yenilendiyse döngüye girme */
   if(ui.view==='tables'&&!$layer.innerHTML&&!printing&&!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))){try{sessionStorage.setItem('kAutoUpd',NEW_VER+'|'+Date.now())}catch(e){}A.doUpdate();return true}return false}
@@ -1738,7 +1743,17 @@ const SR_CLS=window.SpeechRecognition||window.webkitSpeechRecognition;
 const SR_OK=!!SR_CLS&&!(V_IOS&&navigator.bluetooth)&&(()=>{try{return localStorage.getItem('kSrBroken')!=='1'}catch(e){return true}})();
 const MIC_SVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>';
 function voiceBtn(){return SR_OK?`<button class="btn pri vbtn" id="vHold" style="touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none">${MIC_SVG}<span>Basılı tut, konuş</span></button>`
-  :`<button class="btn pri vbtn" data-act="voice">${MIC_SVG}<span>Sesli sipariş</span></button>`}
+  :`<div class="vinl"><textarea id="vInline" rows="1" placeholder="🎤 Sesli sipariş: dokun, konuş" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea><button class="vclr" data-act="vClear" aria-label="Temizle">✕</button></div>
+   <div id="vPanel" hidden><div class="vtabs" id="vTabs"></div><div id="vList"></div><button class="btn pri block" id="vOk" style="min-height:54px;font-size:18px" disabled>Hesaba ekle</button></div>`}
+function vBusy(){const a=document.activeElement;return !!((a&&a.id==='vInline')||(document.getElementById('vInline')||{}).value)}
+/* ana ekrandaki satır içi sesli sipariş (Bluefy: klavye diktesi) */
+document.addEventListener('input',e=>{if(e.target.id!=='vInline')return;const ta=e.target;ta.style.height='auto';ta.style.height=Math.min(140,ta.scrollHeight)+'px';
+  clearTimeout(vInlineT);vInlineT=setTimeout(()=>{const p=document.getElementById('vPanel');if(!p)return;const txt=ta.value.trim();p.hidden=!txt;if(!txt){ui.voice=[];return}
+    if(ui.vTable===undefined)ui.vTable=null;ui.voice=vParse(txt);
+    if(vParse.table&&tableList().some(x=>x.key===vParse.table)&&mineT(S.tables[vParse.table]))ui.vTable=vParse.table;vTabs();vRender();
+    document.getElementById('vOk').onclick=()=>vCommit(()=>{ta.value='';ta.blur();ui.voice=[];ui.vTable=null;render()})},250)});
+let vInlineT=null;
+A.vClear=()=>{const ta=document.getElementById('vInline');if(ta){ta.value='';ta.style.height='';ta.blur()}ui.voice=[];ui.vTable=null;const p=document.getElementById('vPanel');if(p)p.hidden=true};
 /* bas-konuş: basılı tutarken dinler, bırakınca onay penceresi açılır */
 let vRec=null,vTxt='',vStarted=false,vWatch=null,vDownAt=0;
 function vHoldStart(btn){if(vRec)return;vTxt='';vStarted=false;vDownAt=Date.now();
@@ -1759,6 +1774,15 @@ document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closes
 function vTabs(){const el=document.getElementById('vTabs');if(!el)return;
   el.innerHTML=tableList().filter(x=>x.key.startsWith('M')||!S.tables[x.key]||mineT(S.tables[x.key])).map(x=>{const t=S.tables[x.key],busy=t&&tCount(t)&&!mineT(t);
     return `<button class="${ui.vTable===x.key?'on':''} ${busy?'busy':''}" data-act="vTab" data-k="${esc(x.key)}" ${busy?'disabled':''}>${esc(x.short)}</button>`}).join('')}
+function vCommit(after){const k=ui.vTable;if(!k){toast('Önce masayı seçin');return}if(!mineT(S.tables[k])){toast('Bu masa başka garsonda');return}
+  const prev=ui.table;ui.table=k;const t=curT();let n=0;
+  for(const v of ui.voice||[]){const it=S.menu.items.find(x=>x.id===v.sel);if(!it)continue;
+    const half=v.half&&vCanHalf(it),pkg=v.pkg&&!noPkg(it),pr=half?itemHalf(it):it.price;
+    let l=t.lines.find(x=>x.itemId===it.id&&!!x.half===half&&!x.unit&&!!x.pkg===pkg&&!x.ikram&&!x.note&&x.price===pr);
+    if(!l){l={id:uid(),itemId:it.id,name:half?it.name+' (az)':it.name,price:pr,qty:0,sent:0,note:'',pkg,...(half?{half:true}:{})};t.lines.push(l)}
+    l.qty+=v.qty;n+=v.qty}
+  if(!n){ui.table=prev;return}if(!t.openedAt)t.openedAt=Date.now();ui.voice=[];if(ui.view!=='order')ui.table=prev;save();after&&after();
+  toast(`${tName(k)}: ${n} ürün eklendi`)}
 A.vTab=d=>{ui.vTable=d.k;vTabs();vRender()};
 A.voice=(pre)=>{const prefill=typeof pre==='string'?pre:'';ui.voice=[];ui.vTable=ui.view==='order'&&ui.table?ui.table:null;const SR=null;
   modal(`<div class="row" style="justify-content:space-between"><h2>Sesli sipariş</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
@@ -1777,16 +1801,7 @@ A.voice=(pre)=>{const prefill=typeof pre==='string'?pre:'';ui.voice=[];ui.vTable
       rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript+' ';ta.value=base+t.trim();upd()};
       rec.onend=()=>{rec=null;b.textContent='🎤 Dinlemeye başla'};rec.onerror=e=>{rec=null;b.textContent='🎤 Dinlemeye başla';toast('Mikrofon: '+(e.error||'hata')+' · klavyedeki mikrofonu kullanın')};
       rec.start();b.textContent='■ Dinlemeyi bitir'}catch(e){rec=null;toast('Mikrofon açılamadı, klavyedeki mikrofonu kullanın')}}}
-  document.getElementById('vOk').onclick=()=>{const k=ui.vTable;if(!k){toast('Önce masayı seçin');return}if(!mineT(S.tables[k])){toast('Bu masa başka garsonda');return}
-    const prev=ui.table;ui.table=k;const t=curT();let n=0;
-    for(const v of ui.voice||[]){const it=S.menu.items.find(x=>x.id===v.sel);if(!it)continue;
-      const half=v.half&&vCanHalf(it),pkg=v.pkg&&!noPkg(it),pr=half?itemHalf(it):it.price;
-      let l=t.lines.find(x=>x.itemId===it.id&&!!x.half===half&&!x.unit&&!!x.pkg===pkg&&!x.ikram&&!x.note&&x.price===pr);
-      if(!l){l={id:uid(),itemId:it.id,name:half?it.name+' (az)':it.name,price:pr,qty:0,sent:0,note:'',pkg,...(half?{half:true}:{})};t.lines.push(l)}
-      l.qty+=v.qty;n+=v.qty}
-    if(!n){ui.table=prev;return}if(!t.openedAt)t.openedAt=Date.now();ui.voice=[];save();closeLayer();
-    if(ui.view==='order'){vOrder()}else{ui.table=prev;render()}
-    toast(`${tName(k)}: ${n} ürün eklendi`)};
+  document.getElementById('vOk').onclick=()=>vCommit(()=>{closeLayer();if(ui.view==='order')vOrder();else render()});
   vRender()};
 A.vQty=d=>{const v=ui.voice[+d.i];if(!v)return;v.qty=Math.max(1,v.qty+(+d.d));vRender()};
 A.vHalf=d=>{const v=ui.voice[+d.i];if(v){v.half=!v.half;vRender()}};
@@ -1893,6 +1908,7 @@ function remoteRender(){renderCloud();
   if($layer.innerHTML){if(ui.view==='order'&&document.querySelector('#layer .billv')&&!ui.editCart){try{openCart()}catch(e){}}return}
   if(ui.view==='order'&&ui.table&&!mineT(S.tables[ui.table])){ui.view='tables';ui.table=null}
   if(ui.view==='order'){const a=document.activeElement;if(a&&a.id==='osearch'){renderCartBar();return}}
+  if(ui.view==='tables'&&vBusy())return;
   if(['tables','order','report','tips'].includes(ui.view))render()}
 function cloudBadge(){if(!S.settings.cloudOn)return '';const st={ok:['#1f7a4d','Ortak veri: bağlı'],sync:['#a15c00','Ortak veri: bağlanıyor…'],offline:['#a15c00','İnternet yok: değişiklikler bağlanınca gönderilecek'],err:['#b42318','Ortak veri hatası'],out:['#b42318','Ortak veri: giriş gerekli (Ayarlar)'],off:['#5b6677','Ortak veri: kapalı']}[CL.status]||['#5b6677',''];
   return `<p class="muted" id="cloudBadge" style="margin:0;font-size:13px;display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:${st[0]};flex:none"></span>${esc(st[1])}</p>`}
