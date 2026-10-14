@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 126</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 127</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1609,8 +1609,14 @@ async function checkUpdate(){
   if(VIEW||!/^https?:/.test(location.protocol))return;
   try{const r=await fetch(location.pathname+'?ver='+Date.now(),{cache:'no-store'});if(!r.ok)return;
     const m=(await r.text()).match(/POS · Sürüm (\d+)/);const v=m?parseInt(m[1]):0;
-    if(v>MY_VER){NEW_VER=v;document.getElementById('updBar').hidden=false}}catch(e){}
+    if(v>MY_VER){NEW_VER=v;if(!autoUpdate())document.getElementById('updBar').hidden=false}}catch(e){}
 }
+/* yeni sürüm: masalar ekranında boşta duruluyorsa kendiliğinden yenile; değilse çubuk göster ve boşa çıkınca yenile */
+function autoUpdate(){if(!NEW_VER||VIEW)return false;const a=document.activeElement;
+  let last='';try{last=sessionStorage.getItem('kAutoUpd')||''}catch(e){}
+  const [lv,lt]=last.split('|');if(+lv===NEW_VER&&Date.now()-(+lt||0)<180000)return false;/* aynı sürüme az önce yenilendiyse döngüye girme */
+  if(ui.view==='tables'&&!$layer.innerHTML&&!printing&&!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))){try{sessionStorage.setItem('kAutoUpd',NEW_VER+'|'+Date.now())}catch(e){}A.doUpdate();return true}return false}
+setInterval(()=>{if(NEW_VER)autoUpdate()},20000);
 A.doUpdate=()=>{location.replace(location.pathname+'?v='+(NEW_VER||Date.now()))};
 setTimeout(checkUpdate,4000);setInterval(checkUpdate,5*60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});
