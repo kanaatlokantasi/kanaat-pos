@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 120</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 121</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -435,6 +435,7 @@ if(!S.settings.pilavCatV1){const C=S.menu.cats,pi=C.findIndex(c=>c.name==='Pilav
 if(!S.settings.kofteCatV1){const C=S.menu.cats,ki=C.findIndex(c=>c.name==='Köfteler');if(ki>=0){const [x]=C.splice(ki,1);const pi=C.findIndex(c=>c.name==='Pilav ve Makarnalar');C.splice(pi>=0?pi+1:C.length,0,x)}S.settings.kofteCatV1=true;save()}
 if(!S.settings.eksiliV1){S.menu.items.forEach(i=>{if(i.name==='Ekişili Köfte')i.name='Ekşili Köfte'});S.settings.eksiliV1=true;save()}
 if(!S.settings.handKalamV1){if(!S.settings.handFont||S.settings.handFont==='plain')S.settings.handFont='kalam';S.settings.handKalamV1=true;save()}
+if(!S.settings.shareOffV1){S.settings.shareBT=false;S.settings.shareOffV1=true;save()}
 if(!S.settings.yogurtluV1){S.menu.items.forEach(i=>{if(i.name==='Yoğurlu Pazı Salatası')i.name='Yoğurtlu Pazı Salatası'});S.settings.yogurtluV1=true;save()}
 if(!S.settings.domatesV1){const c=S.menu.cats.find(x=>x.name==='Çorbalar');if(c&&!S.menu.items.some(i=>i.name==='Domates Çorbası')){const k=S.menu.items.findIndex(i=>i.name==='Şehriye Çorbası');S.menu.items.splice(k>=0?k:S.menu.items.length,0,{id:uid(),cat:c.id,name:'Domates Çorbası',price:180})}S.settings.domatesV1=true;save()}
 applyCatOrder();
@@ -831,7 +832,7 @@ function vSettings(){
      <div class="f">Baskı hızı<div class="seg"><button class="${s.speed!=='safe'?'act':''}" data-act="set" data-k="speed" data-val="fast">Hızlı</button><button class="${s.speed==='safe'?'act':''}" data-act="set" data-k="speed" data-val="safe">Güvenli</button></div></div>
      <p class="muted" style="margin:0;font-size:13px">Fişte kayma, eksik satır veya bozuk görüntü olursa “Güvenli”ye geçin.</p>
      <label class="row" style="font-weight:600"><input type="checkbox" id="cutter" ${s.cutter?'checked':''}> Yazıcıda kağıt kesici var</label>
-     <label class="row" style="font-weight:600"><input type="checkbox" id="shareBT" ${s.shareBT!==false?'checked':''}> Yazıcıyı paylaş (bas ve bırak)</label>
+     <label class="row" style="font-weight:600"><input type="checkbox" id="shareBT" ${s.shareBT===true?'checked':''}> Yazıcıyı paylaş (bas ve bırak)</label>
      <p class="muted" style="margin:0;font-size:13px">Açıkken telefon yazıcıya sadece basarken bağlanır, bitince bırakır; böylece birden fazla garson aynı yazıcıyı kullanabilir. Her baskıya birkaç saniye eklenir. Yazıcıyı tek telefon kullanıyorsa kapatabilirsiniz.</p>`}
      <label class="row" style="font-weight:600"><input type="checkbox" id="kitchenOn" ${s.kitchen?'checked':''}> Mutfak fişi kullan</label>
      <div class="f">Bağlantı kayıtları<pre id="btlog" style="margin:0;max-height:180px;overflow:auto;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;font:12px/1.45 ui-monospace,Menlo,monospace;color:var(--ink);white-space:pre-wrap;font-weight:400">${esc(BLOG.join('\n')||'Henüz kayıt yok. “Yazıcıya bağlan”a basın.')}</pre></div>
@@ -1228,7 +1229,7 @@ async function ensureBT(){
   if(BT.char&&BT.device?.gatt?.connected&&BT.niim===isNiim())return true;
   if(!BT.device&&navigator.bluetooth?.getDevices&&S.settings.btName){try{const ds=await navigator.bluetooth.getDevices();BT.device=ds.find(d=>d.name===S.settings.btName)||null;
     if(BT.device&&!BT.device._kanaat){BT.device.addEventListener('gattserverdisconnected',()=>{blog('Bağlantı kapandı');BT.char=null;renderChip()});BT.device._kanaat=true}}catch(e){}}
-  if(BT.device){const tries=S.settings.shareBT!==false?4:1;
+  if(BT.device){const tries=S.settings.shareBT===true?4:2;
     for(let i=0;i<tries;i++){blog('Yazıcıya bağlanılıyor: '+(BT.device.name||'')+(i?` (deneme ${i+1})`:''));
       try{await attach(await BT.device.gatt.connect());return true}catch(e){blog('Bağlanamadı: '+errText(e))}
       if(i<tries-1){toast('Yazıcı başka telefonda olabilir, tekrar deneniyor…');await sleep(2500)}}}
@@ -1236,7 +1237,7 @@ async function ensureBT(){
 }
 /* yazıcıyı paylaş: baskı bitince bağlantıyı bırak ki diğer telefonlar da basabilsin */
 let btIdle=null;
-function releaseBT(){clearTimeout(btIdle);if(S.settings.shareBT===false||BT.niim)return;
+function releaseBT(){clearTimeout(btIdle);if(S.settings.shareBT!==true||BT.niim)return;
   btIdle=setTimeout(()=>{if(printing||!BT.device?.gatt?.connected)return;try{BT.device.gatt.disconnect();blog('Yazıcı bırakıldı (paylaşım açık)')}catch(e){}BT.char=null;renderChip()},3000)}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function sendBytes(bytes){
