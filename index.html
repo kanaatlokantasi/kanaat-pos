@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 122</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 123</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1333,15 +1333,46 @@ async function printDoc(doc,label){
   }
   showPreview(doc,label);return false;
 }
-/* bilgisayara bağlı yazıcı (USB/Windows): fişi görüntü olarak tarayıcının yazdırmasıyla bas */
+/* bilgisayara bağlı yazıcı (USB/Windows): fişi HTML metni olarak bas. Yazıcı sürücüsü yazıyı kendi çözünürlüğünde çizer, görüntüden çok daha keskin çıkar. */
+function docHtml(doc){
+  const FZ={n:1,l:1.15,xl:1.3}[S.settings.fontSize||'xl']||1.3,W=S.settings.paper==80?72:48,fs=(W===72?28:Math.max(15,Math.round(384*0.06)))*FZ*(W/(W===72?576:384))*8/8;
+  const mm=v=>(v*W/(W===72?576:384)).toFixed(2)+'mm',px=v=>v;/* v: tuval pikseli */
+  const base=(W===72?28:Math.max(15,Math.round(384*0.06)))*FZ;
+  let hand=null,rtl=false,out='',inBox=false;
+  const fam=plain=>hand&&!plain?`'${hand.fam}',Figtree,Arial,sans-serif`:`Figtree,'Helvetica Neue',Arial,sans-serif`;
+  const fw=(b,plain)=>hand&&!plain?(b?hand.w[1]:hand.w[0]):(b?700:500);
+  const fz=(sz,plain)=>mm(hand&&!plain?sz*hand.z:sz);
+  const st=(sz,b,plain,extra='')=>`font-family:${fam(plain)};font-weight:${fw(b,plain)};font-size:${fz(sz,plain)};line-height:1.25;${extra}`;
+  for(const r of doc){
+    if(r.k==='dir'){rtl=!!r.rtl;continue}
+    if(r.k==='hand'){hand=handOf(r.f);continue}
+    const dir=rtl?' dir="rtl"':'';
+    if(r.k==='gap'){out+=`<div style="height:${mm(base*.5)}"></div>`;continue}
+    if(r.k==='logo'){out+=`<img src="${LOGO_IMG.src}" style="width:82%;display:block;margin:${mm(4)} auto ${mm(10)}">`;continue}
+    if(r.k==='hr'){out+=`<div style="border-top:${mm(2)} dashed #000;margin:${mm(base*.4)} 0 ${mm(base*.45)}"></div>`;continue}
+    if(r.k==='bs'){out+=`<div style="border:${mm(4)} solid #000;padding:${mm(base*.3)} ${mm(10)};margin:${mm(base*.3)} 0">`;inBox=true;continue}
+    if(r.k==='be'){if(inBox)out+='</div>';inBox=false;continue}
+    if(r.k==='inv'){out+=`<div style="background:#000;color:#fff;text-align:center;padding:${mm(base*.5)} ${mm(10)};margin:${mm(4)} 0;${st(base*1.15,true,true)}">${esc(r.text)}</div>`;continue}
+    if(r.k==='qr'){out+=`<div style="width:42%;margin:${mm(8)} auto">${qrSvg(r.data)}</div>`;continue}
+    if(r.k==='title'){out+=`<div${dir} style="text-align:center;${st(base*1.45,true,r.plain)}">${esc(r.text)}</div>`;continue}
+    if(r.k==='c'){out+=`<div${dir} style="text-align:center;${st(r.small?base*.85:base,r.b,r.plain)}">${esc(r.text)}</div>`;continue}
+    if(r.k==='l'||r.k==='kl'){out+=`<div${dir} style="${st(r.k==='kl'?base*1.25:(r.small?base*.85:base),r.k==='kl'||r.b,r.plain)}">${esc(r.text)}</div>`;continue}
+    if(r.k==='lr'||r.k==='big'){const sz=r.k==='big'?base*1.4:base,b=r.k==='big'||r.b;
+      out+=`<div${dir} style="display:flex;justify-content:space-between;gap:${mm(12)};${st(sz,b,r.plain)}"><span>${esc(r.l)}</span>${r.r?`<span style="white-space:nowrap">${esc(r.r)}</span>`:''}</div>`;continue}
+  }
+  if(inBox)out+='</div>';
+  const fonts='https://fonts.googleapis.com/css2?family=Figtree:wght@500;700'+(hand?'&family='+hand.fam.replace(/ /g,'+')+(hand.w[0]!==hand.w[1]||hand.w[0]!==400?':wght@'+[...new Set(hand.w)].join(';'):''):'')+'&display=block';
+  return {html:out,fonts,W}}
 async function sysPrint(doc,label){
   const hk=(doc.find(r=>r.k==='hand')||{}).f;if(hk&&!(await handReady(hk)))doc=doc.filter(r=>r.k!=='hand');
-  const url=renderCanvas(doc).toDataURL('image/png');
+  const {html,fonts,W}=docHtml(doc);
   return new Promise(res=>{const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';document.body.appendChild(f);
-    const d=f.contentDocument;d.open();d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(label)}</title><style>@page{margin:0}html,body{margin:0;padding:0;background:#fff}img{width:72mm;display:block;margin:0 auto}</style></head><body><img id="r" src="${url}"></body></html>`);d.close();
-    const img=d.getElementById('r');let done=false;
-    const go=()=>{if(done)return;done=true;toast(label+' yazıcıya gönderildi');try{f.contentWindow.focus();f.contentWindow.print()}catch(e){toast('Yazdırılamadı: '+errText(e))}setTimeout(()=>{f.remove();res(true)},1500)};
-    if(img.complete)go();else{img.onload=go;img.onerror=go}})}
+    const d=f.contentDocument;d.open();d.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(label)}</title><link rel="stylesheet" href="${fonts}">
+      <style>@page{margin:0}html,body{margin:0;padding:0;background:#fff;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      #r{width:${W}mm;margin:0 auto;padding:2mm 0 6mm;box-sizing:border-box;color:#000}#r svg{width:100%;height:auto}</style></head><body><div id="r">${html}</div></body></html>`);d.close();
+    let done=false;const go=()=>{if(done)return;done=true;toast(label+' yazıcıya gönderildi');try{f.contentWindow.focus();f.contentWindow.print()}catch(e){toast('Yazdırılamadı: '+errText(e))}setTimeout(()=>{f.remove();res(true)},1500)};
+    const imgs=[...d.images].map(i=>i.complete?Promise.resolve():new Promise(r=>{i.onload=i.onerror=r}));
+    Promise.race([Promise.all([...imgs,(d.fonts&&d.fonts.ready)||Promise.resolve()]),new Promise(r=>setTimeout(r,3500))]).then(()=>setTimeout(go,150))})}
 function docText(doc){return doc.map(r=>{if(r.k==='logo')return 'KANAAT LOKANTASI';if(r.k==='hr')return '----------------';if(r.k==='bs'||r.k==='be')return '================';if(r.k==='qr')return r.data;if(r.k==='gap')return '';
   if(r.k==='lr'||r.k==='big')return r.l+(r.r?'  '+r.r:'');return r.text||''}).filter((x,i,a)=>!(x===''&&a[i-1]==='')).join('\n').trim()}
 function showPreview(doc,label){
