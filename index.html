@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 116</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 117</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -402,7 +402,7 @@ function load(){let d=null;try{d=JSON.parse(localStorage.getItem(LS)||'null')}ca
   {const M=S.menu,i=M.items.findIndex(x=>x.name==='Etli Sarma');
     if(i>=0){const o=M.items[i];o.name='Etli Yaprak Sarma';M.items.splice(i+1,0,{id:uid(),cat:o.cat,name:'Etli Lahana Sarma',price:o.price,noHalf:!!o.noHalf,...(o.halfPrice!=null?{halfPrice:o.halfPrice}:{})})}}}
 function pruneSales(){const d=S.settings.keepDays||10,lim=Date.now()-d*86400e3,n=S.sales.length;S.sales=S.sales.filter(x=>x.at>=lim);return n-S.sales.length}
-function save(){if(VIEW)return;try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){
+function save(){if(VIEW)return;cloudQueue();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){
   /* depolama doluysa en eski adisyonların %20'sini silip tekrar dene; 7 günden yenilere dokunma */
   const lim=Date.now()-7*86400e3,old=S.sales.filter(x=>x.at<lim);
   if(old.length){const cut=new Set(old.slice(0,Math.max(1,Math.ceil(old.length*.2))).map(x=>x.id));S.sales=S.sales.filter(x=>!cut.has(x.id));
@@ -588,12 +588,12 @@ function vTables(){
   const openSum=open.reduce((a,t)=>a+tTotal(S.tables[t.key]),0);
   $main.innerHTML=`<div class="stack">
     ${sampleBanner()}
-    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>
+    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}
     <div class="tgrid">${list.map(t=>{const o=S.tables[t.key];const n=tCount(o);
       const mins=o&&n?Math.max(0,Math.round((Date.now()-o.openedAt)/60000)):0;
       return `<button class="tile ${n?'open':''}" data-act="openTable" data-k="${esc(t.key)}">
         <span class="n">${esc(t.short)}</span>
-        ${n?`<span><span class="t num">${fmt(tTotal(o))}</span><br><span class="m num">${n} ürün · ${mins} dk</span></span>`:`<span class="m">Boş</span>`}
+        ${n?`<span><span class="t num">${fmt(tTotal(o))}</span><br><span class="m num">${n} ürün · ${mins} dk</span>${CL.on&&o.waiter?`<br><span class="m">${esc(o.waiter.split(' ')[0])}</span>`:''}</span>`:`<span class="m">Boş</span>`}
       </button>`}).join('')}</div></div>`;
 }
 
@@ -606,7 +606,7 @@ function pkgBlocked(it){if(ui.pkg&&noPkg(it)){toast(baseName(it.name)+' pakete e
 const IKRAM_ON=false;
 function billSections(lines,lbl){const n=lines.filter(l=>!l.pkg&&!l.ikram),p=lines.filter(l=>l.pkg&&!l.ikram),k=lines.filter(l=>l.ikram);
   return [...n,...(p.length?[{sec:lbl.pkg,kind:'pkg'}]:[]),...p,...(k.length?[{sec:lbl.ik,kind:'ik'}]:[]),...k]}
-function curT(){return S.tables[ui.table]||(S.tables[ui.table]={lines:[],openedAt:Date.now()})}
+function curT(){return S.tables[ui.table]||(S.tables[ui.table]={lines:[],openedAt:Date.now(),waiter:S.settings.waiter||''})}
 function itemTile(i,qmap,hmap,umap,catHalf){const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');const np=ui.pkg&&noPkg(i);return `<div class="itemw ${corner?'hashalf':''} ${np?'nopkg':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
       ${hasB?`<span class="q">${b}</span>`:''}
       <span class="nm">${esc(i.name)}</span>${np?'<span class="pr" style="font-size:14px">Pakete eklenmez</span>':`<span class="pr num">${fmt(i.price)}</span>`}</button>
@@ -634,7 +634,7 @@ function vOrder(){
   $main.innerHTML=`
     <div class="ohead"><button class="back" data-act="tab" data-v="tables" aria-label="Masalara dön"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
       <h2 style="flex:1">${esc(tName(ui.table))}</h2>
-      <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button>${IKRAM_ON?`<button class="btn ${ui.ikram?'ikon':''}" data-act="toggleIkram" aria-pressed="${ui.ikram?'true':'false'}">İkram</button>`:''}<button class="btn" data-act="moveTable">Taşı</button></div>
+      <button class="btn ${ui.pkg?'pkgon':''}" data-act="togglePkg" aria-pressed="${ui.pkg?'true':'false'}">Paket</button>${IKRAM_ON?`<button class="btn ${ui.ikram?'ikon':''}" data-act="toggleIkram" aria-pressed="${ui.ikram?'true':'false'}">İkram</button>`:''}<button class="btn" data-act="moveTable">Taşı</button>${CL.on?'<button class="btn" data-act="handover">Devret</button>':''}</div>
     ${ui.pkg?`<div class="pkgbar"><b>PAKET ekleniyor</b><span>Dokunduğunuz ürünler paket olarak yazılır.</span><button class="linkbtn" data-act="togglePkg">Bitir</button></div>`:''}
     ${ui.ikram?`<div class="pkgbar ikbar"><b>İKRAM ekleniyor</b><span>Dokunduğunuz ürünler 0 ₺ ikram olarak yazılır.</span><button class="linkbtn" data-act="toggleIkram">Bitir</button></div>`:''}
     ${!ui.cat?`<div class="osrch"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="osearch" type="search" enterkeyhint="search" placeholder="Ürün ara… (ör. mer, tas, köf)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="${esc(ui.q||'')}">${ui.q?'<button class="sx" data-act="clrQ" aria-label="Aramayı temizle">✕</button>':''}</div><div id="sres"></div><div id="cgridw"><div class="cgrid">${cats.map(c=>{const n=(t?.lines||[]).filter(l=>{const it=S.menu.items.find(i=>i.id===l.itemId);return it&&it.cat===c.id}).reduce((a,l)=>a+l.qty,0);
@@ -797,6 +797,7 @@ function vSettings(){
   const s=S.settings;const hasBT=!!navigator.bluetooth;
   $main.innerHTML=`<div class="stack">
    <h2>Ayarlar</h2>
+   <div class="card stack" id="cloudCard">${cloudCard()}</div>
    <div class="card stack">
      <h3 style="margin:0">Ekran yazı boyutu</h3>
      <div class="seg">${[['n','Normal'],['l','Büyük'],['xl','Çok büyük']].map(([v,t])=>`<button class="${(s.uiZoom||'n')===v?'act':''}" data-act="set" data-k="uiZoom" data-val="${v}">${t}</button>`).join('')}</div>
@@ -1460,8 +1461,8 @@ const A={
     const tip=tipAmount(tTotal(t));
     const tipPct=(tip>0&&typeof ui.tip?.mode==='number')?ui.tip.mode:null;
     const methods=[...new Set(payments.map(p=>p.pay))];const payLbl=methods.length===1?methods[0]:'Karışık';
-    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,...(tipPct?{tipPct}:{}),pay:payLbl,...(payments.length>1?{payments,split:payments.length}:{}),...(splitN>1?{split:splitN}:{}),closed:true,at:Date.now(),waiter:S.settings.waiter||'',...(lang!=='tr'?{lang}:{})};
-    S.sales.push(sale);pruneSales();delete S.tables[ui.table];save();closeLayer();ui.view='tables';render();
+    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,...(tipPct?{tipPct}:{}),pay:payLbl,...(payments.length>1?{payments,split:payments.length}:{}),...(splitN>1?{split:splitN}:{}),closed:true,at:Date.now(),waiter:t.waiter||S.settings.waiter||'',...(lang!=='tr'?{lang}:{})};
+    S.sales.push(sale);pruneSales();delete S.tables[ui.table];save();cloudSeq(sale);closeLayer();ui.view='tables';render();
     toast(`${sale.table} kapandı · ${fmt(sale.total+tip)}${tip?' (bahşiş '+fmt(tip)+')':''}`);
     if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:payLbl,no:sale.no,at:sale.at,tip,tipPct,waiter:sale.waiter,payments:sale.payments,lang,closed:true,splitN:sale.payments?0:sale.split}),'Fiş')},
   clearTable(){requireAdmin(()=>ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')}))},
@@ -1575,7 +1576,7 @@ function askWaiter(change){
   const i=document.getElementById('wname');setTimeout(()=>i.focus(),80);
   const go=()=>{const v=i.value.replace(/\s+/g,' ').trim();
     if(v.split(' ').length<2||v.length<4){document.getElementById('wErr').textContent='Lütfen ad ve soyad yazın.';return}
-    S.settings.waiter=v.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');save();closeLayer();renderWaiterTag();render();toast('Garson: '+S.settings.waiter)};
+    S.settings.waiter=v.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');save();closeLayer();renderWaiterTag();render();toast('Garson: '+S.settings.waiter);if(CL&&CL.on)CL.db.collection('staff').doc(fid(S.settings.waiter)).set({n:S.settings.waiter,at:Date.now()}).catch(()=>{})};
   document.getElementById('wOk').onclick=go;i.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
   if(!change){const sc=$layer.querySelector('[data-scrim]');if(sc)sc.removeAttribute('data-scrim')}
 }
@@ -1651,6 +1652,103 @@ async function custView(){
   if(o.f&&HAND_FONTS[o.f]){S.settings.handFont=o.f;await handReady(o.f)}else S.settings.handFont='plain';
   const go=()=>draw();if(LOGO_IMG.complete)go();else{LOGO_IMG.onload=LOGO_IMG.onerror=go;setTimeout(()=>{if(!url)go()},1500)}
 }
+
+/* ===================== ortak veri (Firebase) =====================
+   Masalar ve kapanan adisyonlar tüm cihazlarda ortak. Menü ve ayarlar her cihazda ayrı.
+   Bu yapılandırma gizli değildir; erişimi giriş + Firestore kuralları korur. */
+const FB_CFG={apiKey:"AIzaSyAClzgK945RPjPwY7xKTH5f4RzwzfxEI2M",authDomain:"kanaat-pos.firebaseapp.com",projectId:"kanaat-pos",storageBucket:"kanaat-pos.firebasestorage.app",messagingSenderId:"115307541152",appId:"1:115307541152:web:566b27d3cad0008dc4cfc5"};
+const FB_VER='10.14.1';
+var CL={staff:{},on:false,user:null,db:null,known:{t:{},s:{}},ready:false,status:'off',unsub:[],timer:null,loading:null};
+const fid=k=>encodeURIComponent(k).replace(/\./g,'%2E');
+function loadScript(u){return new Promise((res,rej)=>{const x=document.createElement('script');x.src=u;x.onload=res;x.onerror=()=>rej(new Error('Firebase yüklenemedi (internet?)'));document.head.appendChild(x)})}
+function cloudInit(){if(VIEW)return Promise.resolve(false);if(CL.loading)return CL.loading;
+  CL.loading=(async()=>{try{for(const m of ['app','auth','firestore'])await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-${m}-compat.js`);
+      firebase.initializeApp(FB_CFG);CL.db=firebase.firestore();
+      try{await CL.db.enablePersistence({synchronizeTabs:true})}catch(e){}
+      firebase.auth().onAuthStateChanged(u=>{CL.user=u;if(u){S.settings.cloudOn=true;localSave();cloudStart()}else cloudStop();renderCloud()});
+      return true}catch(e){CL.loading=null;CL.status='err';CL.err=errText(e);renderCloud();return false}})();
+  return CL.loading}
+function localSave(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.status='sync';CL.known={t:{},s:{}};
+  if(S.settings.cloudMigrated)S.sales.forEach(x=>CL.known.s[x.id]=JSON.stringify(x));
+  const db=CL.db;
+  CL.unsub.push(db.collection('tables').onSnapshot({includeMetadataChanges:false},snap=>{
+    const first=!CL.ready,seen=new Set();
+    snap.docChanges().forEach(ch=>{const d=ch.doc.data()||{},k=d.k;if(!k)return;
+      if(ch.type==='removed'){if(S.tables[k]&&ui.table===k&&ui.view==='order')toast(tName(k)+' başka cihazda kapatıldı');delete S.tables[k];delete CL.known.t[k];return}
+      if(ch.doc.metadata.hasPendingWrites)return;
+      const prevW=S.tables[k]?.waiter;S.tables[k]=d.t||{lines:[]};CL.known.t[k]=JSON.stringify(S.tables[k]);
+      if(!first&&d.t?.waiter&&d.t.waiter===S.settings.waiter&&prevW&&prevW!==d.t.waiter)toast(`${tName(k)} size devredildi (${prevW})`)});
+    if(first){snap.docs.forEach(x=>seen.add((x.data()||{}).k));
+      if(S.settings.cloudMigrated){for(const k of Object.keys(S.tables))if(!seen.has(k))delete S.tables[k]}
+      CL.ready=true}
+    CL.status=snap.metadata.fromCache?'offline':'ok';
+    localSave();cloudFlush();if(first&&!S.settings.cloudMigrated){S.settings.cloudMigrated=true;localSave()}
+    remoteRender()},e=>{CL.status='err';CL.err=errText(e);renderCloud()}));
+  const since=Date.now()-(S.settings.keepDays||10)*86400e3;
+  CL.unsub.push(db.collection('sales').where('at','>=',since).onSnapshot(snap=>{let ch=false;
+    snap.docChanges().forEach(c=>{if(c.type==='removed'||c.doc.metadata.hasPendingWrites)return;const d=c.doc.data();if(!d||!d.id)return;
+      const i=S.sales.findIndex(x=>x.id===d.id);if(i>=0)S.sales[i]=d;else S.sales.push(d);CL.known.s[d.id]=JSON.stringify(d);ch=true});
+    if(ch){S.sales.sort((a,b)=>a.at-b.at);localSave();if(['report','tips'].includes(ui.view)&&!$layer.innerHTML)render()}},e=>{}));
+  /* çalışan garsonlar: devir listesi için */
+  const ping=()=>{const n=(S.settings.waiter||'').trim();if(n&&CL.on)db.collection('staff').doc(fid(n)).set({n,at:Date.now()}).catch(()=>{})};
+  ping();CL.ping=setInterval(ping,10*60e3);
+  CL.unsub.push(db.collection('staff').onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(c.type==='removed'||!d)return;CL.staff[d.n]=d.at})},()=>{}));
+  renderCloud()}
+function cloudStop(){clearInterval(CL.ping);CL.unsub.forEach(f=>{try{f()}catch(e){}});CL.unsub=[];CL.on=false;CL.ready=false;CL.status=CL.user?'off':'out'}
+function cloudQueue(){if(!CL||!CL.on||!CL.ready)return;clearTimeout(CL.timer);CL.timer=setTimeout(cloudFlush,60)}
+function cloudFlush(){if(!CL.on||!CL.ready)return;const db=CL.db,ops=[];
+  for(const [k,t] of Object.entries(S.tables)){if(!t)continue;const j=JSON.stringify(t);if(CL.known.t[k]!==j){CL.known.t[k]=j;ops.push(b=>b.set(db.collection('tables').doc(fid(k)),{k,t:JSON.parse(j),u:Date.now(),by:S.settings.waiter||''}))}}
+  for(const k of Object.keys(CL.known.t))if(!(k in S.tables)){delete CL.known.t[k];ops.push(b=>b.delete(db.collection('tables').doc(fid(k))))}
+  for(const x of S.sales){const j=JSON.stringify(x);if(CL.known.s[x.id]!==j){CL.known.s[x.id]=j;ops.push(b=>b.set(db.collection('sales').doc(x.id),JSON.parse(j)))}}
+  for(let i=0;i<ops.length;i+=400){const b=db.batch();ops.slice(i,i+400).forEach(f=>f(b));b.commit().catch(e=>{CL.status='err';CL.err=errText(e);renderCloud()})}}
+/* adisyon numarası: ortak sayaç (çevrimdışıysa telefonun kendi numarası kalır) */
+function cloudSeq(sale){if(!CL.on)return;const ref=CL.db.collection('meta').doc('seq');
+  CL.db.runTransaction(async tx=>{const d=await tx.get(ref);const n=((d.exists&&d.data().n)||0)+1;tx.set(ref,{n});return n})
+    .then(n=>{const x=S.sales.find(y=>y.id===sale.id);if(x){x.no=n;S.seq=Math.max(S.seq,n);save()}}).catch(()=>{})}
+function remoteRender(){renderCloud();
+  if($layer.innerHTML){if(ui.view==='order'&&document.querySelector('#layer .billv')&&!ui.editCart){try{openCart()}catch(e){}}return}
+  if(ui.view==='order'){const a=document.activeElement;if(a&&a.id==='osearch'){renderCartBar();return}}
+  if(['tables','order','report','tips'].includes(ui.view))render()}
+function cloudBadge(){if(!S.settings.cloudOn)return '';const st={ok:['#1f7a4d','Ortak veri: bağlı'],sync:['#a15c00','Ortak veri: bağlanıyor…'],offline:['#a15c00','İnternet yok: değişiklikler bağlanınca gönderilecek'],err:['#b42318','Ortak veri hatası'],out:['#b42318','Ortak veri: giriş gerekli (Ayarlar)'],off:['#5b6677','Ortak veri: kapalı']}[CL.status]||['#5b6677',''];
+  return `<p class="muted" id="cloudBadge" style="margin:0;font-size:13px;display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:${st[0]};flex:none"></span>${esc(st[1])}</p>`}
+function cloudCard(){const u=CL.user;
+  return `<h3 style="margin:0">Ortak veri (tüm telefonlar ve bilgisayar)</h3>
+   ${u?`<p style="margin:0">Bağlı hesap: <b>${esc(u.email||'')}</b></p>${cloudBadge()}
+     <p class="muted" style="margin:0;font-size:13px">Açık masalar ve kapanan adisyonlar bütün cihazlarda ortak. Menü ve yazıcı ayarları her cihazda ayrıdır.</p>
+     <button class="btn" data-act="cloudOut">Bu cihazda ortak veriden çık</button>`
+   :`<p class="muted" style="margin:0;font-size:13px">Lokanta hesabıyla bir kez giriş yapınca bu cihaz diğer telefonlarla aynı masaları görür.${CL.status==='err'&&CL.err?' <b style="color:var(--danger)">'+esc(CL.err)+'</b>':''}</p>
+     <button class="btn pri" data-act="cloudIn">Ortak veriye bağlan</button>`}`}
+function renderCloud(){const c=document.getElementById('cloudCard');if(c)c.innerHTML=cloudCard();const b=document.getElementById('cloudBadge');if(b&&ui.view==='tables')b.outerHTML=cloudBadge()}
+A.cloudIn=()=>requireAdmin(()=>{
+  modal(`<div class="row" style="justify-content:space-between"><h2>Ortak veriye bağlan</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
+    <p class="muted" style="margin:0">Firebase'de oluşturduğunuz lokanta hesabıyla giriş yapın. Bu cihaz bir daha sormaz.</p>
+    <label class="f">E-posta<input id="clEmail" type="email" autocomplete="username" autocapitalize="off" value="info@kanaatlokantasi.com.tr"></label>
+    <label class="f">Şifre<input id="clPass" type="password" autocomplete="current-password"></label>
+    <p id="clErr" class="muted" style="margin:0;color:var(--danger);min-height:1.2em"></p>
+    <button class="btn pri block" id="clOk" style="min-height:52px">Giriş yap</button>`);
+  const go=async()=>{const e=document.getElementById('clEmail').value.trim(),p=document.getElementById('clPass').value,er=document.getElementById('clErr'),btn=document.getElementById('clOk');
+    if(!e||!p){er.textContent='E-posta ve şifreyi yazın.';return}btn.disabled=true;er.textContent='Bağlanılıyor…';
+    if(!(await cloudInit())){er.textContent='Firebase yüklenemedi. İnternet bağlantısını kontrol edin.';btn.disabled=false;return}
+    try{await firebase.auth().signInWithEmailAndPassword(e,p);closeLayer();toast('Ortak veriye bağlandı');render()}
+    catch(x){btn.disabled=false;const c=x.code||'';er.textContent=/invalid|wrong|not-found|credential/.test(c)?'E-posta veya şifre hatalı.':/network/.test(c)?'İnternet bağlantısı yok.':/too-many/.test(c)?'Çok fazla deneme. Biraz bekleyin.':('Giriş olmadı: '+(x.message||c))}};
+  document.getElementById('clOk').onclick=go;document.getElementById('clPass').addEventListener('keydown',ev=>{if(ev.key==='Enter')go()})});
+A.cloudOut=()=>requireAdmin(()=>ask('Bu cihaz ortak veriden çıkarılsın mı? Masalar bu cihazda görünmez olur.','Çık',async()=>{
+  try{await firebase.auth().signOut()}catch(e){}S.settings.cloudOn=false;S.settings.cloudMigrated=false;S.tables={};localSave();cloudStop();render();toast('Ortak veriden çıkıldı')},false));
+/* masa devri: masayı içindekilerle başka garsona ver */
+A.handover=()=>{const k=ui.table,t=S.tables[k];if(!t||!tCount(t)){toast('Devredilecek ürün yok');return}
+  const recent=Date.now()-2*86400e3,names=new Set();
+  Object.entries(CL.staff).forEach(([n,at])=>{if(at>Date.now()-14*3600e3)names.add(n)});Object.values(S.tables).forEach(x=>x&&x.waiter&&names.add(x.waiter));S.sales.filter(x=>x.at>recent&&x.waiter).forEach(x=>names.add(x.waiter));
+  names.delete(t.waiter||S.settings.waiter||'');const list=[...names].sort((a,b)=>a.localeCompare(b,'tr'));
+  modal(`<div class="row" style="justify-content:space-between"><h2>${esc(tName(k))} kime devredilsin?</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
+    <p class="muted" style="margin:0">Masa içindekilerle birlikte seçtiğiniz garsona geçer. Şu an: <b>${esc(t.waiter||S.settings.waiter||'-')}</b></p>
+    <div style="display:grid;gap:8px">${list.map(n=>`<button class="btn" data-act="handTo" data-n="${esc(n)}" style="min-height:52px;font-size:17px">${esc(n)}</button>`).join('')||'<p class="muted" style="margin:0">Listede garson yok.</p>'}</div>
+    <label class="f">Başka garson (ad soyad)<input id="hoName" autocapitalize="words" placeholder="Örn. Mehmet Kaya"></label>
+    <button class="btn pri block" data-act="handTo" data-n="">Devret</button>`)};
+A.handTo=d=>{const k=ui.table,t=S.tables[k];if(!t)return;let n=(d.n||document.getElementById('hoName')?.value||'').replace(/\s+/g,' ').trim();
+  if(n.split(' ').length<2){toast('Ad ve soyad yazın');return}n=n.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');
+  const from=t.waiter||S.settings.waiter||'';t.waiter=n;t.from=from;save();closeLayer();ui.view='tables';render();toast(`${tName(k)} → ${n} devredildi`)};
+if(!VIEW&&S.settings.cloudOn)cloudInit();
 if(!VIEW&&handOf(S.settings.handFont))setTimeout(()=>handReady(),1500);
 if(VIEW)custView();
 else{render();
