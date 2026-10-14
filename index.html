@@ -288,7 +288,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 117</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 118</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -583,13 +583,16 @@ function render(){
 
 function sampleBanner(){return S.menu.sample?`<div class="note">Şu an <b>örnek menü</b> yüklü (fiyatlar örnektir). <button class="linkbtn" data-act="tab" data-v="menu">Kendi menünüzü yükleyin →</button></div>`:''}
 
+/* ortak veride garson sadece kendi masalarını görür; yönetici (kasa bilgisayarı) hepsini görür */
+function mineT(t){return !(CL&&CL.on)||isAdmin()||!t||!t.waiter||t.waiter===(S.settings.waiter||'')}
 function vTables(){
-  const list=tableList();const open=list.filter(t=>S.tables[t.key]&&tCount(S.tables[t.key])>0);
+  const list=tableList();const open=list.filter(t=>S.tables[t.key]&&tCount(S.tables[t.key])>0&&mineT(S.tables[t.key]));
   const openSum=open.reduce((a,t)=>a+tTotal(S.tables[t.key]),0);
   $main.innerHTML=`<div class="stack">
     ${sampleBanner()}
     <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}
     <div class="tgrid">${list.map(t=>{const o=S.tables[t.key];const n=tCount(o);
+      if(n&&!mineT(o))return `<div class="tile" aria-disabled="true" style="opacity:.45;border-style:dashed;cursor:not-allowed"><span class="n">${esc(t.short)}</span><span class="m">Dolu</span></div>`;
       const mins=o&&n?Math.max(0,Math.round((Date.now()-o.openedAt)/60000)):0;
       return `<button class="tile ${n?'open':''}" data-act="openTable" data-k="${esc(t.key)}">
         <span class="n">${esc(t.short)}</span>
@@ -606,7 +609,7 @@ function pkgBlocked(it){if(ui.pkg&&noPkg(it)){toast(baseName(it.name)+' pakete e
 const IKRAM_ON=false;
 function billSections(lines,lbl){const n=lines.filter(l=>!l.pkg&&!l.ikram),p=lines.filter(l=>l.pkg&&!l.ikram),k=lines.filter(l=>l.ikram);
   return [...n,...(p.length?[{sec:lbl.pkg,kind:'pkg'}]:[]),...p,...(k.length?[{sec:lbl.ik,kind:'ik'}]:[]),...k]}
-function curT(){return S.tables[ui.table]||(S.tables[ui.table]={lines:[],openedAt:Date.now(),waiter:S.settings.waiter||''})}
+function curT(){const x=S.tables[ui.table];if(x&&!x.waiter&&S.settings.waiter)x.waiter=S.settings.waiter;return x||(S.tables[ui.table]={lines:[],openedAt:Date.now(),waiter:S.settings.waiter||''})}
 function itemTile(i,qmap,hmap,umap,catHalf){const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');const np=ui.pkg&&noPkg(i);return `<div class="itemw ${corner?'hashalf':''} ${np?'nopkg':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
       ${hasB?`<span class="q">${b}</span>`:''}
       <span class="nm">${esc(i.name)}</span>${np?'<span class="pr" style="font-size:14px">Pakete eklenmez</span>':`<span class="pr num">${fmt(i.price)}</span>`}</button>
@@ -1366,7 +1369,7 @@ const A={
     if(l.ikram){const it=S.menu.items.find(i=>i.id===l.itemId);l.price=l.op!=null?l.op:(it?(l.half?itemHalf(it):l.unit?it.unitPrice:it.price):0);delete l.ikram;delete l.op}
     else{l.op=l.price;l.price=0;l.ikram=true}
     save();openCart();vOrder()},
-  openTable(d){ui.pkg=false;ui.ikram=false;ui.cat=null;ui.q='';ui.lang='tr';ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
+  openTable(d){if(!mineT(S.tables[d.k])){toast('Bu masa başka garsonda');return}ui.pkg=false;ui.ikram=false;ui.cat=null;ui.q='';ui.lang='tr';ui.table=d.k;ui.view='order';render();$main.scrollTop=0},
   cat(d){ui.cat=d.id||null;ui.q='';render();$main.scrollTop=0},
   clrQ(){ui.q='';vOrder();const si=document.getElementById('osearch');if(si)si.focus()},
   add(d){const it=S.menu.items.find(i=>i.id===d.id);if(!it)return;if(pkgBlocked(it))return;const t=curT();
@@ -1467,7 +1470,7 @@ const A={
     if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:payLbl,no:sale.no,at:sale.at,tip,tipPct,waiter:sale.waiter,payments:sale.payments,lang,closed:true,splitN:sale.payments?0:sale.split}),'Fiş')},
   clearTable(){requireAdmin(()=>ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')}))},
   moveTable(){const t=S.tables[ui.table];if(!t||!tCount(t)){toast('Taşınacak ürün yok');return}
-    const free=tableList().filter(x=>x.key!==ui.table);
+    const free=tableList().filter(x=>x.key!==ui.table&&(!S.tables[x.key]||!tCount(S.tables[x.key])||mineT(S.tables[x.key])));
     modal(`<div class="row" style="justify-content:space-between"><h2>Nereye taşınsın?</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
      <p class="muted" style="margin:0">Dolu masaya taşırsanız adisyonlar birleşir.</p>
      <div class="tgrid">${free.map(x=>`<button class="tile ${S.tables[x.key]&&tCount(S.tables[x.key])?'open':''}" style="min-height:64px" data-act="doMove" data-k="${esc(x.key)}"><span class="n">${esc(x.short)}</span></button>`).join('')}</div>`)},
@@ -1708,6 +1711,7 @@ function cloudSeq(sale){if(!CL.on)return;const ref=CL.db.collection('meta').doc(
     .then(n=>{const x=S.sales.find(y=>y.id===sale.id);if(x){x.no=n;S.seq=Math.max(S.seq,n);save()}}).catch(()=>{})}
 function remoteRender(){renderCloud();
   if($layer.innerHTML){if(ui.view==='order'&&document.querySelector('#layer .billv')&&!ui.editCart){try{openCart()}catch(e){}}return}
+  if(ui.view==='order'&&ui.table&&!mineT(S.tables[ui.table])){ui.view='tables';ui.table=null}
   if(ui.view==='order'){const a=document.activeElement;if(a&&a.id==='osearch'){renderCartBar();return}}
   if(['tables','order','report','tips'].includes(ui.view))render()}
 function cloudBadge(){if(!S.settings.cloudOn)return '';const st={ok:['#1f7a4d','Ortak veri: bağlı'],sync:['#a15c00','Ortak veri: bağlanıyor…'],offline:['#a15c00','İnternet yok: değişiklikler bağlanınca gönderilecek'],err:['#b42318','Ortak veri hatası'],out:['#b42318','Ortak veri: giriş gerekli (Ayarlar)'],off:['#5b6677','Ortak veri: kapalı']}[CL.status]||['#5b6677',''];
