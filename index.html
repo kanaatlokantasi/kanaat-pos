@@ -302,7 +302,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 152</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 153</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1993,7 +1993,7 @@ function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.menuReady=fal
   ping();CL.ping=setInterval(ping,10*60e3);
   CL.unsub.push(db.collection('staff').onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(c.type==='removed'||!d)return;CL.staff[d.n]=d.at})},()=>{}));
   /* kasadan garsona mesaj */
-  CL.unsub.push(db.collection('msgs').where('at','>=',Date.now()-12*3600e3).onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(!d)return;
+  CL.unsub.push(db.collection('msgs').where('at','>=',Date.now()-7*86400e3).onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(!d)return;
       if(c.type==='removed'){delete CL.msgs[c.doc.id];return}CL.msgs[c.doc.id]={...d,id:c.doc.id}});msgCheck();if(document.getElementById('msgSent'))msgSentRender()},()=>{}));
   renderCloud()}
 function cloudStop(){clearInterval(CL.ping);CL.unsub.forEach(f=>{try{f()}catch(e){}});CL.unsub=[];CL.on=false;CL.ready=false;CL.status=CL.user?'off':'out'}
@@ -2051,10 +2051,18 @@ A.msg=()=>{if(!CL.on||!isTrusted())return;ui.msgTo=ui.msgTo||'*';const L=staffNa
   modal(`<div class="row" style="justify-content:space-between"><h2>Garsona mesaj</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
     <div><b style="font-size:14px">Kime</b><div class="vtabs" id="msgTo" style="margin-top:6px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr))"></div></div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">${MSG_QUICK.map(q=>`<button class="btn" data-act="msgQ" data-t="${esc(q)}" style="min-height:40px;font-size:14px">${esc(q)}</button>`).join('')}</div>
-    <textarea id="msgText" rows="2" maxlength="200" style="width:100%;font:inherit;font-size:18px;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;box-sizing:border-box" placeholder="Mesajınızı yazın…"></textarea>
+    <textarea id="msgText" rows="5" maxlength="500" style="width:100%;min-height:150px;resize:vertical;line-height:1.4;font:inherit;font-size:20px;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;box-sizing:border-box" placeholder="Mesajınızı yazın…"></textarea>
     <button class="btn pri block" data-act="msgSend" style="min-height:52px;font-size:18px">Gönder</button>
-    <div id="msgSent"></div>`);
-  ui.msgNames=L;msgToRender();msgSentRender()};
+    <div id="msgSent"></div><button class="linkbtn" data-act="msgLog" style="align-self:flex-start">Mesaj geçmişi</button>`);
+  const md=document.querySelector('#layer .modal');if(md)md.style.maxWidth='720px';
+  ui.msgNames=L;msgToRender();msgSentRender();clearInterval(ui.msgT);ui.msgT=setInterval(()=>{if(document.getElementById('msgSent'))msgSentRender();else clearInterval(ui.msgT)},20000)};
+/* tüm mesajlar Firebase'de kayıtlı kalır; burada son 7 gün listelenir */
+A.msgLog=()=>{const L=Object.values(CL.msgs).sort((a,b)=>b.at-a.at);
+  modal(`<div class="row" style="justify-content:space-between"><h2>Mesaj geçmişi</h2><button class="x" data-act="msg" aria-label="Geri">✕</button></div>
+    <div>${L.map(m=>msgRow(m,true)).join('')||'<p class="muted">Mesaj yok.</p>'}</div>`);const md=document.querySelector('#layer .modal');if(md)md.style.maxWidth='720px'};
+function msgRow(m,day){const r=Object.entries(m.read||{});
+  const st=m.to==='*'?(r.length?'✓ Okuyan: '+r.map(([n,t])=>n.split(' ')[0]+' '+hm(t)).join(', '):'Henüz okunmadı'):(m.read&&m.read[m.to]?'✓ Okundu '+hm(m.read[m.to]):'Henüz okunmadı');
+  return `<div style="border-bottom:1px solid var(--line);padding:6px 0"><div><b>${esc(m.to==='*'?'Herkes':m.to)}</b> <span class="muted num">${day?dmy(m.at)+' ':''}${hm(m.at)}</span></div><div>${esc(m.text)}</div><div class="muted" style="font-size:13px;color:${st.startsWith('✓')?'#1f7a4d':''}">${esc(st)}</div></div>`}
 function msgToRender(){const el=document.getElementById('msgTo');if(!el)return;const L=ui.msgNames||[];
   el.innerHTML=[['*','Herkes'],...L.map(n=>[n,n])].map(([k,t])=>`<button class="${ui.msgTo===k?'on':''}" data-act="msgPick" data-n="${esc(k)}">${esc(t)}</button>`).join('')}
 A.msgPick=d=>{ui.msgTo=d.n;msgToRender()};
@@ -2063,10 +2071,9 @@ A.msgSend=()=>{const ta=document.getElementById('msgText'),text=(ta&&ta.value||'
   const id=uid(),m={to:ui.msgTo||'*',text,from:S.settings.waiter||'Kasa',at:Date.now(),read:{}};CL.msgs[id]={...m,id};
   CL.db.collection('msgs').doc(id).set(m).then(()=>{},()=>toast('Mesaj gönderilemedi'));ta.value='';msgSentRender();toast('Mesaj gönderildi: '+(m.to==='*'?'herkese':m.to))};
 function msgSentRender(){const el=document.getElementById('msgSent');if(!el)return;
-  const L=Object.values(CL.msgs).sort((a,b)=>b.at-a.at).slice(0,8);
-  el.innerHTML=L.length?`<b style="font-size:14px">Gönderilenler</b>`+L.map(m=>{const r=Object.entries(m.read||{});
-    const st=m.to==='*'?(r.length?'✓ Okuyan: '+r.map(([n,t])=>n.split(' ')[0]+' '+hm(t)).join(', '):'Henüz okunmadı'):(m.read&&m.read[m.to]?'✓ Okundu '+hm(m.read[m.to]):'Henüz okunmadı');
-    return `<div style="border-bottom:1px solid var(--line);padding:6px 0"><div><b>${esc(m.to==='*'?'Herkes':m.to)}</b> <span class="muted num">${hm(m.at)}</span></div><div>${esc(m.text)}</div><div class="muted" style="font-size:13px;color:${st.startsWith('✓')?'#1f7a4d':''}">${esc(st)}</div></div>`}).join(''):''}
+  /* pencerede sadece son 5 dakika; eskiler geçmişte durur */
+  const L=Object.values(CL.msgs).filter(m=>m.at>Date.now()-5*60e3).sort((a,b)=>b.at-a.at);
+  el.innerHTML=L.length?`<b style="font-size:14px">Son 5 dakikada gönderilenler</b>`+L.map(m=>msgRow(m)).join(''):''}
 /* garson telefonunda: okunmamış mesajı tam ekran göster */
 function msgCheck(){const me=(S.settings.waiter||'').trim();if(!me||isTrusted()||document.getElementById('msgPop'))return;
   const m=Object.values(CL.msgs).filter(x=>(x.to===me||x.to==='*')&&x.from!==me&&!(x.read&&x.read[me])&&x.at>Date.now()-12*3600e3).sort((a,b)=>a.at-b.at)[0];if(!m)return;
