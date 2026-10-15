@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 141</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 142</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1730,7 +1730,7 @@ function vParse(text){
   const segs=[];let cur=null;const flush=()=>{if(cur&&cur.words.length)segs.push(cur);cur=null};const nw=()=>cur||(cur={qty:0,words:[],half:false,pkg:false});
   const T=vTokens(text);let table=null;
   for(let i=0;i<T.length;i++){const w=T[i];
-    if(w==='|'){flush();continue}
+    if(w==='|'){if(cur&&!cur.words.length)continue;/* sadece sayı söylenip duraklandıysa sayıyı sonraki ürüne taşı */flush();continue}
     if(w==='masa'||w==='masaya'||w==='masanin'||w==='masada'){const x=T[i+1];
       if(x&&vIsNum(x)){i++;const n=vNum(x);const has=k=>tableList().some(t=>t.key===k);
         if(!has('M'+n)&&/^\d{2}$/.test(x)&&has('M'+x[0])&&+x[1]>0){table='M'+x[0];flush();nw().qty=+x[1]}else table='M'+n;continue}
@@ -1791,7 +1791,7 @@ function vHoldStart(btn){if(vRec)return;vTxt='';vFinals=[];vStarted=false;vDownA
     r.onresult=e=>{let interim='';for(let i=0;i<e.results.length;i++){const res=e.results[i];
         if(res.isFinal){const alts=[];for(let j=0;j<res.length;j++)alts.push(res[j].transcript.trim());sess[i]=vBest(alts)}else interim+=res[0].transcript}
       {const L=Object.keys(sess).sort((a,b)=>a-b).map(k=>sess[k]).filter(Boolean);r._fin=L.filter((f,i)=>!L.slice(i+1).some(g=>vFold2(g).startsWith(vFold2(f))))}
-      vTxt=[...vFinals,...r._fin,...(interim?[interim]:[])].join(', ');const sp=btn.querySelector('span');if(sp)sp.textContent=vTxt.slice(-40)||'Dinliyorum…'};
+      vTxt=[...vFinals,...r._fin,...(interim?[interim]:[])].join(' ');const sp=btn.querySelector('span');if(sp)sp.textContent=vTxt.slice(-40)||'Dinliyorum…'};
     r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){vHolding=false;toast('Mikrofon izni yok · klavye mikrofonunu kullanın')}};
     r.onend=()=>{for(const f of (r._fin||[])){const n=vFold2(f),last=vFinals.length?vFold2(vFinals[vFinals.length-1]):null;if(last===n)continue;if(last&&n.startsWith(last))vFinals[vFinals.length-1]=f;else vFinals.push(f)}/* Android aynı cümleyi tekrar gönderebiliyor */
       vRec=null;if(vHolding){run();return}vDone()};
@@ -1799,7 +1799,7 @@ function vHoldStart(btn){if(vRec)return;vTxt='';vFinals=[];vStarted=false;vDownA
   run();
   vWatch=setTimeout(()=>{if(!vStarted){vHolding=false;try{vRec&&vRec.abort()}catch(e){}vRec=null;const b=document.getElementById('vHold');if(b){b.classList.remove('on');b.querySelector('span').textContent='Basılı tut, konuş'}toast('Mikrofon açılamadı, tekrar deneyin')}},6000)}
 const vFold2=t=>fold(t).replace(/\s+/g,' ').trim();
-function vDone(){clearTimeout(vWatch);const t=vFinals.join(', ')||vTxt;const b=document.getElementById('vHold');if(b){b.classList.remove('on');b.querySelector('span').textContent='Basılı tut, konuş'}
+function vDone(){clearTimeout(vWatch);const t=vFinals.join(' ')||vTxt;const b=document.getElementById('vHold');if(b){b.classList.remove('on');b.querySelector('span').textContent='Basılı tut, konuş'}
   if(t||Date.now()-vDownAt<450)A.voice(t)}
 function vHoldEnd(){if(!vHolding)return;vHolding=false;if(vRec){try{vRec.stop()}catch(e){}}else vDone()}
 document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('#vHold');if(!b)return;e.preventDefault();vHoldStart(b)});
