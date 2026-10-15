@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 146</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 147</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1758,7 +1758,7 @@ function vParse(text){
     if(V_SKIP.has(w)||!vKnown(w))continue;
     c.words.push(w)}
   flush();vParse.table=table;
-  return segs.map(sg=>{const opts=vMatch(sg.words);return{qty:Math.max(1,sg.qty||1),half:sg.half,pkg:sg.pkg,said:sg.words.join(' '),opts:opts.map(i=>i.id),sel:opts[0]?.id||''}})}
+  return segs.map(sg=>{const opts=vMatch(sg.words);return{qty:Math.max(1,sg.qty||1),half:!!(sg.half&&opts[0]&&vCanHalf(opts[0]))/* azı olmayan üründe 'az' yok sayılır */,pkg:sg.pkg,said:sg.words.join(' '),opts:opts.map(i=>i.id),sel:opts[0]?.id||''}})}
 function vCanHalf(it){const c=S.menu.cats.find(x=>x.id===it.cat);return !!(c&&c.half&&!it.noHalf)}
 function vRender(){const el=document.getElementById('vList');if(!el)return;const L=ui.voice||[];
   const miss=L.filter(v=>!S.menu.items.some(x=>x.id===v.sel)).map(v=>v.said);
@@ -1768,7 +1768,7 @@ function vRender(){const el=document.getElementById('vList');if(!el)return;const
     return `<div class="vrow"><select data-vsel="${i}" aria-label="Ürün" style="grid-column:1/-1">${v.opts.map(id=>{const x=S.menu.items.find(y=>y.id===id);return x?`<option value="${id}" ${id===v.sel?'selected':''}>${esc(x.name)}</option>`:''}).join('')}</select>
       <span class="vq"><button data-act="vQty" data-i="${i}" data-d="-1" aria-label="Azalt">−</button><b class="num">${v.qty}</b><button data-act="vQty" data-i="${i}" data-d="1" aria-label="Artır">+</button></span>
       <small class="muted num" style="font-size:15px">${fmt(pr)}</small>
-      ${ch?`<button class="vt ${v.half?'on':''}" data-act="vHalf" data-i="${i}">AZ</button>`:(v.half?'<span style="color:var(--danger);font-weight:800;font-size:12px;text-align:center;line-height:1.1">AZ<br>YOK</span>':'<span></span>')}
+      ${ch?`<button class="vt ${v.half?'on':''}" data-act="vHalf" data-i="${i}">AZ</button>`:'<span></span>'}
       ${noPkg(it)?'<span></span>':`<button class="vt pk ${pk?'on':''}" data-act="vPkg" data-i="${i}" aria-label="Paket">P</button>`}
       <button class="vt" data-act="vDel" data-i="${i}" aria-label="Sil">✕</button></div>`}).join(''):'<p class="muted" style="margin:6px 0">Söyledikleriniz burada ürün olarak görünecek.</p>')
 
