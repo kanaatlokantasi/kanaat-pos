@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 136</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 137</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -601,7 +601,7 @@ function render(){
 function sampleBanner(){return S.menu.sample?`<div class="note">Şu an <b>örnek menü</b> yüklü (fiyatlar örnektir). <button class="linkbtn" data-act="tab" data-v="menu">Kendi menünüzü yükleyin →</button></div>`:''}
 
 /* ortak veride garson sadece kendi masalarını görür; yönetici (kasa bilgisayarı) hepsini görür */
-function mineT(t){return !(CL&&CL.on)||isAdmin()||!t||!t.waiter||t.waiter===(S.settings.waiter||'')}
+function mineT(t){return !(CL&&CL.on)||isTrusted()||!t||!tCount(t)||(!!t.waiter&&t.waiter===(S.settings.waiter||''))}
 function vTables(){
   const list=tableList();const open=list.filter(t=>S.tables[t.key]&&tCount(S.tables[t.key])>0&&mineT(S.tables[t.key]));
   const openSum=open.reduce((a,t)=>a+tTotal(S.tables[t.key]),0);
@@ -626,7 +626,7 @@ function pkgBlocked(it){if(ui.pkg&&noPkg(it)){toast(baseName(it.name)+' pakete e
 const IKRAM_ON=false;
 function billSections(lines,lbl){const n=lines.filter(l=>!l.pkg&&!l.ikram),p=lines.filter(l=>l.pkg&&!l.ikram),k=lines.filter(l=>l.ikram);
   return [...n,...(p.length?[{sec:lbl.pkg,kind:'pkg'}]:[]),...p,...(k.length?[{sec:lbl.ik,kind:'ik'}]:[]),...k]}
-function curT(){const x=S.tables[ui.table];if(x&&!x.waiter&&S.settings.waiter)x.waiter=S.settings.waiter;return x||(S.tables[ui.table]={lines:[],openedAt:Date.now(),waiter:S.settings.waiter||''})}
+function curT(){const x=S.tables[ui.table];if(x&&!x.waiter&&!tCount(x)&&S.settings.waiter)x.waiter=S.settings.waiter;return x||(S.tables[ui.table]={lines:[],openedAt:Date.now(),waiter:S.settings.waiter||''})}
 function itemTile(i,qmap,hmap,umap,catHalf){const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');const np=ui.pkg&&noPkg(i);return `<div class="itemw ${corner?'hashalf':''} ${np?'nopkg':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
       ${hasB?`<span class="q">${b}</span>`:''}
       <span class="nm">${esc(i.name)}</span>${np?'<span class="pr" style="font-size:14px">Pakete eklenmez</span>':`<span class="pr num">${fmt(i.price)}</span>`}</button>
@@ -1519,7 +1519,7 @@ const A={
     if(ui.split.paid.filter(Boolean).length===ui.split.n){const sh=splitShares(payGrand());A.finishPay(ui.split.paid.map((p,k)=>({pay:p,amount:sh[k]})))}else updatePay()},
   undoSplit(d){ui.split.paid[Number(d.i)]=null;updatePay()},
   async doPay(d){const g=payGrand();await A.finishPay([{pay:d.p,amount:g}])},
-  async finishPay(payments,splitN){const t=S.tables[ui.table];if(!t)return;const pr=document.getElementById('payPrint')?.checked;
+  async finishPay(payments,splitN){const t=S.tables[ui.table];if(!t)return;if(!mineT(t)){toast('Bu masayı sadece garsonu ya da kasa kapatabilir');return}const pr=document.getElementById('payPrint')?.checked;
     const lang=isEN()?ui.lang:'tr';
     const lines=t.lines.filter(l=>l.qty>0).map(l=>({name:l.name,price:l.price,qty:l.qty,...(l.pkg?{pkg:true}:{}),...(l.ikram?{ikram:true,op:l.op||0}:{}),...(lang!=='tr'?{en:enLine(l,lang)}:{})}));
     ui.lang='tr';
@@ -1530,13 +1530,13 @@ const A={
     S.sales.push(sale);pruneSales();delete S.tables[ui.table];save();cloudSeq(sale);closeLayer();ui.view='tables';render();
     toast(`${sale.table} kapandı · ${fmt(sale.total+tip)}${tip?' (bahşiş '+fmt(tip)+')':''}`);
     if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:payLbl,no:sale.no,at:sale.at,tip,tipPct,waiter:sale.waiter,payments:sale.payments,lang,closed:true,splitN:sale.payments?0:sale.split}),'Fiş')},
-  clearTable(){requireAdmin(()=>ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')}))},
+  clearTable(){if(!mineT(S.tables[ui.table])){toast('Bu masa başka garsonda');return}requireAdmin(()=>ask(tName(ui.table)+' boşaltılsın mı?','Boşalt',()=>{delete S.tables[ui.table];save();ui.view='tables';render();toast('Masa boşaltıldı')}))},
   moveTable(){const t=S.tables[ui.table];if(!t||!tCount(t)){toast('Taşınacak ürün yok');return}
     const free=tableList().filter(x=>x.key!==ui.table&&(!S.tables[x.key]||!tCount(S.tables[x.key])||mineT(S.tables[x.key])));
     modal(`<div class="row" style="justify-content:space-between"><h2>Nereye taşınsın?</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
      <p class="muted" style="margin:0">Dolu masaya taşırsanız adisyonlar birleşir.</p>
      <div class="tgrid">${free.map(x=>`<button class="tile ${S.tables[x.key]&&tCount(S.tables[x.key])?'open':''}" style="min-height:64px" data-act="doMove" data-k="${esc(x.key)}"><span class="n">${esc(x.short)}</span></button>`).join('')}</div>`)},
-  doMove(d){const from=S.tables[ui.table],to=S.tables[d.k];
+  doMove(d){const from=S.tables[ui.table],to=S.tables[d.k];if(!mineT(from)||(to&&!mineT(to))){toast('Bu masa başka garsonda');return}
     if(to){to.lines.push(...from.lines);to.openedAt=Math.min(to.openedAt,from.openedAt)}else S.tables[d.k]=from;
     delete S.tables[ui.table];ui.table=d.k;save();closeLayer();render();toast('Taşındı: '+tName(d.k))},
   async printZ(){await printDoc(zDoc(ui.reportDay),'Gün sonu')},
@@ -1885,7 +1885,7 @@ function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.menuReady=fal
     snap.docChanges().forEach(ch=>{const d=ch.doc.data()||{},k=d.k;if(!k)return;
       if(ch.type==='removed'){if(S.tables[k]&&ui.table===k&&ui.view==='order')toast(tName(k)+' başka cihazda kapatıldı');delete S.tables[k];delete CL.known.t[k];return}
       if(ch.doc.metadata.hasPendingWrites)return;
-      const prevW=S.tables[k]?.waiter;S.tables[k]=d.t||{lines:[]};CL.known.t[k]=JSON.stringify(S.tables[k]);
+      const prevW=S.tables[k]?.waiter;S.tables[k]=d.t||{lines:[]};CL.known.t[k]=JSON.stringify(S.tables[k]);if(!S.tables[k].waiter&&d.by)S.tables[k].waiter=d.by;
       if(!first&&d.t?.waiter&&d.t.waiter===S.settings.waiter&&prevW&&prevW!==d.t.waiter)toast(`${tName(k)} size devredildi (${prevW})`)});
     if(first){snap.docs.forEach(x=>seen.add((x.data()||{}).k));
       if(S.settings.cloudMigrated){for(const k of Object.keys(S.tables))if(!seen.has(k))delete S.tables[k]}
@@ -1957,7 +1957,7 @@ A.cloudIn=()=>requireAdmin(()=>{
 A.cloudOut=()=>requireAdmin(()=>ask('Bu cihaz ortak veriden çıkarılsın mı? Masalar bu cihazda görünmez olur.','Çık',async()=>{
   try{await firebase.auth().signOut()}catch(e){}S.settings.cloudOn=false;S.settings.cloudMigrated=false;S.tables={};localSave();cloudStop();render();toast('Ortak veriden çıkıldı')},false));
 /* masa devri: masayı içindekilerle başka garsona ver */
-A.handover=()=>{const k=ui.table,t=S.tables[k];if(!t||!tCount(t)){toast('Devredilecek ürün yok');return}
+A.handover=()=>{const k=ui.table,t=S.tables[k];if(!mineT(t)){toast('Bu masa başka garsonda');return}if(!t||!tCount(t)){toast('Devredilecek ürün yok');return}
   const recent=Date.now()-2*86400e3,names=new Set();
   Object.entries(CL.staff).forEach(([n,at])=>{if(at>Date.now()-14*3600e3)names.add(n)});Object.values(S.tables).forEach(x=>x&&x.waiter&&names.add(x.waiter));S.sales.filter(x=>x.at>recent&&x.waiter).forEach(x=>names.add(x.waiter));
   names.delete(t.waiter||S.settings.waiter||'');const list=[...names].sort((a,b)=>a.localeCompare(b,'tr'));
