@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 135</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 136</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1694,8 +1694,8 @@ A.freeAmt=()=>{if(!ui.table)return;
   document.getElementById('faOk').onclick=go;a.addEventListener('keydown',e=>{if(e.key==='Enter')go()})};
 
 /* ===== sesli sipariş: klavye dikte ya da tarayıcının konuşma tanıması → ürün listesi → onay ===== */
-const V_NUM={bir:1,iki:2,uc:3,dort:4,bes:5,alti:6,yedi:7,sekiz:8,dokuz:9,on:10,onbir:11,oniki:12,yarim:0};
-const V_SKIP=new Set(['tane','adet','porsiyon','tabak','bardak','de','da','ile','lutfen','bize','getir','getirir','misin','musun','ver','daha','bi','sonra','bir de','icin','olsun','tamam']);
+const V_NUM={bi:1,tek:1,bir:1,iki:2,uc:3,dort:4,bes:5,alti:6,yedi:7,sekiz:8,dokuz:9,on:10,onbir:11,oniki:12,yarim:0};
+const V_SKIP=new Set(['tane','adet','porsiyon','tabak','bardak','de','da','ile','lutfen','bize','getir','getirir','misin','musun','ver','daha','sonra','bir de','icin','olsun','tamam']);
 const V_ALIAS={ezo:'ezogelin',pilav:'pirinc pilavi',su:'sise su',soda:'maden suyu',kahve:'turk kahvesi',iskembe:'terbiyeli iskembe',paca:'kuzu ayak paca',fasulye:'kuru fasulye',kuru:'kuru fasulye',salata:'mevsim salata',coban:'coban salata',kola:'kola',yaprak:'yaprak sarma',dolma:'etli dolma',musakka:'patlican musakka',karniyarik:'karniyarik',sutlac:'sutlac'};
 function vMatch(words){const q=words.join(' ');if(!q)return[];
   const al=V_ALIAS[q];const toks=(al||q).split(' ');
@@ -1717,8 +1717,9 @@ function vParse(text){
     const t=fold(raw);if(!t)continue;
     for(const w of t.split(' ')){
       if(w==='masa'||w==='masaya'||w==='masanin'){wantT=true;continue}
-      if(wantT){wantT=false;const n=/^\d+$/.test(w)?+w:V_NUM[w];if(n){table='M'+n;continue}}
-      if(/^\d+$/.test(w)||(w in V_NUM&&w!=='yarim')){const n=/^\d+$/.test(w)?+w:V_NUM[w];if(cur&&cur.words.length)flush();cur=cur||{qty:0,words:[],half:false,pkg:false};cur.qty=(cur.qty||0)+n;continue}
+      if(wantT){wantT=false;const n=/^\d+$/.test(w)?+w:V_NUM[w];if(n){const has=k=>tableList().some(x=>x.key===k);
+          if(!has('M'+n)&&/^\d{2}$/.test(w)&&has('M'+w[0])&&+w[1]>0){table='M'+w[0];cur={qty:+w[1],words:[],half:false,pkg:false}}else table='M'+n;continue}}
+      if(/^\d+$/.test(w)||(w in V_NUM&&w!=='yarim')){const n=/^\d+$/.test(w)?+w:V_NUM[w];if(cur&&cur.words.length)flush();cur=cur||{qty:0,words:[],half:false,pkg:false};cur.qty=(cur.qty===10&&n<10)?10+n:n;continue}
       cur=cur||{qty:0,words:[],half:false,pkg:false};
       if(w==='az'||w==='yarim'){cur.half=true;continue}
       if(w==='paket'||w==='paketli'||w==='paketle'){cur.pkg=true;continue}
@@ -1756,21 +1757,26 @@ document.addEventListener('input',e=>{if(e.target.id!=='vInline')return;const ta
 let vInlineT=null;
 A.vClear=()=>{const ta=document.getElementById('vInline');if(ta){ta.value='';ta.style.height='';ta.blur()}ui.voice=[];ui.vTable=null;const p=document.getElementById('vPanel');if(p)p.hidden=true};
 /* bas-konuş: basılı tutarken dinler, bırakınca onay penceresi açılır */
-let vRec=null,vTxt='',vStarted=false,vWatch=null,vDownAt=0;
-function vHoldStart(btn){if(vRec)return;vTxt='';vStarted=false;vDownAt=Date.now();
+let vRec=null,vTxt='',vStarted=false,vWatch=null,vDownAt=0,vHolding=false,vFinals=[];
+/* birden çok duyulan seçenekten menüyle en iyi eşleşeni seç (özellikle sayılar ve ürün adları için) */
+function vBest(alts){let best=alts[0]||'',bs=-1e9;for(const a of alts){const r=vParse(a);const sc=r.filter(x=>x.sel).length*3-r.filter(x=>!x.sel).length*2+(vParse.table?1:0);if(sc>bs){bs=sc;best=a}}return best}
+function vHoldStart(btn){if(vRec)return;vTxt='';vFinals=[];vStarted=false;vDownAt=Date.now();vHolding=true;
   btn.classList.add('on');btn.querySelector('span').textContent='Dinliyorum… bırakınca biter';
-  try{vRec=new SR_CLS();vRec.lang='tr-TR';vRec.interimResults=true;vRec.continuous=true;
-    vRec.onstart=()=>{vStarted=true;clearTimeout(vWatch)};
-    vRec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript+' ';vTxt=t.trim();const sp=btn.querySelector('span');if(sp)sp.textContent=vTxt.slice(-40)||'Dinliyorum…'};
-    vRec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){toast('Mikrofon izni yok · klavye mikrofonunu kullanın')}};
-    vRec.onend=()=>{const t=vTxt;vRec=null;clearTimeout(vWatch);const b=document.getElementById('vHold');if(b){b.classList.remove('on');b.querySelector('span').textContent='Basılı tut, konuş'}
-      if(t||Date.now()-vDownAt<450)A.voice(t)};
-    vRec.start();
-    vWatch=setTimeout(()=>{if(!vStarted){try{vRec&&vRec.abort()}catch(e){}vRec=null;try{localStorage.setItem('kSrBroken','1')}catch(e){}toast('Bu telefonda bas-konuş çalışmıyor, klavye mikrofonu açılıyor');A.voice('')}},2500);
-  }catch(e){vRec=null;A.voice('')}}
-function vHoldEnd(){if(vRec){try{vRec.stop()}catch(e){}}}
+  const run=()=>{try{const r=new SR_CLS();vRec=r;r.lang='tr-TR';r.interimResults=true;r.continuous=false;r.maxAlternatives=4;
+    r.onstart=()=>{vStarted=true;clearTimeout(vWatch)};
+    r.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const res=e.results[i];
+        if(res.isFinal){const alts=[];for(let j=0;j<res.length;j++)alts.push(res[j].transcript.trim());vFinals.push(vBest(alts))}else interim+=res[0].transcript}
+      vTxt=(vFinals.join(', ')+(interim?', '+interim:'')).replace(/^, /,'');const sp=btn.querySelector('span');if(sp)sp.textContent=vTxt.slice(-40)||'Dinliyorum…'};
+    r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){vHolding=false;toast('Mikrofon izni yok · klavye mikrofonunu kullanın')}};
+    r.onend=()=>{vRec=null;if(vHolding){run();return}vDone()};
+    r.start()}catch(e){vRec=null;vHolding=false;vDone()}};
+  run();
+  vWatch=setTimeout(()=>{if(!vStarted){vHolding=false;try{vRec&&vRec.abort()}catch(e){}vRec=null;try{localStorage.setItem('kSrBroken','1')}catch(e){}toast('Bu telefonda bas-konuş çalışmıyor, klavye mikrofonu açılıyor');A.voice('')}},2500)}
+function vDone(){clearTimeout(vWatch);const t=vFinals.join(', ')||vTxt;const b=document.getElementById('vHold');if(b){b.classList.remove('on');b.querySelector('span').textContent='Basılı tut, konuş'}
+  if(t||Date.now()-vDownAt<450)A.voice(t)}
+function vHoldEnd(){if(!vHolding)return;vHolding=false;if(vRec){try{vRec.stop()}catch(e){}}else vDone()}
 document.addEventListener('pointerdown',e=>{const b=e.target.closest&&e.target.closest('#vHold');if(!b)return;e.preventDefault();vHoldStart(b)});
-['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,e=>{if(vRec&&e.target.closest&&(e.target.closest('#vHold')||t!=='pointerleave'))vHoldEnd()}));
+['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,e=>{if(vHolding&&e.target.closest&&(e.target.closest('#vHold')||t!=='pointerleave'))vHoldEnd()}));
 document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('#vHold'))e.preventDefault()});
 function vTabs(){const el=document.getElementById('vTabs');if(!el)return;
   el.innerHTML=tableList().filter(x=>x.key.startsWith('M')||!S.tables[x.key]||mineT(S.tables[x.key])).map(x=>{const t=S.tables[x.key],busy=t&&tCount(t)&&!mineT(t);
