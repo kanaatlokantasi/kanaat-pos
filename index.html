@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 134</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 135</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -819,6 +819,7 @@ function vSettings(){
   $main.innerHTML=`<div class="stack">
    <h2>Ayarlar</h2>
    <div class="card stack" id="cloudCard">${cloudCard()}</div>
+   <div class="card stack"><h3 style="margin:0">Mikrofon testi</h3><p class="muted" style="margin:0;font-size:13px">Bu telefonda bas-konuş için hangi yolların çalıştığını dener (en fazla 10 saniye). Sonucu ekran görüntüsü olarak gönderin.</p><button class="btn" data-act="micTest">Mikrofonu test et</button><pre id="micOut" style="white-space:pre-wrap;font-size:13px;margin:0"></pre></div>
    <div class="card stack">
      <h3 style="margin:0">Ekran yazı boyutu</h3>
      <div class="seg">${[['n','Normal'],['l','Büyük'],['xl','Çok büyük']].map(([v,t])=>`<button class="${(s.uiZoom||'n')===v?'act':''}" data-act="set" data-k="uiZoom" data-val="${v}">${t}</button>`).join('')}</div>
@@ -1808,6 +1809,20 @@ A.vHalf=d=>{const v=ui.voice[+d.i];if(v){v.half=!v.half;vRender()}};
 A.vPkg=d=>{const v=ui.voice[+d.i];if(v){v.pkg=!v.pkg;vRender()}};
 A.vDel=d=>{ui.voice.splice(+d.i,1);vRender()};
 document.addEventListener('change',e=>{const i=e.target.dataset&&e.target.dataset.vsel;if(i!==undefined&&ui.voice&&ui.voice[+i]){ui.voice[+i].sel=e.target.value;vRender()}});
+
+/* tanı: bu tarayıcıda konuşma tanıma / ses kaydı çalışıyor mu? (donmasın diye her adım zaman aşımlı) */
+A.micTest=async()=>{const o=document.getElementById('micOut');const log=t=>{o.textContent+=t+'\n'};o.textContent='';
+  const wait=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('zaman aşımı')),ms))]);
+  log('Tarayıcı: '+(navigator.bluetooth?'Bluetooth VAR':'Bluetooth yok')+' · '+(navigator.userAgent.match(/(iPhone OS [\d_]+|Android [\d.]+)/)||[''])[0]);
+  const SRc=window.SpeechRecognition||window.webkitSpeechRecognition;log('1) Konuşma tanıma: '+(SRc?'tanımlı':'YOK'));
+  if(SRc){try{await wait(new Promise((ok,no)=>{const r=new SRc();r.lang='tr-TR';let got=false;r.onstart=()=>{log('   başladı, 3 sn konuşun…');setTimeout(()=>{try{r.stop()}catch(e){}},3000)};
+      r.onresult=e=>{got=true;log('   duydu: '+e.results[0][0].transcript)};r.onerror=e=>{log('   hata: '+e.error)};r.onend=()=>{log('   bitti '+(got?'✓ ÇALIŞIYOR':'(ses gelmedi)'));ok()};r.start()}),6000)}catch(e){log('   '+e.message)}}
+  const md=navigator.mediaDevices&&navigator.mediaDevices.getUserMedia;log('2) Ses kaydı (mikrofon): '+(md?'tanımlı':'YOK')+' · MediaRecorder: '+(window.MediaRecorder?'var':'YOK'));
+  if(md){try{const st=await wait(navigator.mediaDevices.getUserMedia({audio:true}),6000);log('   mikrofon açıldı ✓');
+      if(window.MediaRecorder){const rec=new MediaRecorder(st);const ch=[];rec.ondataavailable=e=>ch.push(e.data);rec.start();await new Promise(r=>setTimeout(r,1500));rec.stop();await new Promise(r=>rec.onstop=r);
+        const sz=ch.reduce((a,b)=>a+b.size,0);log('   1,5 sn kayıt: '+sz+' bayt '+(sz>1000?'✓ KAYIT ÇALIŞIYOR':'(boş)')+' · '+(rec.mimeType||''))}
+      st.getTracks().forEach(t=>t.stop())}catch(e){log('   '+(e.name||'')+' '+e.message)}}
+  log('Test bitti.')};
 const CV_TXT={tr:['Hesabınız','Kaydet / Paylaş','Görüntüye basılı tutarak da kaydedebilirsiniz.','Hesap açılamadı. Garsondan QR kodu tekrar göstermesini isteyin.','Bilgi amaçlıdır; ödeme Türk Lirası ile alınır.'],
   en:['Your bill','Save / Share','You can also press and hold the image to save it.','The bill could not be opened. Please ask your server to show the QR code again.','For information only; payment is taken in Turkish Lira.'],
   ar:['فاتورتك','حفظ / مشاركة','يمكنك أيضًا الضغط مطولًا على الصورة لحفظها.','تعذّر فتح الفاتورة. يرجى أن تطلب من النادل عرض رمز QR مرة أخرى.','للعلم فقط؛ يتم الدفع بالليرة التركية.'],
