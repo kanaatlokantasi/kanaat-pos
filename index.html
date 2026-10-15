@@ -302,7 +302,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 151</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 152</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -608,7 +608,7 @@ function vTables(){
   const openSum=open.reduce((a,t)=>a+tTotal(S.tables[t.key]),0);
   $main.innerHTML=`<div class="stack">
     ${sampleBanner()}
-    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}${voiceBtn()}
+    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}${CL.on&&isTrusted()?`<button class="btn" data-act="msg" style="min-height:50px;font-size:17px">✉️ Garsona mesaj gönder</button>`:''}${voiceBtn()}
     <div class="tgrid">${list.map(t=>{const o=S.tables[t.key];const n=tCount(o);
       if(n&&!mineT(o))return `<div class="tile" aria-disabled="true" style="opacity:.45;border-style:dashed;cursor:not-allowed"><span class="n">${esc(t.short)}</span><span class="m">Dolu</span></div>`;
       const mins=o&&n?Math.max(0,Math.round((Date.now()-o.openedAt)/60000)):0;
@@ -1949,7 +1949,7 @@ async function custView(){
    Bu yapılandırma gizli değildir; erişimi giriş + Firestore kuralları korur. */
 const FB_CFG={apiKey:"AIzaSyAClzgK945RPjPwY7xKTH5f4RzwzfxEI2M",authDomain:"kanaat-pos.firebaseapp.com",projectId:"kanaat-pos",storageBucket:"kanaat-pos.firebasestorage.app",messagingSenderId:"115307541152",appId:"1:115307541152:web:566b27d3cad0008dc4cfc5"};
 const FB_VER='10.14.1';
-var CL={staff:{},on:false,user:null,db:null,known:{t:{},s:{}},ready:false,status:'off',unsub:[],timer:null,loading:null};
+var CL={msgs:{},staff:{},on:false,user:null,db:null,known:{t:{},s:{}},ready:false,status:'off',unsub:[],timer:null,loading:null};
 const fid=k=>encodeURIComponent(k).replace(/\./g,'%2E');
 function loadScript(u){return new Promise((res,rej)=>{const x=document.createElement('script');x.src=u;x.onload=res;x.onerror=()=>rej(new Error('Firebase yüklenemedi (internet?)'));document.head.appendChild(x)})}
 function cloudInit(){if(VIEW)return Promise.resolve(false);if(CL.loading)return CL.loading;
@@ -1992,6 +1992,9 @@ function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.menuReady=fal
   const ping=()=>{const n=(S.settings.waiter||'').trim();if(n&&CL.on)db.collection('staff').doc(fid(n)).set({n,at:Date.now()}).catch(()=>{})};
   ping();CL.ping=setInterval(ping,10*60e3);
   CL.unsub.push(db.collection('staff').onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(c.type==='removed'||!d)return;CL.staff[d.n]=d.at})},()=>{}));
+  /* kasadan garsona mesaj */
+  CL.unsub.push(db.collection('msgs').where('at','>=',Date.now()-12*3600e3).onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(!d)return;
+      if(c.type==='removed'){delete CL.msgs[c.doc.id];return}CL.msgs[c.doc.id]={...d,id:c.doc.id}});msgCheck();if(document.getElementById('msgSent'))msgSentRender()},()=>{}));
   renderCloud()}
 function cloudStop(){clearInterval(CL.ping);CL.unsub.forEach(f=>{try{f()}catch(e){}});CL.unsub=[];CL.on=false;CL.ready=false;CL.status=CL.user?'off':'out'}
 /* menü başka cihazdan gelince açık masalardaki ürünleri yeni menüye isimden eşle */
@@ -2039,6 +2042,46 @@ A.cloudIn=()=>requireAdmin(()=>{
   document.getElementById('clOk').onclick=go;document.getElementById('clPass').addEventListener('keydown',ev=>{if(ev.key==='Enter')go()})});
 A.cloudOut=()=>requireAdmin(()=>ask('Bu cihaz ortak veriden çıkarılsın mı? Masalar bu cihazda görünmez olur.','Çık',async()=>{
   try{await firebase.auth().signOut()}catch(e){}S.settings.cloudOn=false;S.settings.cloudMigrated=false;S.tables={};localSave();cloudStop();render();toast('Ortak veriden çıkıldı')},false));
+/* ===== kasadan garsona mesaj ===== */
+function staffNames(){const recent=Date.now()-2*86400e3,names=new Set();
+  Object.entries(CL.staff).forEach(([n,at])=>{if(at>Date.now()-14*3600e3)names.add(n)});Object.values(S.tables).forEach(x=>x&&x.waiter&&names.add(x.waiter));S.sales.filter(x=>x.at>recent&&x.waiter).forEach(x=>names.add(x.waiter));
+  names.delete(S.settings.waiter||'');return [...names].filter(n=>n.trim()).sort((a,b)=>a.localeCompare(b,'tr'))}
+const MSG_QUICK=['Kasaya gelir misin?','Mutfakta yemek hazır, servise al','Hesap isteyen masa var','Paket sipariş hazır','Mola bitti, salona dön'];
+A.msg=()=>{if(!CL.on||!isTrusted())return;ui.msgTo=ui.msgTo||'*';const L=staffNames();
+  modal(`<div class="row" style="justify-content:space-between"><h2>Garsona mesaj</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
+    <div><b style="font-size:14px">Kime</b><div class="vtabs" id="msgTo" style="margin-top:6px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr))"></div></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">${MSG_QUICK.map(q=>`<button class="btn" data-act="msgQ" data-t="${esc(q)}" style="min-height:40px;font-size:14px">${esc(q)}</button>`).join('')}</div>
+    <textarea id="msgText" rows="2" maxlength="200" style="width:100%;font:inherit;font-size:18px;padding:10px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:inherit;box-sizing:border-box" placeholder="Mesajınızı yazın…"></textarea>
+    <button class="btn pri block" data-act="msgSend" style="min-height:52px;font-size:18px">Gönder</button>
+    <div id="msgSent"></div>`);
+  ui.msgNames=L;msgToRender();msgSentRender()};
+function msgToRender(){const el=document.getElementById('msgTo');if(!el)return;const L=ui.msgNames||[];
+  el.innerHTML=[['*','Herkes'],...L.map(n=>[n,n])].map(([k,t])=>`<button class="${ui.msgTo===k?'on':''}" data-act="msgPick" data-n="${esc(k)}">${esc(t)}</button>`).join('')}
+A.msgPick=d=>{ui.msgTo=d.n;msgToRender()};
+A.msgQ=d=>{const ta=document.getElementById('msgText');if(ta)ta.value=d.t};
+A.msgSend=()=>{const ta=document.getElementById('msgText'),text=(ta&&ta.value||'').trim();if(!text){toast('Mesajı yazın');return}
+  const id=uid(),m={to:ui.msgTo||'*',text,from:S.settings.waiter||'Kasa',at:Date.now(),read:{}};CL.msgs[id]={...m,id};
+  CL.db.collection('msgs').doc(id).set(m).then(()=>{},()=>toast('Mesaj gönderilemedi'));ta.value='';msgSentRender();toast('Mesaj gönderildi: '+(m.to==='*'?'herkese':m.to))};
+function msgSentRender(){const el=document.getElementById('msgSent');if(!el)return;
+  const L=Object.values(CL.msgs).sort((a,b)=>b.at-a.at).slice(0,8);
+  el.innerHTML=L.length?`<b style="font-size:14px">Gönderilenler</b>`+L.map(m=>{const r=Object.entries(m.read||{});
+    const st=m.to==='*'?(r.length?'✓ Okuyan: '+r.map(([n,t])=>n.split(' ')[0]+' '+hm(t)).join(', '):'Henüz okunmadı'):(m.read&&m.read[m.to]?'✓ Okundu '+hm(m.read[m.to]):'Henüz okunmadı');
+    return `<div style="border-bottom:1px solid var(--line);padding:6px 0"><div><b>${esc(m.to==='*'?'Herkes':m.to)}</b> <span class="muted num">${hm(m.at)}</span></div><div>${esc(m.text)}</div><div class="muted" style="font-size:13px;color:${st.startsWith('✓')?'#1f7a4d':''}">${esc(st)}</div></div>`}).join(''):''}
+/* garson telefonunda: okunmamış mesajı tam ekran göster */
+function msgCheck(){const me=(S.settings.waiter||'').trim();if(!me||isTrusted()||document.getElementById('msgPop'))return;
+  const m=Object.values(CL.msgs).filter(x=>(x.to===me||x.to==='*')&&x.from!==me&&!(x.read&&x.read[me])&&x.at>Date.now()-12*3600e3).sort((a,b)=>a.at-b.at)[0];if(!m)return;
+  const d=document.createElement('div');d.id='msgPop';
+  d.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML=`<div style="background:var(--surface,#fff);color:inherit;border-radius:18px;padding:22px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.4);display:grid;gap:14px;border:4px solid #f5b400">
+    <div class="muted" style="font-size:14px">✉️ Kasadan mesaj · ${esc(hm(m.at))}</div><div style="font-size:26px;font-weight:700;line-height:1.25">${esc(m.text)}</div>
+    <button class="btn pri block" id="msgOk" style="min-height:60px;font-size:20px">Tamam, okudum</button></div>`;
+  document.body.appendChild(d);try{navigator.vibrate&&navigator.vibrate([400,150,400,150,400])}catch(e){}msgBeep();
+  document.getElementById('msgOk').onclick=()=>{const t=Date.now();m.read={...(m.read||{}),[me]:t};
+    const {id,...doc}=m;CL.db.collection('msgs').doc(id).set(doc).catch(()=>{});d.remove();setTimeout(msgCheck,300)}}
+function msgBeep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const a=msgBeep.ac||(msgBeep.ac=new C());if(a.state==='suspended')a.resume();
+  [0,.35].forEach(dl=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.3,a.currentTime+dl);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dl+.3);o.start(a.currentTime+dl);o.stop(a.currentTime+dl+.3)})}catch(e){}}
+/* ses için tarayıcı ilk dokunuşta izin verir */
+document.addEventListener('pointerdown',function pr(){try{const C=window.AudioContext||window.webkitAudioContext;if(C&&!msgBeep.ac){msgBeep.ac=new C();msgBeep.ac.resume()}}catch(e){}document.removeEventListener('pointerdown',pr)},{once:true});
 /* masa devri: masayı içindekilerle başka garsona ver */
 A.handover=()=>{const k=ui.table,t=S.tables[k];if(!mineT(t)){toast('Bu masa başka garsonda');return}if(!t||!tCount(t)){toast('Devredilecek ürün yok');return}
   const recent=Date.now()-2*86400e3,names=new Set();
