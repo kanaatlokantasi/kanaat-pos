@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 144</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 145</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1698,14 +1698,18 @@ const V_NUM={bi:1,tek:1,bir:1,iki:2,uc:3,dort:4,bes:5,alti:6,yedi:7,sekiz:8,doku
 const V_SKIP=new Set(['tane','adet','porsiyon','tabak','bardak','de','da','ile','lutfen','bize','getir','getirir','misin','musun','ver','daha','sonra','bir de','icin','olsun','tamam']);
 const V_ALIAS={ezo:'ezogelin',pilav:'pirinc pilavi',su:'sise su',soda:'maden suyu',kahve:'turk kahvesi',iskembe:'terbiyeli iskembe',paca:'kuzu ayak paca',fasulye:'kuru fasulye',kuru:'kuru fasulye',salata:'mevsim salata',coban:'coban salata',kola:'kola',yaprak:'yaprak sarma',dolma:'etli dolma',musakka:'patlican musakka',karniyarik:'karniyarik',sutlac:'sutlac'};
 function vMatch(words){const q=words.join(' ');if(!q)return[];
-  const al=V_ALIAS[q];const toks=(al||q).split(' ');
+  const al=V_ALIAS[q];let toks=(al||q).split(' ');
+  if(!al){const MW=vMenuWords(),isMenu=t=>[...MW].some(m=>m.startsWith(t)||t.startsWith(m));const hits=toks.filter(t=>t.length>=2&&isMenu(t));
+    /* sohbet kelimeleri arasında tek ürün kelimesi varsa kısaltmayı uygula: "pilav abi" → pirinç pilavı */
+    if(hits.length===1&&V_ALIAS[hits[0]])toks=V_ALIAS[hits[0]].split(' ').concat(toks.filter(t=>t!==hits[0]))}
   const cp=(a,b)=>{let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;return i};
   const co=Object.fromEntries(S.menu.cats.map((c,k)=>[c.id,k]));
-  const res=S.menu.items.map((it,k)=>{const w=fold(it.name).split(/\s+/);let sc=0;const used=new Set();
+  const res=S.menu.items.map((it,k)=>{const w=fold(it.name).split(/\s+/);let sc=0,miss=0;const used=new Set();
     for(const t of toks){let best=-1,bs=0;w.forEach((x,i)=>{if(used.has(i))return;const c=cp(t,x),need=Math.min(4,t.length,x.length);
         if((t.length<=3?x.startsWith(t):c>=need)){const v=c===x.length&&c===t.length?3:2;if(v>bs){bs=v;best=i}}});
-      if(best<0)return null;used.add(best);sc+=bs}
-    sc-=Math.max(0,w.length-toks.length)*0.3;if(fold(it.name).startsWith(toks[0]))sc+=0.5;return{it,sc,k,c:co[it.cat]??99}}).filter(Boolean)
+      if(best<0){miss++;continue}used.add(best);sc+=bs}
+    if(sc<2)return null;/* hiç ürün kelimesi yoksa (sohbet/gürültü) eşleşme yok */
+    sc-=miss*0.6;sc-=Math.max(0,w.length-used.size)*0.3;if(fold(it.name).startsWith(toks[0]))sc+=0.5;return{it,sc,k,c:co[it.cat]??99}}).filter(Boolean)
     .sort((a,b)=>b.sc-a.sc||a.c-b.c||a.k-b.k);
   return res.slice(0,6).map(x=>x.it)}
 const V_NUMW=Object.keys(V_NUM).filter(w=>w.length>=2&&w!=='yarim'&&w!=='tek'&&w!=='bi').sort((a,b)=>b.length-a.length);
