@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 147</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 148</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1792,28 +1792,38 @@ document.addEventListener('input',e=>{if(e.target.id!=='vInline')return;const ta
 let vInlineT=null;
 A.vClear=()=>{const ta=document.getElementById('vInline');if(ta){ta.value='';ta.style.height='';ta.blur()}ui.voice=[];ui.vTable=null;const p=document.getElementById('vPanel');if(p)p.hidden=true};
 /* bas-konuş: basılı tutarken dinler, bırakınca onay penceresi açılır */
-let vRec=null,vTxt='',vStarted=false,vWatch=null,vDownAt=0,vHolding=false,vFinals=[];
+let vRec=null,vTxt='',vStarted=false,vWatch=null,vDownAt=0,vHolding=false,vFinals=[],vInterim='',vEnding=false,vEndT=null;
 /* birden çok duyulan seçenekten menüyle en iyi eşleşeni seç (özellikle sayılar ve ürün adları için) */
 function vBest(alts){let best=alts[0]||'',bs=-1e9;for(const a of alts){const r=vParse(a);const sc=r.filter(x=>x.sel).length*3-r.filter(x=>!x.sel).length*2+(vParse.table?1:0);if(sc>bs){bs=sc;best=a}}return best}
-function vHoldStart(btn){if(vRec)return;vTxt='';vFinals=[];vStarted=false;vDownAt=Date.now();vHolding=true;
-  btn.classList.add('on');btn.querySelector('span').textContent='Dinliyorum… bırakınca biter';
-  const run=()=>{try{const r=new SR_CLS();vRec=r;r.lang='tr-TR';r.interimResults=true;r.continuous=true;r.maxAlternatives=4;
-    r.onstart=()=>{vStarted=true;clearTimeout(vWatch)};
+const vFold2=t=>fold(t).replace(/\s+/g,' ').trim();
+function vAddFinal(f){const n=vFold2(f);if(!n)return;const last=vFinals.length?vFold2(vFinals[vFinals.length-1]):null;if(last===n||(last&&last.endsWith(n)))return;if(last&&n.startsWith(last))vFinals[vFinals.length-1]=f;else vFinals.push(f)}
+function vLabel(t){const b=document.getElementById('vHold');const sp=b&&b.querySelector('span');if(sp)sp.textContent=t}
+function vHoldStart(btn){if(vRec||vEnding)return;vTxt='';vFinals=[];vInterim='';vStarted=false;vDownAt=Date.now();vHolding=true;
+  btn.classList.add('on');vLabel('Dinliyorum… bırakınca biter');
+  let fails=0;
+  const run=()=>{let r;try{r=new SR_CLS();vRec=r;r.lang='tr-TR';r.interimResults=true;r.continuous=true;r.maxAlternatives=4}catch(e){vRec=null;return retry()}
+    r.onstart=()=>{vStarted=true;fails=0;clearTimeout(vWatch)};
     const sess={};/* bu oturumun kesin sonuçları: aynı sonuç iki kez gelirse üzerine yazılır, çoğalmaz */
     r.onresult=e=>{let interim='';for(let i=0;i<e.results.length;i++){const res=e.results[i];
-        if(res.isFinal){const alts=[];for(let j=0;j<res.length;j++)alts.push(res[j].transcript.trim());const cf=res[0].confidence;sess[i]=(cf>0&&cf<0.35)?'':vBest(alts)/* çok düşük güvenli (uzaktan gelen/gürültü) cümleyi at */}else interim+=res[0].transcript}
+        if(res.isFinal){const alts=[];for(let j=0;j<res.length;j++)alts.push(res[j].transcript.trim());const cf=res[0].confidence;sess[i]=(cf>0&&cf<0.35)?'':vBest(alts)}else interim+=res[0].transcript}
       {const L=Object.keys(sess).sort((a,b)=>a-b).map(k=>sess[k]).filter(Boolean);r._fin=L.filter((f,i)=>!L.slice(i+1).some(g=>vFold2(g).startsWith(vFold2(f))))}
-      vTxt=[...vFinals,...r._fin,...(interim?[interim]:[])].join(' ');const sp=btn.querySelector('span');if(sp)sp.textContent=vTxt.slice(-40)||'Dinliyorum…'};
-    r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){vHolding=false;toast('Mikrofon izni yok · klavye mikrofonunu kullanın')}};
-    r.onend=()=>{for(const f of (r._fin||[])){const n=vFold2(f),last=vFinals.length?vFold2(vFinals[vFinals.length-1]):null;if(last===n)continue;if(last&&n.startsWith(last))vFinals[vFinals.length-1]=f;else vFinals.push(f)}/* Android aynı cümleyi tekrar gönderebiliyor */
-      vRec=null;if(vHolding){run();return}vDone()};
-    r.start()}catch(e){vRec=null;vHolding=false;vDone()}};
+      vInterim=interim.trim();vTxt=[...vFinals,...r._fin,...(vInterim?[vInterim]:[])].join(' ');vLabel(vTxt.slice(-40)||'Dinliyorum…')};
+    r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){vHolding=false;toast('Mikrofon izni yok')}};
+    r.onend=()=>{(r._fin||[]).forEach(vAddFinal);
+      /* parmak kalkarken henüz kesinleşmemiş son sözler kaybolmasın */
+      if(vInterim&&!vHolding){vAddFinal(vInterim)}vInterim='';
+      if(vRec===r)vRec=null;
+      if(vHolding){setTimeout(()=>{if(vHolding&&!vRec)run()},120);return}/* tarayıcı kendi kapatsa bile parmak kalkana kadar yeniden aç */
+      vDone()};
+    try{r.start()}catch(e){vRec=null;retry()}};
+  const retry=()=>{if(!vHolding){vDone();return}if(++fails>5){vHolding=false;vDone();return}setTimeout(()=>{if(vHolding&&!vRec)run()},250)};
   run();
-  vWatch=setTimeout(()=>{if(!vStarted){vHolding=false;try{vRec&&vRec.abort()}catch(e){}vRec=null;const b=document.getElementById('vHold');if(b){b.classList.remove('on');b.querySelector('span').textContent='Basılı tut, konuş'}toast('Mikrofon açılamadı, tekrar deneyin')}},6000)}
-const vFold2=t=>fold(t).replace(/\s+/g,' ').trim();
-function vDone(){clearTimeout(vWatch);const t=vFinals.join(' ')||vTxt;const b=document.getElementById('vHold');if(b){b.classList.remove('on');b.querySelector('span').textContent='Basılı tut, konuş'}
+  vWatch=setTimeout(()=>{if(!vStarted){vHolding=false;try{vRec&&vRec.abort()}catch(e){}vRec=null;const b=document.getElementById('vHold');if(b)b.classList.remove('on');vLabel('Basılı tut, konuş');toast('Mikrofon açılamadı, tekrar deneyin')}},6000)}
+function vDone(){clearTimeout(vWatch);clearTimeout(vEndT);vEnding=false;const t=vFinals.join(' ')||vTxt;const b=document.getElementById('vHold');if(b)b.classList.remove('on');vLabel('Basılı tut, konuş');
   if(t||Date.now()-vDownAt<450)A.voice(t)}
-function vHoldEnd(){if(!vHolding)return;vHolding=false;if(vRec){try{vRec.stop()}catch(e){}}else vDone()}
+/* parmak kalkınca son sözlerin işlenmesi için kısa süre daha dinle, sonra durdur */
+function vHoldEnd(){if(!vHolding)return;vHolding=false;vEnding=true;vLabel('İşleniyor…');
+  vEndT=setTimeout(()=>{if(vRec){try{vRec.stop()}catch(e){vDone()}setTimeout(()=>{if(vEnding){(vRec&&vRec._fin||[]).forEach(vAddFinal);if(vInterim)vAddFinal(vInterim);vRec=null;vDone()}},2500)}else vDone()},700)}
 /* dokunmatik: parmak kalkana kadar dinle (uzun basmada tarayıcı iptal etmesin diye touchstart engellenir) */
 document.addEventListener('touchstart',e=>{const b=e.target.closest&&e.target.closest('#vHold');if(!b)return;e.preventDefault();vHoldStart(b)},{passive:false});
 document.addEventListener('touchend',e=>{if(vHolding){e.preventDefault();vHoldEnd()}},{passive:false});
