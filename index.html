@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 139</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 140</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1766,7 +1766,8 @@ const V_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navi
 const SR_CLS=window.SpeechRecognition||window.webkitSpeechRecognition;
 const SR_OK=!!SR_CLS&&!(V_IOS&&navigator.bluetooth)&&(()=>{try{return localStorage.getItem('kSrBroken')!=='1'}catch(e){return true}})();
 const MIC_SVG='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>';
-function voiceBtn(){return SR_OK?`<button class="btn pri vbtn" id="vHold" style="touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none">${MIC_SVG}<span>Basılı tut, konuş</span></button>`
+const IS_DESKTOP=!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)&&!(navigator.maxTouchPoints>1);
+function voiceBtn(){if(IS_DESKTOP)return '';return SR_OK?`<button class="btn pri vbtn" id="vHold" style="touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none">${MIC_SVG}<span>Basılı tut, konuş</span></button>`
   :`<div class="vinl"><textarea id="vInline" rows="1" placeholder="🎤 Sesli sipariş: dokun, konuş" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea><button class="vclr" data-act="vClear" aria-label="Temizle">✕</button></div>
    <div id="vPanel" hidden><div class="vtabs" id="vTabs"></div><div id="vList"></div><button class="btn pri block" id="vOk" style="min-height:54px;font-size:18px" disabled>Hesaba ekle</button></div>`}
 function vBusy(){const a=document.activeElement;return !!((a&&a.id==='vInline')||(document.getElementById('vInline')||{}).value)}
