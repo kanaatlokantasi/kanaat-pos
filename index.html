@@ -302,7 +302,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 153</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 154</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -723,6 +723,23 @@ function summary(day){
     items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),pitems:Object.entries(pitems).sort((a,b)=>b[1].t-a[1].t),pkgTotal,pkgSales,iks:Object.entries(iks).sort((a,b)=>b[1].t-a[1].t),ikTotal,voids:list.length-valid.length,
     waiters:Object.entries(valid.reduce((m,s)=>{const w=s.waiter||'(adsız)';m[w]=m[w]||{n:0,t:0,tip:0,tc:0,tk:0,ik:0};m[w].n++;m[w].ik+=s.lines.reduce((a,l)=>a+(l.ikram?l.qty*(l.op||0):0),0);m[w].t+=s.total;m[w].tip+=s.tip||0;m[w].tc+=saleSplit(s,'Nakit').tip;m[w].tk+=saleSplit(s,'Kart').tip;return m},{})).sort((a,b)=>b[1].tip-a[1].tip)}
 }
+/* garson bazında: hangi üründen kaç adet, ne kadar ciro */
+function waiterDetail(){const per=ui.wPer||'d',end=new Date(ui.reportDay+'T23:59:59').getTime();
+  const from=per==='w'?end-7*86400e3:new Date(ui.reportDay+'T00:00:00').getTime();
+  const sales=S.sales.filter(s=>!s.void&&s.at>from&&s.at<=end);const W={};
+  sales.forEach(s=>{const w=s.waiter||'(adsız)';const x=W[w]=W[w]||{n:0,t:0,tip:0,q:0,items:{}};x.n++;x.t+=s.total;x.tip+=s.tip||0;
+    s.lines.forEach(l=>{if(l.ikram)return;const k=l.name+(l.pkg?' · paket':'');const it=x.items[k]=x.items[k]||{q:0,t:0};it.q+=l.qty;it.t+=l.qty*l.price;x.q+=l.qty})});
+  const names=Object.keys(W).sort((a,b)=>W[b].t-W[a].t);if(!names.includes(ui.wSel))ui.wSel=names[0];
+  const x=W[ui.wSel];const items=x?Object.entries(x.items).sort((a,b)=>b[1].q-a[1].q||b[1].t-a[1].t):[];
+  return `<div class="card stack" id="wDet"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Garson satış detayı</h3>
+    <div class="langsw" role="group" aria-label="Dönem" style="width:auto"><button data-act="wPer" data-p="d" class="${per==='d'?'act':''}">Seçili gün</button><button data-act="wPer" data-p="w" class="${per==='w'?'act':''}">Son 7 gün</button></div></div>
+    ${names.length?`<div class="vtabs" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))">${names.map(n=>`<button class="${n===ui.wSel?'on':''}" data-act="wSel" data-n="${esc(n)}" style="font-size:15px;padding:6px">${esc(n)}<br><small class="num" style="font-weight:600">${fmt(W[n].t)}</small></button>`).join('')}</div>
+    <div class="kpis"><div class="kpi big"><span>${esc(ui.wSel)} · ciro</span><b class="num">${fmt(x.t)}</b></div><div class="kpi"><span>Adisyon</span><b class="num">${x.n}</b></div>
+      <div class="kpi"><span>Ürün adedi</span><b class="num">${x.q}</b></div><div class="kpi"><span>Ortalama adisyon</span><b class="num">${fmt(x.n?x.t/x.n:0)}</b></div>
+      <div class="kpi"><span>Bahşiş</span><b class="num">${fmt(x.tip)}</b></div></div>
+    <div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
+      ${items.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r num">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`
+    :`<p class="muted">${per==='w'?'Son 7 günde':'Bu gün'} satış yok.</p>`}</div>`}
 function vReport(){
   const r=summary(ui.reportDay);
   $main.innerHTML=`<div class="stack">
@@ -743,6 +760,7 @@ function vReport(){
    <div class="card"><h3>Garsonlara göre</h3>${r.waiters.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Garson</th><th class="r">Adisyon</th><th class="r">Satış</th><th class="r">Bahşiş</th></tr>
      ${r.waiters.map(([w,v])=>`<tr><td>${esc(w)}${v.ik?`<br><small style="color:#7c3aed">İkram ${money(v.ik)}</small>`:''}</td><td class="r">${v.n}</td><td class="r">${fmt(v.t)}</td><td class="r"><b>${fmt(v.tip)}</b>${v.tip?`<br><small>Net (%${Math.round(tipShare()*100)}) <b>${money(netOf(v.tip))}</b></small>`:''}</td></tr>`).join('')}</table></div>
 `:'<p class="muted">Bu gün satış yok.</p>'}</div>
+   ${waiterDetail()}
    <div class="card"><h3>Satılan ürünler · masada</h3>${r.items.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Tutar</th></tr>
      ${r.items.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.q}</td><td class="r">${fmt(v.t)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Masada satış yok.</p>'}</div>
    ${r.iks.length?`<div class="card"><h3>İkram edilenler</h3><div style="overflow-x:auto"><table class="t"><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Menü değeri</th></tr>
@@ -2065,6 +2083,8 @@ function msgRow(m,day){const r=Object.entries(m.read||{});
   return `<div style="border-bottom:1px solid var(--line);padding:6px 0"><div><b>${esc(m.to==='*'?'Herkes':m.to)}</b> <span class="muted num">${day?dmy(m.at)+' ':''}${hm(m.at)}</span></div><div>${esc(m.text)}</div><div class="muted" style="font-size:13px;color:${st.startsWith('✓')?'#1f7a4d':''}">${esc(st)}</div></div>`}
 function msgToRender(){const el=document.getElementById('msgTo');if(!el)return;const L=ui.msgNames||[];
   el.innerHTML=[['*','Herkes'],...L.map(n=>[n,n])].map(([k,t])=>`<button class="${ui.msgTo===k?'on':''}" data-act="msgPick" data-n="${esc(k)}">${esc(t)}</button>`).join('')}
+A.wSel=d=>{ui.wSel=d.n;const el=document.getElementById('wDet');if(el)el.outerHTML=waiterDetail()};
+A.wPer=d=>{ui.wPer=d.p;const el=document.getElementById('wDet');if(el)el.outerHTML=waiterDetail()};
 A.msgPick=d=>{ui.msgTo=d.n;msgToRender()};
 A.msgQ=d=>{const ta=document.getElementById('msgText');if(ta)ta.value=d.t};
 A.msgSend=()=>{const ta=document.getElementById('msgText'),text=(ta&&ta.value||'').trim();if(!text){toast('Mesajı yazın');return}
