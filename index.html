@@ -157,6 +157,7 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .langsw.langrow{display:grid;grid-template-columns:repeat(6,1fr);width:100%;margin-bottom:10px}.langsw.langrow button{padding:10px 4px}
 .langsw{display:inline-flex;border:1.5px solid #111;border-radius:8px;overflow:hidden}.langsw button{border:0;background:#fff;color:#111;font-weight:700;font-size:14px;padding:6px 12px;min-height:36px}.langsw button.act{background:#111;color:#fff}
 .billv .bl{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+.billv .bl.vnew{background:rgba(255,196,0,.22);border-radius:8px;padding-left:6px;padding-right:6px}
 .billv .bn{min-width:0;font-size:16px;line-height:1.3}
 .billv .bn small{display:block;color:#777;font-size:12px}
 .billv .ba{font-size:16px;font-weight:600}
@@ -301,7 +302,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 150</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 151</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -680,7 +681,7 @@ function openCart(){
    <div class="sb">
     ${lines.length?`<div class="langsw langrow" role="group" aria-label="Dil">${LANGS.map(([c,t])=>`<button data-act="lang" data-l="${c}" class="${(ui.lang||'tr')===c?'act':''}">${t}</button>`).join('')}</div><div class="billv" dir="${isRTL()?'rtl':'ltr'}">
       <div class="bhead"><span class="muted">${dmy(Date.now())} · ${hm(Date.now())}</span><button class="linkbtn" data-act="toggleEdit">${ed?'Bitti':'Düzelt'}</button></div>
-      ${billSections(lines,{pkg:L('PAKET','TAKE AWAY'),ik:L('İKRAM','COMPLIMENTARY')}).map(l=>l.sec?`<div class="bsec ${l.kind==='ik'?'iksec':''}">${l.sec}</div>`:`<div class="bl ${ed?'ed':''}">
+      ${billSections(lines,{pkg:L('PAKET','TAKE AWAY'),ik:L('İKRAM','COMPLIMENTARY')}).map(l=>l.sec?`<div class="bsec ${l.kind==='ik'?'iksec':''}">${l.sec}</div>`:`<div class="bl ${ed?'ed':''} ${ui.vNew&&ui.vNew.includes(l.id)?'vnew':''}">
         <div class="bn"><b class="num">${l.qty} x</b> ${esc(isEN()?enLine(l):l.name)}${l.qty>1?`<small class="num">${l.qty} x ${money(l.price)}</small>`:''}</div>
         ${ed?`<div style="display:flex;align-items:center;gap:6px;flex:none">${IKRAM_ON||l.ikram?`<button class="lnik ${l.ikram?'on':''}" data-act="lineIkram" data-id="${l.id}" aria-pressed="${l.ikram?'true':'false'}">İkram</button>`:''}<div class="qty"><button data-act="dec" data-id="${l.id}" aria-label="Bir azalt">−</button><span class="num">${l.qty}</span><button data-act="inc" data-id="${l.id}" aria-label="Bir artır">+</button></div></div>`:`${l.ikram?`<div class="ba ikt">${L('İKRAM','FREE')}</div>`:`<div class="ba num">${money(l.qty*l.price)}</div>`}`}
       </div>`).join('')}
@@ -1460,7 +1461,7 @@ const A={
     if(!l||l.qty<=l.sent||l.qty<1){toast('Geri alınacak bir şey yok');return}
     l.qty--;const nm=l.name;pruneTable(u.k);save();if(ui.view==='order'&&ui.table===u.k)vOrder();
     if(document.querySelector('.billv')&&ui.table===u.k)openCart();toast('Silindi: 1 '+nm);if(navigator.vibrate)navigator.vibrate([10,40,10])},
-  cart(){ui.editCart=false;openCart()},
+  cart(){ui.editCart=false;ui.vNew=null;openCart()},
   async fxNow(){toast('Kurlar alınıyor…');if(await fetchFx(true)){toast('Kurlar güncellendi');render()}else toast('Kur alınamadı. İnternet bağlantısını kontrol edin.')},
   lang(d){ui.lang=LANGS.some(([c])=>c===d.l)?d.l:'tr';openCart();if(isEN())fetchFx().then(ok=>{if(ok&&isEN()&&document.querySelector('.billv'))openCart()})},
   close(){closeLayer()},
@@ -1836,7 +1837,7 @@ function vHoldStart(btn){if(vRec||vEnding)return;vTxt='';vFinals=[];vInterim='';
   run();
   vWatch=setTimeout(()=>{if(!vStarted){vHolding=false;try{vRec&&vRec.abort()}catch(e){}vRec=null;const b=document.getElementById('vHold');if(b)b.classList.remove('on');vLabel('Basılı tut, konuş');toast('Mikrofon açılamadı, tekrar deneyin')}},6000)}
 function vDone(){clearTimeout(vWatch);clearTimeout(vEndT);vEnding=false;const t=vFinals.join(' ')||vTxt;const b=document.getElementById('vHold');if(b)b.classList.remove('on');vLabel('Basılı tut, konuş');
-  if(t||Date.now()-vDownAt<450)A.voice(t)}
+  if(t)vQuick(t);else if(Date.now()-vDownAt<450)toast('Basılı tutup konuşun, bitince bırakın')}
 /* parmak kalkınca son sözlerin işlenmesi için kısa süre daha dinle, sonra durdur */
 function vHoldEnd(){if(!vHolding)return;vHolding=false;vEnding=true;vLabel('İşleniyor…');
   vEndT=setTimeout(()=>{if(vRec){try{vRec.stop()}catch(e){vDone()}setTimeout(()=>{if(vEnding){(vRec&&vRec._fin||[]).forEach(vAddFinal);if(vInterim)vAddFinal(vInterim);vRec=null;vDone()}},2500)}else vDone()},700)}
@@ -1850,15 +1851,29 @@ function vTabs(){const el=document.getElementById('vTabs');if(!el)return;
   el.innerHTML=tableList().filter(x=>x.key.startsWith('M')||!S.tables[x.key]||mineT(S.tables[x.key])).map(x=>{const t=S.tables[x.key],busy=t&&tCount(t)&&!mineT(t);
     return `<button class="${ui.vTable===x.key?'on':''} ${busy?'busy':''}" data-act="vTab" data-k="${esc(x.key)}" ${busy?'disabled':''}>${esc(x.short)}</button>`}).join('')}
 function vCommit(after){const k=ui.vTable;if(!k){toast('Önce masayı seçin');return}if(!mineT(S.tables[k])){toast('Bu masa başka garsonda');return}
-  const prev=ui.table;ui.table=k;const t=curT();let n=0;
+  const prev=ui.table;ui.table=k;const t=curT();let n=0;ui.vNew=[];
   for(const v of ui.voice||[]){const it=vItem(v.sel);if(!it)continue;
     const half=v.half&&vCanHalf(it),pkg=v.pkg&&!noPkg(it),pr=half?itemHalf(it):it.price;
     let l=t.lines.find(x=>x.itemId===it.id&&!!x.half===half&&!x.unit&&!!x.pkg===pkg&&!x.ikram&&!x.note&&x.price===pr);
     if(!l){l={id:uid(),itemId:it.id,name:half?it.name+' (az)':it.name,price:pr,qty:0,sent:0,note:'',pkg,...(half?{half:true}:{})};t.lines.push(l)}
-    l.qty+=v.qty;n+=v.qty}
+    l.qty+=v.qty;n+=v.qty;ui.vNew.push(l.id)}
   if(!n){ui.table=prev;return}if(!t.openedAt)t.openedAt=Date.now();ui.voice=[];if(ui.view!=='order')ui.table=prev;save();after&&after();
   toast(`${tName(k)}: ${n} ürün eklendi`)}
-A.vTab=d=>{ui.vTable=d.k;vTabs();vRender()};
+A.vTab=d=>{ui.vTable=d.k;if(ui.vPick){ui.vPick=false;vQuickGo();return}vTabs();vRender()};
+/* bas-konuş sonrası: ürünler doğrudan masaya eklenir, hesap 'Düzelt' modunda açılır (adet −/+ ile düzeltilir) */
+function vQuick(text){const r=vParse(text);const ok=r.filter(v=>vItem(v.sel));ui.vMiss=r.filter(v=>!vItem(v.sel)).map(v=>v.said).filter(Boolean);
+  if(!ok.length){toast('Ürün anlaşılamadı: “'+text.slice(0,60)+'” · tekrar söyleyin');return}
+  ui.voice=ok;let k=null;
+  if(vParse.table&&tableList().some(x=>x.key===vParse.table)&&mineT(S.tables[vParse.table]))k=vParse.table;
+  else if(vParse.table&&tableList().some(x=>x.key===vParse.table))toast(tName(vParse.table)+' başka garsonda');
+  if(!k&&ui.view==='order'&&ui.table)k=ui.table;
+  ui.vTable=k;if(k){vQuickGo();return}
+  const n=ok.reduce((a,v)=>a+v.qty,0);ui.vPick=true;
+  modal(`<div class="row" style="justify-content:space-between"><h2>Hangi masa?</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
+    <p class="muted" style="margin:0">${n} ürün: ${esc(ok.map(v=>v.qty+' '+vItem(v.sel).name).join(', '))}</p><div class="vtabs" id="vTabs"></div>`);vTabs()}
+function vQuickGo(){const k=ui.vTable,miss=ui.vMiss||[];
+  vCommit(()=>{closeLayer();ui.pkg=false;ui.ikram=false;ui.cat=null;ui.q='';ui.lang='tr';ui.table=k;ui.view='order';render();ui.editCart=true;openCart();
+    if(miss.length)setTimeout(()=>toast('Anlaşılmadı: '+miss.join(', ')),1600)})}
 A.voice=(pre)=>{const prefill=typeof pre==='string'?pre:'';ui.voice=[];ui.vTable=ui.view==='order'&&ui.table?ui.table:null;const SR=null;
   modal(`<div class="row" style="justify-content:space-between"><h2>Sesli sipariş</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
     <p style="margin:0;font-size:15px">1) Aşağıdaki kutuya dokunun · 2) Klavyenin sağ altındaki <b>🎤 mikrofon</b> tuşuna basıp söyleyin · 3) Bitince listeyi kontrol edin.</p>
