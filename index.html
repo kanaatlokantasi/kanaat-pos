@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 149</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 150</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -810,6 +810,10 @@ function vMenu(){
      ${m.cats.map(c=>`<div class="cathead"><input id="cat-${c.id}" value="${esc(c.name)}" data-catname="${c.id}" aria-label="Kategori adı"><label class="halfchk"><input type="checkbox" data-cathalf="${c.id}" ${c.half?'checked':''}> AZ var</label><button class="linkbtn" data-act="delCat" data-id="${c.id}" style="color:var(--danger)">Sil</button></div>
        ${m.items.filter(i=>i.cat===c.id).map(i=>`<div class="mi"><input id="in-${i.id}" value="${esc(i.name)}" data-iname="${i.id}" aria-label="Ürün adı"><input id="ip-${i.id}" class="p" inputmode="decimal" value="${money(i.price)}" data-iprice="${i.id}" aria-label="Fiyat">${c.half?`<label class="halfchk" title="Az porsiyon: ${esc(fmt(itemHalf(i)))}"><input type="checkbox" data-itemhalf="${i.id}" ${i.noHalf?'':'checked'}>AZ</label>`:'<span></span>'}<button class="del" data-act="delItem" data-id="${i.id}" aria-label="Sil">✕</button></div>`).join('')}
        <button class="linkbtn" data-act="addItem" data-cat="${c.id}">+ Bu kategoriye ürün ekle</button>`).join('')}
+   </div>
+   <div class="card stack" id="comboCard"><h3 style="margin:0">Sadece sesli siparişte çağrılan ürünler</h3>
+     <p class="muted" style="margin:0;font-size:13px">Bunlar menüde ve masa ekranında görünmez; sadece sesli siparişte söylenince eklenir. Döner, pilav ya da kebap fiyatını değiştirdiğinizde bunları da güncelleyin.</p>
+     ${V_COMBO.map(x=>`<div class="mi"><span style="flex:1;font-weight:600">${esc(x.name)}</span><input class="p" inputmode="decimal" value="${money(comboPrice(x.id))}" data-cprice="${x.id}" aria-label="${esc(x.name)} fiyatı"></div>`).join('')}
    </div></div>`;
 }
 
@@ -1606,7 +1610,9 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.dataset.note){const l=findLine(el.dataset.note);if(l){l.note=el.value.trim();save()}}
   if(el.dataset.catname){const c=S.menu.cats.find(x=>x.id===el.dataset.catname);if(c){c.name=el.value.trim()||c.name;S.menu.sample=false;save()}}
   if(el.dataset.iname){const i=S.menu.items.find(x=>x.id===el.dataset.iname);if(i){i.name=el.value.trim()||i.name;S.menu.sample=false;save()}}
-  if(el.dataset.iprice){const i=S.menu.items.find(x=>x.id===el.dataset.iprice);const n=parseNum(el.value);if(i&&n!=null){i.price=n;S.menu.sample=false;save()}el.value=money(i?i.price:0)}
+  if(el.dataset.iprice){const i=S.menu.items.find(x=>x.id===el.dataset.iprice);const n=parseNum(el.value);const old=i?i.price:0;if(i&&n!=null){i.price=n;S.menu.sample=false;save()}el.value=money(i?i.price:0)
+    if(i&&n!=null&&n!==old&&/d[oö]ner|pilav|kebap/i.test(i.name)){toast('Hatırlatma: sesli siparişe özel döner / kebaplı pilav fiyatlarını da güncelleyin (sayfanın en altı)');const cc=document.getElementById('comboCard');if(cc){cc.style.outline='3px solid #a15c00';setTimeout(()=>cc.style.outline='',6000)}}}
+  if(el.dataset.cprice){const n=parseNum(el.value);if(n!=null&&n>0){S.menu.combos={...(S.menu.combos||{}),[el.dataset.cprice]:n};save();toast('Fiyat kaydedildi')}el.value=money(comboPrice(el.dataset.cprice))}
 });
 document.getElementById('restoreFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.menu||!d.settings)throw 0;ask('Yedek yüklensin mi? Bu telefondaki veriler değişir.','Yükle',()=>{S={...defaults(),...d};save();render();toast('Yedek yüklendi')},false)}catch(x){toast('Bu dosya geçerli bir yedek değil')}};
@@ -1697,7 +1703,7 @@ A.freeAmt=()=>{if(!ui.table)return;
 const V_NUM={bi:1,tek:1,bir:1,iki:2,uc:3,dort:4,bes:5,alti:6,yedi:7,sekiz:8,dokuz:9,on:10,onbir:11,oniki:12,yarim:0};
 const V_SKIP=new Set(['tane','adet','porsiyon','tabak','bardak','de','da','ile','lutfen','bize','getir','getirir','misin','musun','ver','daha','sonra','bir de','icin','olsun','tamam']);
 const V_ALIAS={ezo:'ezogelin',pilav:'pirinc pilavi',su:'sise su',soda:'maden suyu',kahve:'turk kahvesi',iskembe:'terbiyeli iskembe',paca:'kuzu ayak paca',fasulye:'kuru fasulye',kuru:'kuru fasulye',salata:'mevsim salata',coban:'coban salata',kola:'kola',yaprak:'yaprak sarma',dolma:'etli dolma',musakka:'patlican musakka',karniyarik:'karniyarik',sutlac:'sutlac'};
-function vMatch(words){const cx=words.find(w=>/^cx\d$/.test(w));if(cx){const c=V_COMBO.find(x=>x.id===cx);return c?[c,...V_COMBO.filter(x=>x!==c)]:[]}
+function vMatch(words){const cx=words.find(w=>/^cx\d$/.test(w));if(cx){const c=V_COMBO.find(x=>x.id===cx);return c?[vItem(c.id),...V_COMBO.filter(x=>x!==c).map(x=>vItem(x.id))]:[]}
   const q=words.join(' ');if(!q)return[];
   const al=V_ALIAS[q];let toks=(al||q).split(' ');
   if(!al){const MW=vMenuWords(),isMenu=t=>[...MW].some(m=>m.startsWith(t)||t.startsWith(m));const hits=toks.filter(t=>t.length>=2&&isMenu(t));
@@ -1764,7 +1770,8 @@ function vParse(text){
 /* sadece sesli siparişte çağrılan özel ürünler (menüde görünmez) */
 const V_COMBO=[{id:'cx1',name:'Pilav Üstü Döner',price:760},{id:'cx2',name:'Pilav Üstü Az Döner',price:470},{id:'cx3',name:'Az Pilav Üstü Az Döner',price:380},
   {id:'cx4',name:'Az Pilav Üstü Tam Döner',price:670},{id:'cx5',name:'Kebaplı Pilav',price:860},{id:'cx6',name:'Az Kebaplı Pilav',price:520}].map(x=>({...x,cat:null,noHalf:true,combo:true}));
-const vItem=id=>V_COMBO.find(x=>x.id===id)||S.menu.items.find(x=>x.id===id);
+function comboPrice(id){const c=V_COMBO.find(x=>x.id===id);return (S.menu.combos&&S.menu.combos[id]>0)?S.menu.combos[id]:(c?c.price:0)}
+const vItem=id=>{const c=V_COMBO.find(x=>x.id===id);return c?{...c,price:comboPrice(id)}:S.menu.items.find(x=>x.id===id)};
 const V_COMBO_RX=[[/\baz pilav (ustu|uzeri|ustune|ustunde) az doner\w*/g,'cx3'],[/\baz pilav (ustu|uzeri|ustune|ustunde) (tam )?doner\w*/g,'cx4'],
   [/\bpilav (ustu|uzeri|ustune|ustunde) az doner\w*/g,'cx2'],[/\b(tam )?pilav (ustu|uzeri|ustune|ustunde) (tam )?doner\w*/g,'cx1'],
   [/\b(pilav az kebapli|az kebapli pilav\w*|kebapli az pilav\w*|az pilav kebapli)\b/g,'cx6'],[/\b(pilav (tam )?kebapli|(tam )?kebapli pilav\w*|kebapli (tam )?pilav\w*)\b/g,'cx5']];
