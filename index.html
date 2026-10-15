@@ -301,7 +301,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 138</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 139</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1708,23 +1708,45 @@ function vMatch(words){const q=words.join(' ');if(!q)return[];
     sc-=Math.max(0,w.length-toks.length)*0.3;if(fold(it.name).startsWith(toks[0]))sc+=0.5;return{it,sc,k,c:co[it.cat]??99}}).filter(Boolean)
     .sort((a,b)=>b.sc-a.sc||a.c-b.c||a.k-b.k);
   return res.slice(0,6).map(x=>x.it)}
+const V_NUMW=Object.keys(V_NUM).filter(w=>w.length>=2&&w!=='yarim'&&w!=='tek'&&w!=='bi').sort((a,b)=>b.length-a.length);
+let V_MENUW=null;const vMenuWords=()=>V_MENUW||(V_MENUW=new Set(S.menu.items.flatMap(i=>fold(i.name).split(/\s+/))));
+const vIsNum=w=>/^\d+$/.test(w)||(w in V_NUM&&w!=='yarim');
+const vNum=w=>/^\d+$/.test(w)?+w:V_NUM[w];
+function vTokens(text){
+  let t=String(text).toLocaleLowerCase('tr')
+    .replace(/(\d)\s*[x×]\b/g,'$1 ').replace(/\b[x×]\s*(\d)/g,' $1')       /* 2x / x2 */
+    .replace(/(\d)([a-zçğıöşüâîû])/gi,'$1 $2').replace(/([a-zçğıöşüâîû])(\d)/gi,'$1 $2') /* 2mercimek, masa3 */
+    .replace(/(\d)\s*'\s*[a-zçğıöşü]+/gi,'$1')                            /* 3'e, 2'li */
+    .replace(/[,.;:\n!?]+/g,' | ').replace(/(^|\s)ve(?=\s|$)/g,' | ');
+  const out=[];const MW=vMenuWords();
+  for(const raw of t.split(/\s+/).filter(Boolean)){
+    if(raw==='|'){out.push('|');continue}
+    for(let w of fold(raw).split(' ').filter(Boolean)){
+      /* yapışık sayı: "ikimercimek", "üççay" → "iki mercimek" (menüde böyle başlayan kelime yoksa) */
+      if(!vIsNum(w)&&![...MW].some(m=>m.startsWith(w))){const nw=V_NUMW.find(n=>w.startsWith(n)&&w.length>=n.length+2);if(nw){out.push(nw);w=w.slice(nw.length)}}
+      out.push(w)}}
+  return out}
 function vParse(text){
-  const segs=[];let cur=null;const flush=()=>{if(cur&&cur.words.length)segs.push(cur);cur=null};
-  const norm=String(text).replace(/[,.;\n]+/g,' | ').replace(/\bve\b/gi,' | ');
-  let table=null,wantT=false;
-  for(const raw of norm.split(/\s+/).filter(Boolean)){
-    if(raw==='|'){flush();continue}
-    const t=fold(raw);if(!t)continue;
-    for(const w of t.split(' ')){
-      if(w==='masa'||w==='masaya'||w==='masanin'){wantT=true;continue}
-      if(wantT){wantT=false;const n=/^\d+$/.test(w)?+w:V_NUM[w];if(n){const has=k=>tableList().some(x=>x.key===k);
-          if(!has('M'+n)&&/^\d{2}$/.test(w)&&has('M'+w[0])&&+w[1]>0){table='M'+w[0];cur={qty:+w[1],words:[],half:false,pkg:false}}else table='M'+n;continue}}
-      if(/^\d+$/.test(w)||(w in V_NUM&&w!=='yarim')){const n=/^\d+$/.test(w)?+w:V_NUM[w];if(cur&&cur.words.length)flush();cur=cur||{qty:0,words:[],half:false,pkg:false};cur.qty=(cur.qty===10&&n<10)?10+n:n;continue}
-      cur=cur||{qty:0,words:[],half:false,pkg:false};
-      if(w==='az'||w==='yarim'){cur.half=true;continue}
-      if(w==='paket'||w==='paketli'||w==='paketle'){cur.pkg=true;continue}
-      if(V_SKIP.has(w))continue;
-      cur.words.push(w)}}
+  const segs=[];let cur=null;const flush=()=>{if(cur&&cur.words.length)segs.push(cur);cur=null};const nw=()=>cur||(cur={qty:0,words:[],half:false,pkg:false});
+  const T=vTokens(text);let table=null;
+  for(let i=0;i<T.length;i++){const w=T[i];
+    if(w==='|'){flush();continue}
+    if(w==='masa'||w==='masaya'||w==='masanin'||w==='masada'){const x=T[i+1];
+      if(x&&vIsNum(x)){i++;const n=vNum(x);const has=k=>tableList().some(t=>t.key===k);
+        if(!has('M'+n)&&/^\d{2}$/.test(x)&&has('M'+x[0])&&+x[1]>0){table='M'+x[0];flush();nw().qty=+x[1]}else table='M'+n;continue}
+      continue}
+    if(vIsNum(w)){const n=vNum(w);
+      if(cur&&cur.words.length){
+        /* "mercimek iki (tane)" → sayı sonda: ardından ayraç/son ya da tane/adet geliyorsa bu ürüne ait */
+        let j=i+1;while(T[j]&&V_SKIP.has(T[j]))j++;const nx=T[j];
+        if(!cur.qty&&(!nx||nx==='|'||(T[i+1]&&['tane','adet','porsiyon'].includes(T[i+1])))){cur.qty=n;while(T[i+1]&&['tane','adet','porsiyon'].includes(T[i+1]))i++;flush();continue}
+        flush()}
+      const c=nw();c.qty=(c.qty===10&&n<10)?10+n:n;continue}
+    const c=nw();
+    if(w==='az'||w==='yarim'){c.half=true;continue}
+    if(w==='paket'||w==='paketli'||w==='paketle'){c.pkg=true;continue}
+    if(V_SKIP.has(w))continue;
+    c.words.push(w)}
   flush();vParse.table=table;
   return segs.map(sg=>{const opts=vMatch(sg.words);return{qty:Math.max(1,sg.qty||1),half:sg.half,pkg:sg.pkg,said:sg.words.join(' '),opts:opts.map(i=>i.id),sel:opts[0]?.id||''}})}
 function vCanHalf(it){const c=S.menu.cats.find(x=>x.id===it.cat);return !!(c&&c.half&&!it.noHalf)}
@@ -1906,7 +1928,7 @@ function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.menuReady=fal
   CL.unsub.push(db.collection('meta').doc('menu').onSnapshot(doc=>{if(doc.metadata&&doc.metadata.hasPendingWrites)return;
     const d=doc.exists?doc.data():null;
     if(d&&d.menu&&Array.isArray(d.menu.items)){const j=JSON.stringify(d.menu);CL.known.menu=j;
-      if(JSON.stringify(S.menu)!==j){S.menu=d.menu;if(d.halfPct)S.settings.halfPct=d.halfPct;remapLines();localSave();if(CL.menuReady)toast('Menü güncellendi');remoteRender()}}
+      if(JSON.stringify(S.menu)!==j){S.menu=d.menu;V_MENUW=null;if(d.halfPct)S.settings.halfPct=d.halfPct;remapLines();localSave();if(CL.menuReady)toast('Menü güncellendi');remoteRender()}}
     else CL.known.menu=null;
     CL.menuReady=true;cloudFlush()},e=>{}));
   /* çalışan garsonlar: devir listesi için */
