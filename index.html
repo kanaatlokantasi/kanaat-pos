@@ -305,7 +305,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 158</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 159</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -503,8 +503,11 @@ const enPay=(p,lg=ui.lang)=>tx(({Nakit:'Cash',Kart:'Card','Karışık':'Mixed'})
 /* başlangıç listesi: kasa Menü'den değiştirince ortak menüdeki liste geçerli olur */
 /* ad düzeltmeleri: eski adla açılmış masalar, satışlar ve bahşişler yeni ada sayılır, hiçbir kayıt silinmez */
 const W_REN={'Hakan Yontu':'Hakan Yontan'};const ren=n=>W_REN[n]||n||'';
-const ROSTER0=['Aydın Uçar','Burhan Erzem','Mustafa Tayan','Hakan Yontan','İsa Duman','İdris Ertan','Mehmet Soğancı'].map((n,i)=>({n,b:i+1}));
-const roster=()=>(S.menu&&Array.isArray(S.menu.waiters))?S.menu.waiters.map(r=>W_REN[r.n]?{...r,n:W_REN[r.n]}:r):ROSTER0;
+const ROSTER0=['Aydın Uçar','Burhan Erzem','Mustafa Tayan','Hakan Yontan','İsa Duman','İdris Ertan','Mehmet Soğancı','Mahmut Benderli'].map((n,i)=>({n,b:i+1}));
+/* sonradan eklenenler: kasada liste düzenlenmiş olsa da eksikse sona eklenir (masa numaraları değişmez) */
+const W_ADD=['Mahmut Benderli'];
+function roster(){if(!(S.menu&&Array.isArray(S.menu.waiters)))return ROSTER0;const L=S.menu.waiters.map(r=>W_REN[r.n]?{...r,n:W_REN[r.n]}:r);
+  W_ADD.forEach(n=>{if(!L.some(r=>fold(r.n)===fold(n)))L.push({n,b:Math.max(0,...L.map(r=>r.b))+1})});return L}
 const wPer=()=>Math.max(1,Math.min(30,(S.menu&&S.menu.wTables)||8));
 function myBlock(){if(isTrusted())return null;const me=ren((S.settings.waiter||'').trim());const r=roster().find(x=>x.n===me);return r?r.b:null}
 const tKeyN=n=>{const b=myBlock();return b?'W'+b+'-'+n:'M'+n};
