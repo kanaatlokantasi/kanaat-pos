@@ -296,8 +296,10 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 #toast.act span{overflow:hidden;text-overflow:ellipsis}
 #toast .tundo{flex:none;border:0;background:#fde68a;color:#111;font-weight:800;font-size:15px;border-radius:999px;padding:9px 16px;min-height:40px}
 @media (min-width:600px){.tgrid{grid-template-columns:repeat(4,1fr)}.tgw{grid-template-columns:repeat(4,1fr)}}
-@media (min-width:1000px){.tgrid.tgw{grid-template-columns:repeat(8,1fr)}}
 .tgw .tile .n{font-size:15px;line-height:1.15;word-break:break-word}
+/* kasa: garson grupları yan yana, kompakt kutular → 8 garson tek ekrana sığsın */
+@media (min-width:1000px){.tgrps{display:grid;grid-template-columns:1fr 1fr;gap:4px 18px}.tgrid.tgw{grid-template-columns:repeat(4,1fr);gap:6px}
+  .tgw .tile{min-height:58px;padding:6px 8px}.tgw .tile .n{font-size:14px}.tgw .tile .t{font-size:15px}.tgw .tile .m{font-size:11px}.tgrp h3{font-size:14px;margin:2px 0 4px!important}}
 @media (min-width:600px){.igrid{grid-template-columns:repeat(3,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -305,7 +307,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 159</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 160</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -646,7 +648,7 @@ function vTables(){
       </button>`};
       const grps=[...new Set(list.map(t=>t.grp||''))];
       if(grps.length<2&&!grps[0])return `<div class="tgrid">${list.map(tile).join('')}</div>`;
-      return grps.map(g=>`<div class="tgrp"><h3 style="margin:6px 0">${esc(g||'Diğer')}</h3><div class="tgrid tgw">${list.filter(t=>(t.grp||'')===g).map(tile).join('')}</div></div>`).join('')})()}</div>`;
+      return '<div class="tgrps">'+grps.map(g=>`<div class="tgrp"><h3 style="margin:6px 0">${esc(g||'Diğer')}</h3><div class="tgrid tgw">${list.filter(t=>(t.grp||'')===g).map(tile).join('')}</div></div>`).join('')+'</div>'})()}</div>`;
 }
 
 /* paket olarak verilmeyen ürünler */
