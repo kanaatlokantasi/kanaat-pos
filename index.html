@@ -160,6 +160,9 @@ html:not([data-zoom="n"]) .item{min-height:70px}
 .langsw.langrow{display:grid;grid-template-columns:repeat(6,1fr);width:100%;margin-bottom:10px}.langsw.langrow button{padding:10px 4px}
 .langsw{display:inline-flex;border:1.5px solid #111;border-radius:8px;overflow:hidden}.langsw button{border:0;background:#fff;color:#111;font-weight:700;font-size:14px;padding:6px 12px;min-height:36px}.langsw button.act{background:#111;color:#fff}
 .billv .bl{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #eee}
+.plist{display:grid;gap:6px;max-height:46vh;overflow:auto}.prow{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--surface)}
+.prow .vq{display:flex;align-items:center;gap:4px}.prow .vq button{min-width:42px;min-height:42px;border:1px solid var(--line);border-radius:9px;background:var(--surface);font-weight:800;font-size:18px;color:inherit}.prow .vq button:disabled{opacity:.35}.prow .vq b{min-width:44px;text-align:center}
+.prow.on{border-color:#1f7a4d;background:rgba(31,122,77,.10)}.prow .pn{flex:1;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:4px 0;min-height:44px}
 .billv .bl.vnew{background:rgba(255,196,0,.22);border-radius:8px;padding-left:6px;padding-right:6px}
 .billv .bn{min-width:0;font-size:16px;line-height:1.3}
 .billv .bn small{display:block;color:#777;font-size:12px}
@@ -308,7 +311,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 162</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 163</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -730,6 +733,7 @@ function openCart(){
    <div class="sf">
      <div class="g2"><button class="btn pri" data-act="bill" ${lines.length?'':'disabled'} style="min-height:60px;font-size:18px">Fişi yazdır</button><button class="btn ok" data-act="pay" ${tCount(t)?'':'disabled'} style="min-height:60px;font-size:18px">${tipOfT(t)>0?'Bahşişi değiştir':'Bahşiş ekle'}</button></div>
      ${lines.length&&!ed?`<button class="btn qrbtn" data-act="qrBill"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm8-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3zm-2.5-2.5h3v3h-3v-3z"/></svg>Müşterinin telefonuna gönder</button>`:''}
+     ${lines.length&&!ed&&lines.reduce((a,l)=>a+l.qty,0)>1?`<button class="btn" data-act="partOpen" style="min-height:52px;font-size:17px">✂️ Ürüne göre böl (ayrı ayrı öde)</button>`:''}
      ${ed&&lines.length?`<button class="btn danger" data-act="clearTable">Masayı boşalt</button>`:''}
      ${S.settings.kitchen&&lines.length?`<button class="btn" data-act="kitchen">Mutfağa gönder</button>`:''}
    </div>`);
@@ -2147,6 +2151,41 @@ function msgToRender(){const el=document.getElementById('msgTo');if(!el)return;c
 A.wSel=d=>{ui.wSel=d.n;const el=document.getElementById('wDet');if(el)el.outerHTML=waiterDetail()};
 A.wPer=d=>{ui.wPer=d.p;const el=document.getElementById('wDet');if(el)el.outerHTML=waiterDetail()};
 A.installApp=async()=>{if(!INSTALL_EV)return;INSTALL_EV.prompt();try{await INSTALL_EV.userChoice}catch(e){}INSTALL_EV=null;render()};
+/* ===== ürüne göre böl: seçilen ürünler ayrı adisyon olarak ödenir, masadan düşer ===== */
+A.partOpen=()=>{const t=S.tables[ui.table];if(!t||!mineT(t))return;ui.part={sel:{},tip:0};partRender()};
+function partLines(){const t=S.tables[ui.table];return t?t.lines.filter(l=>l.qty>0):[]}
+function partTotal(){return partLines().reduce((a,l)=>a+(ui.part.sel[l.id]||0)*l.price,0)}
+function partRender(){const t=S.tables[ui.table];if(!t)return;const L=partLines(),sel=ui.part.sel;const tot=partTotal(),n=Object.values(sel).reduce((a,b)=>a+b,0);
+  const rest=tTotal(t)-tot;
+  modal(`<div class="row" style="justify-content:space-between"><h2 style="flex:1">Ürüne göre böl <small class="muted" style="font-size:15px">${esc(tName(ui.table))}</small></h2><button class="x" data-act="partBack" aria-label="Kapat">✕</button></div>
+    <p class="muted" style="margin:0;font-size:14px">Ödeyen kişinin ürünlerine dokunun (her dokunuş 1 adet).</p>
+    <div class="plist">${L.map(l=>{const k=sel[l.id]||0;return `<div class="prow ${k?'on':''}"><button class="pn" data-act="partAdd" data-id="${l.id}"><b>${esc(l.name)}</b>${l.pkg?' <small>· paket</small>':''}<br><small class="muted num">${money(l.price)} · masada ${l.qty}</small></button>
+      <span class="vq"><button data-act="partDec" data-id="${l.id}" aria-label="Azalt" ${k?'':'disabled'}>−</button><b class="num">${k}/${l.qty}</b><button data-act="partAdd" data-id="${l.id}" aria-label="Artır" ${k>=l.qty?'disabled':''}>+</button></span></div>`}).join('')}</div>
+    <div class="row" style="gap:8px"><button class="btn" data-act="partAll" style="flex:1">Hepsini seç</button><button class="btn" data-act="partNone" style="flex:1" ${n?'':'disabled'}>Seçimi temizle</button></div>
+    <label class="f">Bu kişinin bahşişi (isteğe bağlı, TL)<input id="partTip" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${ui.part.tip?money(ui.part.tip):''}"></label>
+    <div class="paysum card"><span class="muted">Seçilen (${n} ürün)</span><span class="grand num" id="partTot">${fmt(tot+(ui.part.tip||0))}</span>
+      <span class="muted">Masada kalacak</span><span class="num">${fmt(rest)}</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="btn pri" data-act="partPrint" ${n?'':'disabled'} style="min-height:56px">Fişini yazdır</button>
+      <button class="btn ok" data-act="partPay" ${n?'':'disabled'} style="min-height:56px">Ödendi · masadan düş</button></div>
+    <p class="muted" style="margin:0;font-size:13px">Ödemeyi yazarkasadan (Ingenico) alın, sonra “Ödendi”ye basın. Seçilenler ayrı adisyon olarak kapanır; kalanlar masada kalır.</p>`);
+  const ti=document.getElementById('partTip');ti.addEventListener('input',()=>{ui.part.tip=Math.max(0,parseNum(ti.value)||0);document.getElementById('partTot').textContent=fmt(partTotal()+ui.part.tip)})}
+A.partAdd=d=>{const l=partLines().find(x=>x.id===d.id);if(!l)return;const k=ui.part.sel[d.id]||0;ui.part.sel[d.id]=k>=l.qty?0:k+1;partRender()};
+A.partDec=d=>{const k=ui.part.sel[d.id]||0;if(k>0)ui.part.sel[d.id]=k-1;partRender()};
+A.partAll=()=>{partLines().forEach(l=>ui.part.sel[l.id]=l.qty);partRender()};
+A.partNone=()=>{ui.part.sel={};partRender()};
+A.partBack=()=>{ui.part=null;closeLayer();openCart()};
+function partSaleLines(lang){return partLines().filter(l=>ui.part.sel[l.id]>0).map(l=>({name:l.name,price:l.price,qty:ui.part.sel[l.id],...(l.pkg?{pkg:true}:{}),...(l.ikram?{ikram:true,op:l.op||0}:{}),...(lang&&lang!=='tr'?{en:enLine(l,lang)}:{})}))}
+A.partPrint=async()=>{const t=S.tables[ui.table];if(!t)return;const lang=isEN()?ui.lang:'tr';const lines=partSaleLines(lang);if(!lines.length)return;
+  await printDoc(billDoc(tName(ui.table),lines,partTotal(),{lang,tip:ui.part.tip||0,waiter:t.waiter||S.settings.waiter||''}),'Hesap fişi')};
+A.partPay=()=>{const t=S.tables[ui.table];if(!t)return;if(!mineT(t)){toast('Bu masayı sadece garsonu ya da kasa kapatabilir');return}
+  const lang=isEN()?ui.lang:'tr';const lines=partSaleLines(lang);if(!lines.length)return;const total=partTotal(),tip=ui.part.tip||0,k=ui.table;
+  const sale={id:uid(),no:++S.seq,table:tName(k),lines,total,tip,pay:'',part:true,closed:true,at:Date.now(),waiter:t.waiter||S.settings.waiter||'',...(lang!=='tr'?{lang}:{})};
+  partLines().forEach(l=>{const q=ui.part.sel[l.id]||0;if(!q)return;l.qty-=q;l.sent=Math.max(0,Math.min(l.sent||0,l.qty))});
+  t.lines=t.lines.filter(l=>l.qty>0);const empty=!t.lines.length;if(empty)delete S.tables[k];
+  S.sales.push(sale);pruneSales();save();cloudSeq(sale);ui.part=null;closeLayer();
+  if(empty){ui.view='tables';render();toast(`${sale.table} kapandı · son ödeme ${fmt(total+tip)}`)}
+  else{render();openCart();toast(`Ödendi: ${fmt(total+tip)} · masada kalan ${fmt(tTotal(S.tables[k]))}`)}};
 A.wPick=d=>{const i=document.getElementById('wname');if(i){i.value=d.n;document.getElementById('wOk').click()}};
 A.msgPick=d=>{ui.msgTo=d.n;msgToRender()};
 A.msgQ=d=>{const ta=document.getElementById('msgText');if(ta)ta.value=d.t};
