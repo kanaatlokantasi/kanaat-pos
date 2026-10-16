@@ -311,7 +311,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 163</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 164</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -968,12 +968,6 @@ function vSettings(){
      <label class="f">Ek masalar (virgülle)<input id="extras" value="${esc(s.extras)}" placeholder="Paket, Gel-Al, Bahçe 1"></label>
    </div>
    <div class="card stack">
-     <h3 style="margin:0">Google değerlendirme QR'ı</h3>
-     <label class="row" style="font-weight:600"><input type="checkbox" id="revOn" ${s.reviewQr?'checked':''}> Fişin en altına QR kodu bas</label>
-     <label class="f">Değerlendirme bağlantısı<input id="revUrl" type="url" autocomplete="off" value="${esc(s.reviewUrl||'')}" placeholder="https://g.page/r/…/review"></label>
-     <p class="muted" style="margin:0;font-size:13px">Müşteri kodu okutunca Google'daki değerlendirme sayfanız açılır. Yorum karşılığında indirim veya ikram vermeyin; Google kurallarına aykırıdır.</p>
-   </div>
-   <div class="card stack">
      <h3 style="margin:0">Adisyon kayıtları</h3>
      <div class="f">Ne kadar süre saklansın?<div class="seg">${[10,30,90,365].map(n=>`<button class="${(s.keepDays||10)==n?'act':''}" data-act="set" data-k="keepDays" data-val="${n}">${n} gün</button>`).join('')}</div></div>
      <p class="muted" style="margin:0;font-size:13px">Bu telefonda ${S.sales.length} adisyon kayıtlı${S.sales.length?` (en eskisi ${dmy(Math.min(...S.sales.map(x=>x.at)))})`:''} · depolama yaklaşık %${Math.min(100,Math.max(1,Math.round(JSON.stringify(S).length/50000)))} dolu. Süresi dolan kayıtlar kendiliğinden silinir. Depolama dolarsa son 7 gün hariç en eski kayıtlar silinir.</p>
@@ -1006,8 +1000,6 @@ function vSettings(){
   bind('tcount',e=>S.settings.tableCount=Math.max(1,Math.min(99,parseInt(e.value)||1)));
   bind('extras',e=>S.settings.extras=e.value);
   bind('waiter',e=>{S.settings.waiter=e.value.trim();renderWaiterTag()});
-  bind('revOn',e=>S.settings.reviewQr=e.checked);
-  bind('revUrl',e=>S.settings.reviewUrl=e.value.trim());
   bind('tipShare',e=>{const n=Math.max(0,Math.min(100,parseFloat(e.value)));S.settings.tipShare=isFinite(n)?n:50;e.value=S.settings.tipShare});
   const ta=document.getElementById('trustAdm');if(ta)ta.onchange=e=>{S.settings.trustedAdmin=e.target.checked;save();renderAdmChip();toast(e.target.checked?'Bu telefonda artık şifre sorulmayacak':'Bu telefon yine şifre soracak')};
   const fo=document.getElementById('fxOn');if(fo)fo.onchange=e=>{S.settings.fxOn=e.target.checked;save();render()};
@@ -1061,7 +1053,7 @@ function billDoc(tableName,lines,total,opts={}){
     ...(opts.tip>0?[]:tipNudge(total,!(opts.closed||opts.pay||(opts.payments&&opts.payments.length)),LG)),
     {k:'c',text:T('Fiyatlarımıza KDV dahildir.','Prices include VAT.'),small:true,plain:true},
     {k:'gap'},...(en?[{k:'c',text:tx('INFORMATION SLIP - NOT A FISCAL RECEIPT',LG),plain:true}]:footerRows()),
-    ...(S.settings.reviewQr&&S.settings.reviewUrl?[{k:'gap'},{k:'c',text:T('Bizi Google\'da değerlendirin','Rate us on Google'),b:true},{k:'qr',data:S.settings.reviewUrl}]:[])];
+    ];
 }
 
 function kitchenDoc(tableName,items){
