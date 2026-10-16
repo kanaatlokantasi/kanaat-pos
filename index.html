@@ -305,7 +305,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 157</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 158</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -501,20 +501,22 @@ const enPay=(p,lg=ui.lang)=>tx(({Nakit:'Cash',Kart:'Card','Karışık':'Mixed'})
 
 /* garson listesi (ortak menüyle paylaşılır): her garsonun kendi 1–8 masası vardır; anahtar W<blok>-<no> */
 /* başlangıç listesi: kasa Menü'den değiştirince ortak menüdeki liste geçerli olur */
-const ROSTER0=['Aydın Uçar','Burhan Erzem','Mustafa Tayan','Hakan Yontu','İsa Duman','İdris Ertan','Mehmet Soğancı'].map((n,i)=>({n,b:i+1}));
-const roster=()=>(S.menu&&Array.isArray(S.menu.waiters))?S.menu.waiters:ROSTER0;
+/* ad düzeltmeleri: eski adla açılmış masalar, satışlar ve bahşişler yeni ada sayılır, hiçbir kayıt silinmez */
+const W_REN={'Hakan Yontu':'Hakan Yontan'};const ren=n=>W_REN[n]||n||'';
+const ROSTER0=['Aydın Uçar','Burhan Erzem','Mustafa Tayan','Hakan Yontan','İsa Duman','İdris Ertan','Mehmet Soğancı'].map((n,i)=>({n,b:i+1}));
+const roster=()=>(S.menu&&Array.isArray(S.menu.waiters))?S.menu.waiters.map(r=>W_REN[r.n]?{...r,n:W_REN[r.n]}:r):ROSTER0;
 const wPer=()=>Math.max(1,Math.min(30,(S.menu&&S.menu.wTables)||8));
-function myBlock(){if(isTrusted())return null;const me=(S.settings.waiter||'').trim();const r=roster().find(x=>x.n===me);return r?r.b:null}
+function myBlock(){if(isTrusted())return null;const me=ren((S.settings.waiter||'').trim());const r=roster().find(x=>x.n===me);return r?r.b:null}
 const tKeyN=n=>{const b=myBlock();return b?'W'+b+'-'+n:'M'+n};
 const wOwner=k=>{const m=/^W(\d+)-(\d+)$/.exec(k);if(!m)return null;const r=roster().find(x=>x.b===+m[1]);return{n:r?r.n:'',no:+m[2]}};
 function tableList(){const out=[];const R=roster(),mb=myBlock(),pc=isTrusted()&&R.length;
   if(mb){for(let i=1;i<=wPer();i++)out.push({key:'W'+mb+'-'+i,name:'Masa '+i,short:String(i)});
     /* başka garsondan devralınan masalar */
-    Object.keys(S.tables||{}).filter(k=>/^W\d+-\d+$/.test(k)&&!out.some(o=>o.key===k)&&tCount(S.tables[k])>0&&S.tables[k].waiter===S.settings.waiter).forEach(k=>{const o=wOwner(k);out.push({key:k,name:'Masa '+o.no+' ('+(o.n.split(' ')[0]||'?')+')',short:(o.n.split(' ')[0]||'?')+'-'+o.no})})}
+    Object.keys(S.tables||{}).filter(k=>/^W\d+-\d+$/.test(k)&&!out.some(o=>o.key===k)&&tCount(S.tables[k])>0&&ren(S.tables[k].waiter)===ren(S.settings.waiter)).forEach(k=>{const o=wOwner(k);out.push({key:k,name:'Masa '+o.no+' ('+(o.n.split(' ')[0]||'?')+')',short:(o.n.split(' ')[0]||'?')+'-'+o.no})})}
   else if(pc){R.forEach(r=>{for(let i=1;i<=wPer();i++)out.push({key:'W'+r.b+'-'+i,name:'Masa '+i,label:r.n+'-'+i,short:r.n+'-'+i,grp:r.n})});
     Object.keys(S.tables||{}).filter(k=>/^W\d+-\d+$/.test(k)&&!out.some(o=>o.key===k)&&tCount(S.tables[k])>0).forEach(k=>{const o=wOwner(k);out.push({key:k,name:'Masa '+o.no,label:(o.n||'?')+'-'+o.no,short:(o.n||'?')+'-'+o.no,grp:'Diğer'})})}
   if(!mb){for(let i=1;i<=S.settings.tableCount;i++)if(!pc||tCount(S.tables['M'+i]))out.push({key:'M'+i,name:'Masa '+i,short:String(i),...(pc?{grp:'Kasa'}:{})})}
-  else Object.keys(S.tables||{}).filter(k=>/^M\d+$/.test(k)&&tCount(S.tables[k])>0&&S.tables[k].waiter===S.settings.waiter).forEach(k=>out.push({key:k,name:'Masa '+k.slice(1),short:'Eski '+k.slice(1)}));
+  else Object.keys(S.tables||{}).filter(k=>/^M\d+$/.test(k)&&tCount(S.tables[k])>0&&ren(S.tables[k].waiter)===ren(S.settings.waiter)).forEach(k=>out.push({key:k,name:'Masa '+k.slice(1),short:'Eski '+k.slice(1)}));
   if(mb)return extrasInto(out);
   Object.keys(S.tables||{}).filter(k=>/^M\d+$/.test(k)&&+k.slice(1)>S.settings.tableCount&&tCount(S.tables[k])>0).sort((a,b)=>a.slice(1)-b.slice(1)).forEach(k=>out.push({key:k,name:'Masa '+k.slice(1),short:k.slice(1),...(pc?{grp:'Kasa'}:{})}));
   return extrasInto(out)}
@@ -625,7 +627,7 @@ function render(){
 function sampleBanner(){return S.menu.sample?`<div class="note">Şu an <b>örnek menü</b> yüklü (fiyatlar örnektir). <button class="linkbtn" data-act="tab" data-v="menu">Kendi menünüzü yükleyin →</button></div>`:''}
 
 /* ortak veride garson sadece kendi masalarını görür; yönetici (kasa bilgisayarı) hepsini görür */
-function mineT(t){return !(CL&&CL.on)||isTrusted()||!t||!tCount(t)||(!!t.waiter&&t.waiter===(S.settings.waiter||''))}
+function mineT(t){return !(CL&&CL.on)||isTrusted()||!t||!tCount(t)||(!!t.waiter&&ren(t.waiter)===ren(S.settings.waiter))}
 function vTables(){
   const list=tableList();const open=list.filter(t=>S.tables[t.key]&&tCount(S.tables[t.key])>0&&mineT(S.tables[t.key]));
   const openSum=open.reduce((a,t)=>a+tTotal(S.tables[t.key]),0);
@@ -747,13 +749,13 @@ function summary(day){
   const ms=(m,k)=>Math.round(valid.reduce((a,s)=>a+saleSplit(s,m)[k],0)*100)/100;
   return{list,valid,total:sum(()=>1),cash:ms('Nakit','food'),card:ms('Kart','food'),tip:tsum(()=>1),tipCash:ms('Nakit','tip'),tipCard:ms('Kart','tip'),
     items:Object.entries(items).sort((a,b)=>b[1].t-a[1].t),pitems:Object.entries(pitems).sort((a,b)=>b[1].t-a[1].t),pkgTotal,pkgSales,iks:Object.entries(iks).sort((a,b)=>b[1].t-a[1].t),ikTotal,voids:list.length-valid.length,
-    waiters:Object.entries(valid.reduce((m,s)=>{const w=s.waiter||'(adsız)';m[w]=m[w]||{n:0,t:0,tip:0,tc:0,tk:0,ik:0};m[w].n++;m[w].ik+=s.lines.reduce((a,l)=>a+(l.ikram?l.qty*(l.op||0):0),0);m[w].t+=s.total;m[w].tip+=s.tip||0;m[w].tc+=saleSplit(s,'Nakit').tip;m[w].tk+=saleSplit(s,'Kart').tip;return m},{})).sort((a,b)=>b[1].tip-a[1].tip)}
+    waiters:Object.entries(valid.reduce((m,s)=>{const w=ren(s.waiter)||'(adsız)';m[w]=m[w]||{n:0,t:0,tip:0,tc:0,tk:0,ik:0};m[w].n++;m[w].ik+=s.lines.reduce((a,l)=>a+(l.ikram?l.qty*(l.op||0):0),0);m[w].t+=s.total;m[w].tip+=s.tip||0;m[w].tc+=saleSplit(s,'Nakit').tip;m[w].tk+=saleSplit(s,'Kart').tip;return m},{})).sort((a,b)=>b[1].tip-a[1].tip)}
 }
 /* garson bazında: hangi üründen kaç adet, ne kadar ciro */
 function waiterDetail(){const per=ui.wPer||'d',end=new Date(ui.reportDay+'T23:59:59').getTime();
   const from=per==='w'?end-7*86400e3:new Date(ui.reportDay+'T00:00:00').getTime();
   const sales=S.sales.filter(s=>!s.void&&s.at>from&&s.at<=end);const W={};
-  sales.forEach(s=>{const w=s.waiter||'(adsız)';const x=W[w]=W[w]||{n:0,t:0,tip:0,q:0,items:{}};x.n++;x.t+=s.total;x.tip+=s.tip||0;
+  sales.forEach(s=>{const w=ren(s.waiter)||'(adsız)';const x=W[w]=W[w]||{n:0,t:0,tip:0,q:0,items:{}};x.n++;x.t+=s.total;x.tip+=s.tip||0;
     s.lines.forEach(l=>{if(l.ikram)return;const k=l.name+(l.pkg?' · paket':'');const it=x.items[k]=x.items[k]||{q:0,t:0};it.q+=l.qty;it.t+=l.qty*l.price;x.q+=l.qty})});
   const names=Object.keys(W).sort((a,b)=>W[b].t-W[a].t);if(!names.includes(ui.wSel))ui.wSel=names[0];
   const x=W[ui.wSel];const items=x?Object.entries(x.items).sort((a,b)=>b[1].q-a[1].q||b[1].t-a[1].t):[];
@@ -810,7 +812,7 @@ function vReport(){
 const tipShare=()=>Math.max(0,Math.min(100,Number(S.settings.tipShare??50)))/100;
 const netOf=t=>Math.round((t||0)*tipShare()*100)/100;
 function myTipSales(day){const w=(S.settings.waiter||'').trim();
-  return salesOf(day).filter(s=>!s.void&&(s.tip||0)>0&&(!w||(s.waiter||'').trim()===w)).sort((a,b)=>a.at-b.at)}
+  return salesOf(day).filter(s=>!s.void&&(s.tip||0)>0&&(!w||ren((s.waiter||'').trim())===ren(w))).sort((a,b)=>a.at-b.at)}
 function vTips(){
   const day=ui.tipDay||dayKey(Date.now()),list=myTipSales(day),w=(S.settings.waiter||'').trim(),pct=Math.round(tipShare()*100);
   const tot=list.reduce((a,s)=>a+s.tip,0),net=Math.round(list.reduce((a,s)=>a+netOf(s.tip),0)*100)/100;
@@ -2166,6 +2168,7 @@ A.handover=()=>{const k=ui.table,t=S.tables[k];if(!mineT(t)){toast('Bu masa baş
 A.handTo=d=>{const k=ui.table,t=S.tables[k];if(!t)return;let n=(d.n||document.getElementById('hoName')?.value||'').replace(/\s+/g,' ').trim();
   if(n.split(' ').length<2){toast('Ad ve soyad yazın');return}n=n.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');
   const from=t.waiter||S.settings.waiter||'';t.waiter=n;t.from=from;save();closeLayer();ui.view='tables';render();toast(`${tName(k)} → ${n} devredildi`)};
+if(W_REN[S.settings.waiter]){S.settings.waiter=W_REN[S.settings.waiter];localSave()}
 if(!VIEW&&S.settings.cloudOn)cloudInit();
 if(!VIEW&&handOf(S.settings.handFont))setTimeout(()=>handReady(),1500);
 if(VIEW)custView();
