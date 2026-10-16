@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-title" content="Kanaat POS">
 <meta name="theme-color" content="#1d4fa3">
 <title>Kanaat POS</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
@@ -305,7 +308,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 161</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 162</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -874,10 +877,20 @@ function vMenu(){
 }
 
 /* ---- ayarlar / yazıcı ---- */
+/* uygulama olarak yükle (Chrome: Android ve bilgisayar) */
+let INSTALL_EV=null;const IS_APP=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL_EV=e;if(ui.view==='settings'&&!$layer.innerHTML)render()});
+window.addEventListener('appinstalled',()=>{INSTALL_EV=null;toast('Kanaat POS uygulama olarak yüklendi');if(ui.view==='settings')render()});
+if('serviceWorker' in navigator&&location.protocol==='https:'&&!VIEW)navigator.serviceWorker.register('sw.js').catch(()=>{});
+function installCard(){if(IS_APP())return '';
+  return `<div class="card stack"><h3 style="margin:0">Uygulama olarak yükle</h3>
+    ${INSTALL_EV?`<p class="muted" style="margin:0;font-size:13px">Ana ekrana Kanaat POS simgesi eklenir; adres çubuğu olmadan tam ekran açılır. Yazıcı, sesli sipariş ve güncellemeler aynen çalışır.</p><button class="btn pri" data-act="installApp" style="min-height:52px;font-size:17px">📲 Uygulamayı yükle</button>`
+    :`<p class="muted" style="margin:0;font-size:13px">${V_IOS?'iPhone\'da Safari\'de Paylaş → <b>Ana Ekrana Ekle</b>. (Bluefy\'de bu özellik yok.)':'Chrome menüsünden (⋮) <b>Uygulamayı yükle</b> ya da <b>Ana ekrana ekle</b>\'yi seçin.'}</p>`}</div>`}
 function vSettings(){
   const s=S.settings;const hasBT=!!navigator.bluetooth;
   $main.innerHTML=`<div class="stack">
    <h2>Ayarlar</h2>
+   ${installCard()}
    <div class="card stack" id="cloudCard">${cloudCard()}</div>
    <div class="card stack"><h3 style="margin:0">Mikrofon testi</h3><p class="muted" style="margin:0;font-size:13px">Bu telefonda bas-konuş için hangi yolların çalıştığını dener (en fazla 10 saniye). Sonucu ekran görüntüsü olarak gönderin.</p><button class="btn" data-act="micTest">Mikrofonu test et</button><pre id="micOut" style="white-space:pre-wrap;font-size:13px;margin:0"></pre></div>
    <div class="card stack">
@@ -2133,6 +2146,7 @@ function msgToRender(){const el=document.getElementById('msgTo');if(!el)return;c
   el.innerHTML=[['*','Herkes'],...L.map(n=>[n,n])].map(([k,t])=>`<button class="${ui.msgTo===k?'on':''}" data-act="msgPick" data-n="${esc(k)}">${esc(t)}</button>`).join('')}
 A.wSel=d=>{ui.wSel=d.n;const el=document.getElementById('wDet');if(el)el.outerHTML=waiterDetail()};
 A.wPer=d=>{ui.wPer=d.p;const el=document.getElementById('wDet');if(el)el.outerHTML=waiterDetail()};
+A.installApp=async()=>{if(!INSTALL_EV)return;INSTALL_EV.prompt();try{await INSTALL_EV.userChoice}catch(e){}INSTALL_EV=null;render()};
 A.wPick=d=>{const i=document.getElementById('wname');if(i){i.value=d.n;document.getElementById('wOk').click()}};
 A.msgPick=d=>{ui.msgTo=d.n;msgToRender()};
 A.msgQ=d=>{const ta=document.getElementById('msgText');if(ta)ta.value=d.t};
