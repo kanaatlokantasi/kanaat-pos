@@ -312,7 +312,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 166</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 167</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -333,9 +333,9 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 
 <script>
 /* ============ veri ============ */
-/* eğitim modu: ayrı depolama, ortak veri kapalı; gerçek masa/satışlara dokunmaz */
+/* eğitim (deneme) modu: kayıtlar gerçek tutulur, masalar/adisyonlar 'eğitim' olarak işaretlenir, fişte EĞİTİM FİŞİ yazar */
 const TRAIN=(()=>{try{return localStorage.getItem('kTrain')==='1'}catch(e){return false}})();
-const LS=TRAIN?'kanaat-pos-train':'kanaat-pos-v1';
+const LS='kanaat-pos-v1';try{localStorage.removeItem('kanaat-pos-train')}catch(e){}
 const uid=()=>Math.random().toString(36).slice(2,10);
 /* müşteri görünümü: QR ile açılan hesap (#h=...) — POS'a ve depolamaya dokunmaz */
 const VIEW=/^#h=/.test(location.hash);
@@ -640,18 +640,21 @@ function sampleBanner(){return S.menu.sample?`<div class="note">Şu an <b>örnek
 
 /* ortak veride garson sadece kendi masalarını görür; yönetici (kasa bilgisayarı) hepsini görür */
 function mineT(t){return !(CL&&CL.on)||isTrusted()||!t||!tCount(t)||(!!t.waiter&&ren(t.waiter)===ren(S.settings.waiter))}
+function trainPcNote(){if(!isTrusted())return '';const names=new Set();
+  Object.entries(CL.staffT||{}).forEach(([n,at])=>{if(at>Date.now()-14*3600e3)names.add(n)});Object.values(S.tables).forEach(t=>{if(t&&t.train&&tCount(t)&&t.waiter)names.add(t.waiter)});
+  return names.size?`<div style="background:#f97316;color:#fff;border-radius:10px;padding:8px 12px;font-weight:700">🎓 Eğitim / deneme modunda çalışan: ${esc([...names].join(', '))} <span style="font-weight:500">· turuncu işaretli masalar ve adisyonlar eğitim kaydıdır</span></div>`:''}
 function vTables(){
   const list=tableList();const open=list.filter(t=>S.tables[t.key]&&tCount(S.tables[t.key])>0&&mineT(S.tables[t.key]));
   const openSum=open.reduce((a,t)=>a+tTotal(S.tables[t.key]),0);
   $main.innerHTML=`<div class="stack">
     ${sampleBanner()}
-    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${cloudBadge()}${CL.on&&isTrusted()?`<button class="btn" data-act="msg" style="min-height:50px;font-size:17px">✉️ Garsona mesaj gönder</button>`:''}${voiceBtn()}
+    <div class="row" style="justify-content:space-between"><h2>Masalar</h2><span class="muted num">${open.length} açık · ${fmt(openSum)}</span></div>${trainPcNote()}${cloudBadge()}${CL.on&&isTrusted()?`<button class="btn" data-act="msg" style="min-height:50px;font-size:17px">✉️ Garsona mesaj gönder</button>`:''}${voiceBtn()}
     ${(()=>{const tile=t=>{const o=S.tables[t.key];const n=tCount(o);
       if(n&&!mineT(o))return `<div class="tile" aria-disabled="true" style="opacity:.45;border-style:dashed;cursor:not-allowed"><span class="n">${esc(t.short)}</span><span class="m">Dolu</span></div>`;
       const mins=o&&n?Math.max(0,Math.round((Date.now()-o.openedAt)/60000)):0;
       return `<button class="tile ${n?'open':''}" data-act="openTable" data-k="${esc(t.key)}">
         <span class="n">${esc(t.short)}</span>
-        ${n?`<span><span class="t num">${fmt(tTotal(o))}</span><br><span class="m num">${n} ürün · ${mins} dk</span>${CL.on&&o.waiter?`<br><span class="m">${esc(o.waiter.split(' ')[0])}</span>`:''}</span>`:`<span class="m">Boş</span>`}
+        ${n?`<span><span class="t num">${fmt(tTotal(o))}</span><br><span class="m num">${n} ürün · ${mins} dk</span>${CL.on&&o.waiter?`<br><span class="m">${esc(o.waiter.split(' ')[0])}</span>`:''}${o.train?' <span class="pill" style="background:#f97316;color:#fff">EĞİTİM</span>':''}</span>`:`<span class="m">Boş</span>`}
       </button>`};
       const grps=[...new Set(list.map(t=>t.grp||''))];
       if(grps.length<2&&!grps[0])return `<div class="tgrid">${list.map(tile).join('')}</div>`;
@@ -667,7 +670,7 @@ function pkgBlocked(it){if(ui.pkg&&noPkg(it)){toast(baseName(it.name)+' pakete e
 const IKRAM_ON=false;
 function billSections(lines,lbl){const n=lines.filter(l=>!l.pkg&&!l.ikram),p=lines.filter(l=>l.pkg&&!l.ikram),k=lines.filter(l=>l.ikram);
   return [...n,...(p.length?[{sec:lbl.pkg,kind:'pkg'}]:[]),...p,...(k.length?[{sec:lbl.ik,kind:'ik'}]:[]),...k]}
-function curT(){const x=S.tables[ui.table];if(x&&!x.waiter&&!tCount(x)&&S.settings.waiter)x.waiter=S.settings.waiter;return x||(S.tables[ui.table]={lines:[],openedAt:Date.now(),waiter:S.settings.waiter||''})}
+function curT(){const x=S.tables[ui.table];if(x&&TRAIN)x.train=true;if(x&&!x.waiter&&!tCount(x)&&S.settings.waiter)x.waiter=S.settings.waiter;return x||(S.tables[ui.table]={lines:[],openedAt:Date.now(),waiter:S.settings.waiter||'',...(TRAIN?{train:true}:{})})}
 function itemTile(i,qmap,hmap,umap,catHalf){const f=qmap[i.id]||0,h=hmap[i.id]||0,u=umap[i.id]||0,hs=h?(h>1?h+' AZ':'AZ'):'',us=u?u+' TEK':'';const b=[f?String(f):'',hs,us].filter(Boolean).join(' + ');const hasB=!!(f||h||u);const corner=i.unitPrice?'unit':(catHalf&&!i.noHalf?'half':'');const np=ui.pkg&&noPkg(i);return `<div class="itemw ${corner?'hashalf':''} ${np?'nopkg':''}"><button class="item ${hasB?'hasq':''}" data-act="add" data-id="${i.id}">
       ${hasB?`<span class="q">${b}</span>`:''}
       <span class="nm">${esc(i.name)}</span>${np?'<span class="pr" style="font-size:14px">Pakete eklenmez</span>':`<span class="pr num">${fmt(i.price)}</span>`}</button>
@@ -796,6 +799,7 @@ function vReport(){
      <div class="kpi" style="grid-column:1/-1"><span>Gönüllü bahşiş (ciroya dahil değil)</span><b class="num">${fmt(r.tip)}</b><span class="num" style="text-transform:none;letter-spacing:0">Garsonlara ödenecek net (%${Math.round(tipShare()*100)}): ${fmt(netOf(r.tip))}</span></div>
      ${(()=>{const f=foreignStats(r.valid),fp=foreignPeriod(ui.reportDay);return `<div class="kpi" style="grid-column:1/-1"><span>Yabancı müşteri (yabancı dilde hesap)</span><b class="num">${f.n} / ${f.of} hesap · ${pctTxt(f.pct)}</b><span class="num" style="text-transform:none;letter-spacing:0">Ciro payı ${pctTxt(f.ciroPct)} (${fmt(f.ciro)}) · Son ${fp.days} gün: ${fp.n}/${fp.of} hesap, ${pctTxt(fp.pct)}</span></div>`})()}
    </div>
+   ${(()=>{const tr=r.valid.filter(s=>s.train);return tr.length?`<div class="kpi" style="grid-column:1/-1;border:2px solid #f97316"><span>🎓 Eğitim modunda alınan (ciroya dahil)</span><b class="num">${tr.length} adisyon · ${fmt(tr.reduce((a,s)=>a+s.total,0))}</b><span style="text-transform:none;letter-spacing:0">${esc([...new Set(tr.map(s=>s.waiter||'-'))].join(', '))}</span></div>`:''})()}
    <div class="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
      <button class="btn pri" data-act="printZ">Gün sonu yazdır</button><button class="btn" data-act="csv">Excel'e aktar (CSV)</button></div>
    <div class="card"><h3>Garsonlara göre</h3>${r.waiters.length?`<div style="overflow-x:auto"><table class="t"><tr><th>Garson</th><th class="r">Adisyon</th><th class="r">Satış</th><th class="r">Bahşiş</th></tr>
@@ -811,7 +815,7 @@ function vReport(){
    <div class="card"><h3>Adisyonlar</h3>${r.list.length?`<input id="saleQ" type="search" inputmode="search" autocomplete="off" placeholder="Ara: saat (14:30), tutar (1750), masa, ürün…" style="margin-bottom:6px">
      <p class="muted" id="saleQn" style="margin:0 0 6px;font-size:13px">${r.list.length} adisyon</p>
      <div style="overflow-x:auto"><table class="t"><tr><th>Saat</th><th>Masa</th><th class="r">Bahşiş</th><th class="r">Tutar</th><th></th></tr>
-     ${r.list.slice().reverse().map(s=>`<tr class="${s.void?'void':''}" data-q="${esc(saleHay(s))}"><td class="num">${hm(s.at)}</td><td>${esc(s.table)}${s.lang&&s.lang!=='tr'?` <span class="pill">${s.lang.toUpperCase()}</span>`:''}</td><td class="r num">${s.tip?money(s.tip):'—'}</td><td class="r">${fmt(s.total)}</td>
+     ${r.list.slice().reverse().map(s=>`<tr class="${s.void?'void':''}" data-q="${esc(saleHay(s))}"><td class="num">${hm(s.at)}</td><td>${esc(s.table)}${s.lang&&s.lang!=='tr'?` <span class="pill">${s.lang.toUpperCase()}</span>`:''}${s.train?' <span class="pill" style="background:#f97316;color:#fff">EĞİTİM</span>':''}</td><td class="r num">${s.tip?money(s.tip):'—'}</td><td class="r">${fmt(s.total)}</td>
        <td class="r"><button class="linkbtn" data-act="saleMenu" data-id="${s.id}">•••</button></td></tr>`).join('')}</table></div>`:'<p class="muted">Kayıt yok.</p>'}</div>
   </div>`;
   document.getElementById('repDay').onchange=e=>{ui.reportDay=e.target.value||dayKey(Date.now());render()};
@@ -890,17 +894,16 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL_EV=
 window.addEventListener('appinstalled',()=>{INSTALL_EV=null;toast('Kanaat POS uygulama olarak yüklendi');if(ui.view==='settings')render()});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!VIEW)navigator.serviceWorker.register('sw.js').catch(()=>{});
 function trainCard(){return TRAIN?`<div class="card stack" style="border:3px solid #f97316"><h3 style="margin:0;color:#c2410c">Eğitim modu AÇIK</h3>
-    <p class="muted" style="margin:0;font-size:13px">Burada girilen siparişler, kapanan hesaplar ve basılan fişler gerçek değildir; kasaya, rapora ve diğer telefonlara gitmez.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="trainReset">Eğitimi baştan başlat</button><button class="btn pri" data-act="trainOff" style="min-height:52px">Eğitimden çık</button></div></div>`
-  :`<div class="card stack"><h3 style="margin:0">Eğitim modu (deneme)</h3><p class="muted" style="margin:0;font-size:13px">Yeni garsonlar için: gerçek gibi sipariş girilir, sesli sipariş denenir, fiş basılır, hesap bölünür ve masa kapatılır; hiçbiri gerçek kayıtlara gitmez. Gerçek açık masalarınız etkilenmez.</p>
+    <p class="muted" style="margin:0;font-size:13px">Siparişler ve hesaplar normal kaydedilir. Bu telefondan açılan masalar ve adisyonlar “eğitim” olarak işaretlenir; kasada görünür. Fişlerin üstünde “EĞİTİM FİŞİ” yazar.</p>
+    <button class="btn pri" data-act="trainOff" style="min-height:52px">Eğitimden çık</button></div>`
+  :`<div class="card stack"><h3 style="margin:0">Eğitim modu (deneme)</h3><p class="muted" style="margin:0;font-size:13px">Yeni garsonlar için. Siparişler ve hesaplar normal kaydedilir; bu telefondan girilenler kasada ve raporda “eğitim” olarak işaretli görünür, fişlerde “EĞİTİM FİŞİ” yazar.</p>
     <button class="btn" data-act="trainOn" style="min-height:52px;border:2px solid #f97316;color:#c2410c;font-weight:800">🎓 Eğitim modunu aç</button></div>`}
-function trainStart(){const t=JSON.parse(JSON.stringify(S));t.tables={};t.sales=[];t.seq=0;
-  try{localStorage.setItem('kanaat-pos-train',JSON.stringify(t));localStorage.setItem('kTrain','1')}catch(e){toast('Eğitim modu açılamadı');return}location.reload()}
+function trainStart(){try{localStorage.setItem('kTrain','1')}catch(e){toast('Eğitim modu açılamadı');return}location.reload()}
 function trainIntro(){modal(`<div style="background:#f97316;color:#fff;border-radius:14px;padding:22px 16px;text-align:center;display:grid;gap:8px">
     <div style="font-size:15px;font-weight:700;letter-spacing:.08em">⚠️ DİKKAT</div><div style="font-family:var(--display);font-size:34px;font-weight:700;line-height:1.05">DENEME SÜRÜMÜ<br>EĞİTİM AMAÇLIDIR</div></div>
-    <p style="margin:0;font-size:16px">Burada girilen siparişler <b>gerçek değildir</b>. Kasaya, rapora ve diğer telefonlara gitmez. Basılan fişlerde “EĞİTİM FİŞİ – GEÇERSİZ” yazar.</p>
-    <p class="muted" style="margin:0;font-size:14px">Müşteri siparişi almak için önce eğitimden çıkın.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="trainOff" style="min-height:54px">Eğitimden çık</button><button class="btn pri" data-act="close" style="min-height:54px;background:#f97316;border-color:#f97316">Eğitime başla</button></div>`)}
+    <p style="margin:0;font-size:16px">Bu telefon <b>eğitim modunda</b>. Siparişler ve hesaplar normal kaydedilir, kasa bu telefondan girilenleri “eğitim” olarak görür. Fişlerin üstünde “EĞİTİM FİŞİ” yazar.</p>
+    <p class="muted" style="margin:0;font-size:14px">Emin olmadığınız bir şey olursa kasaya sorun.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="trainOff" style="min-height:54px">Eğitimden çık</button><button class="btn pri" data-act="close" style="min-height:54px;background:#f97316;border-color:#f97316">Devam et</button></div>`)}
 function installCard(){if(IS_APP())return '';
   return `<div class="card stack"><h3 style="margin:0">Uygulama olarak yükle</h3>
     ${INSTALL_EV?`<p class="muted" style="margin:0;font-size:13px">Ana ekrana Kanaat POS simgesi eklenir; adres çubuğu olmadan tam ekran açılır. Yazıcı, sesli sipariş ve güncellemeler aynen çalışır.</p><button class="btn pri" data-act="installApp" style="min-height:52px;font-size:17px">📲 Uygulamayı yükle</button>`
@@ -911,7 +914,7 @@ function vSettings(){
    <h2>Ayarlar</h2>
    ${installCard()}
    ${trainCard()}
-   ${TRAIN?'':`<div class="card stack" id="cloudCard">${cloudCard()}</div>`}
+   <div class="card stack" id="cloudCard">${cloudCard()}</div>
    <div class="card stack"><h3 style="margin:0">Mikrofon testi</h3><p class="muted" style="margin:0;font-size:13px">Bu telefonda bas-konuş için hangi yolların çalıştığını dener (en fazla 10 saniye). Sonucu ekran görüntüsü olarak gönderin.</p><button class="btn" data-act="micTest">Mikrofonu test et</button><pre id="micOut" style="white-space:pre-wrap;font-size:13px;margin:0"></pre></div>
    <div class="card stack">
      <h3 style="margin:0">Ekran yazı boyutu</h3>
@@ -1425,7 +1428,7 @@ async function niimPrint(canvas){
 }
 let printing=false;
 async function printDoc(doc,label){
-  if(TRAIN){const w={k:'c',text:'*** EĞİTİM FİŞİ - GEÇERSİZ ***',b:true,plain:true};doc=[w,{k:'gap'},...doc,{k:'gap'},w]}
+  if(TRAIN)doc=[{k:'c',text:'EĞİTİM FİŞİ',b:true,plain:true},...doc];
   if(S.settings.printer==='system')return sysPrint(doc,label);
   const hk=(doc.find(r=>r.k==='hand')||{}).f;if(hk&&!(await handReady(hk))){doc=doc.filter(r=>r.k!=='hand');toast('El yazısı yüklenemedi (internet?), düz yazıyla basılıyor')}
   if(await ensureBT()){
@@ -1612,7 +1615,7 @@ const A={
     const tip=tipAmount(tTotal(t));
     const tipPct=(tip>0&&typeof ui.tip?.mode==='number')?ui.tip.mode:null;
     const methods=[...new Set(payments.map(p=>p.pay))];const payLbl=methods.length===1?methods[0]:'Karışık';
-    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,...(tipPct?{tipPct}:{}),pay:payLbl,...(payments.length>1?{payments,split:payments.length}:{}),...(splitN>1?{split:splitN}:{}),closed:true,at:Date.now(),waiter:t.waiter||S.settings.waiter||'',...(lang!=='tr'?{lang}:{})};
+    const sale={id:uid(),no:++S.seq,table:tName(ui.table),lines,total:tTotal(t),tip,...(tipPct?{tipPct}:{}),pay:payLbl,...(payments.length>1?{payments,split:payments.length}:{}),...(splitN>1?{split:splitN}:{}),closed:true,at:Date.now(),waiter:t.waiter||S.settings.waiter||'',...(lang!=='tr'?{lang}:{}),...(TRAIN||t.train?{train:true}:{})};
     S.sales.push(sale);pruneSales();delete S.tables[ui.table];save();cloudSeq(sale);closeLayer();ui.view='tables';render();
     toast(`${sale.table} kapandı · ${fmt(sale.total+tip)}${tip?' (bahşiş '+fmt(tip)+')':''}`);
     if(pr)await printDoc(billDoc(sale.table,lines,sale.total,{pay:payLbl,no:sale.no,at:sale.at,tip,tipPct,waiter:sale.waiter,payments:sale.payments,lang,closed:true,splitN:sale.payments?0:sale.split}),'Fiş')},
@@ -2081,9 +2084,9 @@ function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.menuReady=fal
     else CL.known.menu=null;
     CL.menuReady=true;cloudFlush()},e=>{}));
   /* çalışan garsonlar: devir listesi için */
-  const ping=()=>{const n=(S.settings.waiter||'').trim();if(n&&CL.on)db.collection('staff').doc(fid(n)).set({n,at:Date.now()}).catch(()=>{})};
+  const ping=()=>{const n=(S.settings.waiter||'').trim();if(n&&CL.on)db.collection('staff').doc(fid(n)).set({n,at:Date.now(),...(TRAIN?{train:true}:{})}).catch(()=>{})};
   ping();CL.ping=setInterval(ping,10*60e3);
-  CL.unsub.push(db.collection('staff').onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(c.type==='removed'||!d)return;CL.staff[d.n]=d.at})},()=>{}));
+  CL.unsub.push(db.collection('staff').onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(c.type==='removed'||!d)return;CL.staff[d.n]=d.at;CL.staffT=CL.staffT||{};if(d.train)CL.staffT[d.n]=d.at;else delete CL.staffT[d.n]});if(ui.view==='tables'&&isTrusted()&&!$layer.innerHTML&&!vBusy())render()},()=>{}));
   /* kasadan garsona mesaj */
   CL.unsub.push(db.collection('msgs').where('at','>=',Date.now()-7*86400e3).onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(!d)return;
       if(c.type==='removed'){delete CL.msgs[c.doc.id];return}CL.msgs[c.doc.id]={...d,id:c.doc.id}});msgCheck();if(document.getElementById('msgSent'))msgSentRender()},()=>{}));
@@ -2109,7 +2112,7 @@ function remoteRender(){renderCloud();
   if(ui.view==='order'){const a=document.activeElement;if(a&&a.id==='osearch'){renderCartBar();return}}
   if(ui.view==='tables'&&vBusy())return;
   if(['tables','order','report','tips'].includes(ui.view))render()}
-function cloudBadge(){if(!S.settings.cloudOn||TRAIN)return '';const st={ok:['#1f7a4d','Ortak veri: bağlı'],sync:['#a15c00','Ortak veri: bağlanıyor…'],offline:['#a15c00','İnternet yok: değişiklikler bağlanınca gönderilecek'],err:['#b42318','Ortak veri hatası'],out:['#b42318','Ortak veri: giriş gerekli (Ayarlar)'],off:['#5b6677','Ortak veri: kapalı']}[CL.status]||['#5b6677',''];
+function cloudBadge(){if(!S.settings.cloudOn)return '';const st={ok:['#1f7a4d','Ortak veri: bağlı'],sync:['#a15c00','Ortak veri: bağlanıyor…'],offline:['#a15c00','İnternet yok: değişiklikler bağlanınca gönderilecek'],err:['#b42318','Ortak veri hatası'],out:['#b42318','Ortak veri: giriş gerekli (Ayarlar)'],off:['#5b6677','Ortak veri: kapalı']}[CL.status]||['#5b6677',''];
   return `<p class="muted" id="cloudBadge" style="margin:0;font-size:13px;display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:${st[0]};flex:none"></span>${esc(st[1])}</p>`}
 function cloudCard(){const u=CL.user;
   return `<h3 style="margin:0">Ortak veri (tüm telefonlar ve bilgisayar)</h3>
@@ -2189,15 +2192,14 @@ A.partPrint=async()=>{const t=S.tables[ui.table];if(!t)return;const lang=isEN()?
   await printDoc(billDoc(tName(ui.table),lines,partTotal(),{lang,tip:ui.part.tip||0,waiter:t.waiter||S.settings.waiter||''}),'Hesap fişi')};
 A.partPay=()=>{const t=S.tables[ui.table];if(!t)return;if(!mineT(t)){toast('Bu masayı sadece garsonu ya da kasa kapatabilir');return}
   const lang=isEN()?ui.lang:'tr';const lines=partSaleLines(lang);if(!lines.length)return;const total=partTotal(),tip=ui.part.tip||0,k=ui.table;
-  const sale={id:uid(),no:++S.seq,table:tName(k),lines,total,tip,pay:'',part:true,closed:true,at:Date.now(),waiter:t.waiter||S.settings.waiter||'',...(lang!=='tr'?{lang}:{})};
+  const sale={id:uid(),no:++S.seq,table:tName(k),lines,total,tip,pay:'',part:true,closed:true,at:Date.now(),waiter:t.waiter||S.settings.waiter||'',...(lang!=='tr'?{lang}:{}),...(TRAIN||t.train?{train:true}:{})};
   partLines().forEach(l=>{const q=ui.part.sel[l.id]||0;if(!q)return;l.qty-=q;l.sent=Math.max(0,Math.min(l.sent||0,l.qty))});
   t.lines=t.lines.filter(l=>l.qty>0);const empty=!t.lines.length;if(empty)delete S.tables[k];
   S.sales.push(sale);pruneSales();save();cloudSeq(sale);ui.part=null;closeLayer();
   if(empty){ui.view='tables';render();toast(`${sale.table} kapandı · son ödeme ${fmt(total+tip)}`)}
   else{render();openCart();toast(`Ödendi: ${fmt(total+tip)} · masada kalan ${fmt(tTotal(S.tables[k]))}`)}};
-A.trainOn=()=>ask('Eğitim modu açılsın mı? Gerçek masalarınız saklanır; eğitimden çıkınca aynen geri gelir.','Eğitimi aç',trainStart,false);
+A.trainOn=()=>ask('Bu telefonda eğitim modu açılsın mı?','Eğitimi aç',trainStart,false);
 A.trainOff=()=>{try{localStorage.removeItem('kTrain')}catch(e){}location.reload()};
-A.trainReset=()=>ask('Eğitimdeki masalar ve hesaplar silinsin, baştan başlansın mı?','Baştan başlat',()=>{try{const real=JSON.parse(localStorage.getItem('kanaat-pos-v1')||'null');if(real){real.tables={};real.sales=[];real.seq=0;localStorage.setItem('kanaat-pos-train',JSON.stringify(real))}}catch(e){}location.reload()},false);
 A.wPick=d=>{const i=document.getElementById('wname');if(i){i.value=d.n;document.getElementById('wOk').click()}};
 A.msgPick=d=>{ui.msgTo=d.n;msgToRender()};
 A.msgQ=d=>{const ta=document.getElementById('msgText');if(ta)ta.value=d.t};
@@ -2237,8 +2239,8 @@ A.handTo=d=>{const k=ui.table,t=S.tables[k];if(!t)return;let n=(d.n||document.ge
   if(n.split(' ').length<2){toast('Ad ve soyad yazın');return}n=n.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');
   const from=t.waiter||S.settings.waiter||'';t.waiter=n;t.from=from;save();closeLayer();ui.view='tables';render();toast(`${tName(k)} → ${n} devredildi`)};
 if(W_REN[S.settings.waiter]){S.settings.waiter=W_REN[S.settings.waiter];localSave()}
-if(!VIEW&&!TRAIN&&S.settings.cloudOn)cloudInit();
-if(TRAIN&&!VIEW){document.querySelector('header.top').insertAdjacentHTML('afterend','<div class="trainbar" role="status"><span>🎓 EĞİTİM MODU · GERÇEK DEĞİL</span><button data-act="trainOff">Çık</button></div>');setTimeout(()=>{if(!$layer.innerHTML)trainIntro()},400)}
+if(!VIEW&&S.settings.cloudOn)cloudInit();
+if(TRAIN&&!VIEW){document.querySelector('header.top').insertAdjacentHTML('afterend','<div class="trainbar" role="status"><span>🎓 EĞİTİM MODU · DENEME</span><button data-act="trainOff">Çık</button></div>');setTimeout(()=>{if(!$layer.innerHTML)trainIntro()},400)}
 if(!VIEW&&handOf(S.settings.handFont))setTimeout(()=>handReady(),1500);
 if(VIEW)custView();
 else{render();
