@@ -312,7 +312,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 167</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 168</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -913,6 +913,7 @@ function vSettings(){
   $main.innerHTML=`<div class="stack">
    <h2>Ayarlar</h2>
    ${installCard()}
+   <div class="card stack"><h3 style="margin:0">Garson eğitim videosu</h3><p class="muted" style="margin:0;font-size:13px">Uygulamanın nasıl kullanıldığını 5 dakikada anlatan animasyonlu eğitim (sesli anlatımlı).</p><a class="btn pri" href="https://claude.ai/artifact/T1WKjZhYg5fXGLSZiHohQg" target="_blank" rel="noopener" style="min-height:52px;font-size:17px;display:flex;align-items:center;justify-content:center;text-decoration:none">🎬 Eğitim videosunu aç</a></div>
    ${trainCard()}
    <div class="card stack" id="cloudCard">${cloudCard()}</div>
    <div class="card stack"><h3 style="margin:0">Mikrofon testi</h3><p class="muted" style="margin:0;font-size:13px">Bu telefonda bas-konuş için hangi yolların çalıştığını dener (en fazla 10 saniye). Sonucu ekran görüntüsü olarak gönderin.</p><button class="btn" data-act="micTest">Mikrofonu test et</button><pre id="micOut" style="white-space:pre-wrap;font-size:13px;margin:0"></pre></div>
@@ -929,6 +930,7 @@ function vSettings(){
      ${s.printer==='system'?`<p class="muted" style="margin:0;font-size:13px">Fiş, bilgisayara bağlı yazıcıdan (ör. Rongta) basılır. Rongta'yı Windows'ta <b>varsayılan yazıcı</b> yapın. Her baskıda yazdırma penceresi çıkmasın istiyorsanız Chrome'u <b>--kiosk-printing</b> ayarıyla açın.</p>
      <button class="btn" data-act="testPrint">Deneme fişi</button>`:`
      <div class="row"><span class="chip ${BT.char?'on':''}"><i></i>${BT.char?esc(BT.device?.name||'Bağlı'):'Bağlı değil'}</span></div>
+     <p class="muted" style="margin:0;font-size:13px">Bağlanırken açılan listeden adı <b>HM</b> ile başlayan yazıcıyı seçin.</p>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
        <button class="btn pri" data-act="connect" ${hasBT?'':'disabled'}>${BT.char?'Yeniden bağlan':'Yazıcıya bağlan'}</button>
        <button class="btn" data-act="testPrint">Deneme fişi</button></div>
@@ -1485,7 +1487,10 @@ function docText(doc){return doc.map(r=>{if(r.k==='logo')return 'KANAAT LOKANTAS
 function showPreview(doc,label){
   const c=renderCanvas(doc);const url=c.toDataURL('image/png');
   modal(`<div class="row" style="justify-content:space-between"><h2>${esc(label)}</h2><button class="x" data-act="close" aria-label="Kapat">✕</button></div>
-   ${navigator.bluetooth?'<p class="muted" style="margin:0">Yazıcı bağlı değil. Bağlanınca bu fiş hemen basılır.</p>':'<p class="muted" style="margin:0">Bu tarayıcıdan Bluetooth yazıcıya basılamıyor. Bluefy ile açın ya da fişi paylaşın.</p>'}
+   ${navigator.bluetooth?`<div class="note" style="margin:0"><b>Panik yok: sipariş kayıtlı, sadece fiş basılmadı.</b>
+     <ol style="margin:6px 0 0;padding-left:20px;display:grid;gap:3px"><li>Yazıcı açık mı, ışığı yanıyor mu, kağıdı var mı bakın.</li><li>Telefonun Bluetooth'u açık olsun, yazıcıya yaklaşın.</li>
+     <li>Aşağıdaki <b>“Yazıcıya bağlan ve yazdır”</b>a dokunun, açılan listeden adı <b>HM</b> ile başlayanı seçip <b>Eşle / Bağlan</b>'a basın.</li>
+     <li>Olmazsa yazıcıyı kapatıp açın, 10 saniye bekleyip tekrar deneyin. Yine olmazsa kasaya söyleyin.</li></ol></div>`:'<p class="muted" style="margin:0">Bu tarayıcıdan Bluetooth yazıcıya basılamıyor. Bluefy ile açın ya da fişi paylaşın.</p>'}
    <div class="preview"><img src="${url}" alt="Fiş önizleme"></div>
    <div style="display:grid;gap:8px">
      ${navigator.bluetooth?'<button class="btn pri" id="pvConnect">Yazıcıya bağlan ve yazdır</button>':''}
