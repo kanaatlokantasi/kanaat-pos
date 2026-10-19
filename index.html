@@ -312,7 +312,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 168</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 169</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -333,7 +333,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 
 <script>
 /* ============ veri ============ */
-/* eğitim (deneme) modu: kayıtlar gerçek tutulur, masalar/adisyonlar 'eğitim' olarak işaretlenir, fişte EĞİTİM FİŞİ yazar */
+/* eğitim (deneme) modu: kayıtlar gerçek tutulur, masalar/adisyonlar 'eğitim' olarak işaretlenir, fişin en altında siyah bantta EĞİTİM AMAÇLIDIR yazar */
 const TRAIN=(()=>{try{return localStorage.getItem('kTrain')==='1'}catch(e){return false}})();
 const LS='kanaat-pos-v1';try{localStorage.removeItem('kanaat-pos-train')}catch(e){}
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -894,14 +894,14 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL_EV=
 window.addEventListener('appinstalled',()=>{INSTALL_EV=null;toast('Kanaat POS uygulama olarak yüklendi');if(ui.view==='settings')render()});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!VIEW)navigator.serviceWorker.register('sw.js').catch(()=>{});
 function trainCard(){return TRAIN?`<div class="card stack" style="border:3px solid #f97316"><h3 style="margin:0;color:#c2410c">Eğitim modu AÇIK</h3>
-    <p class="muted" style="margin:0;font-size:13px">Siparişler ve hesaplar normal kaydedilir. Bu telefondan açılan masalar ve adisyonlar “eğitim” olarak işaretlenir; kasada görünür. Fişlerin üstünde “EĞİTİM FİŞİ” yazar.</p>
+    <p class="muted" style="margin:0;font-size:13px">Siparişler ve hesaplar normal kaydedilir. Bu telefondan açılan masalar ve adisyonlar “eğitim” olarak işaretlenir; kasada görünür. Fişlerin en altında siyah zemin üzerine “EĞİTİM AMAÇLIDIR” yazar.</p>
     <button class="btn pri" data-act="trainOff" style="min-height:52px">Eğitimden çık</button></div>`
-  :`<div class="card stack"><h3 style="margin:0">Eğitim modu (deneme)</h3><p class="muted" style="margin:0;font-size:13px">Yeni garsonlar için. Siparişler ve hesaplar normal kaydedilir; bu telefondan girilenler kasada ve raporda “eğitim” olarak işaretli görünür, fişlerde “EĞİTİM FİŞİ” yazar.</p>
+  :`<div class="card stack"><h3 style="margin:0">Eğitim modu (deneme)</h3><p class="muted" style="margin:0;font-size:13px">Yeni garsonlar için. Siparişler ve hesaplar normal kaydedilir; bu telefondan girilenler kasada ve raporda “eğitim” olarak işaretli görünür, fişlerin en altında “EĞİTİM AMAÇLIDIR” yazar.</p>
     <button class="btn" data-act="trainOn" style="min-height:52px;border:2px solid #f97316;color:#c2410c;font-weight:800">🎓 Eğitim modunu aç</button></div>`}
 function trainStart(){try{localStorage.setItem('kTrain','1')}catch(e){toast('Eğitim modu açılamadı');return}location.reload()}
 function trainIntro(){modal(`<div style="background:#f97316;color:#fff;border-radius:14px;padding:22px 16px;text-align:center;display:grid;gap:8px">
     <div style="font-size:15px;font-weight:700;letter-spacing:.08em">⚠️ DİKKAT</div><div style="font-family:var(--display);font-size:34px;font-weight:700;line-height:1.05">DENEME SÜRÜMÜ<br>EĞİTİM AMAÇLIDIR</div></div>
-    <p style="margin:0;font-size:16px">Bu telefon <b>eğitim modunda</b>. Siparişler ve hesaplar normal kaydedilir, kasa bu telefondan girilenleri “eğitim” olarak görür. Fişlerin üstünde “EĞİTİM FİŞİ” yazar.</p>
+    <p style="margin:0;font-size:16px">Bu telefon <b>eğitim modunda</b>. Siparişler ve hesaplar normal kaydedilir, kasa bu telefondan girilenleri “eğitim” olarak görür. Fişlerin en altında siyah zemin üzerine “EĞİTİM AMAÇLIDIR” yazar.</p>
     <p class="muted" style="margin:0;font-size:14px">Emin olmadığınız bir şey olursa kasaya sorun.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-act="trainOff" style="min-height:54px">Eğitimden çık</button><button class="btn pri" data-act="close" style="min-height:54px;background:#f97316;border-color:#f97316">Devam et</button></div>`)}
 function installCard(){if(IS_APP())return '';
@@ -1430,7 +1430,7 @@ async function niimPrint(canvas){
 }
 let printing=false;
 async function printDoc(doc,label){
-  if(TRAIN)doc=[{k:'c',text:'EĞİTİM FİŞİ',b:true,plain:true},...doc];
+  if(TRAIN)doc=[...doc,{k:'gap'},{k:'inv',text:'EĞİTİM AMAÇLIDIR'}];
   if(S.settings.printer==='system')return sysPrint(doc,label);
   const hk=(doc.find(r=>r.k==='hand')||{}).f;if(hk&&!(await handReady(hk))){doc=doc.filter(r=>r.k!=='hand');toast('El yazısı yüklenemedi (internet?), düz yazıyla basılıyor')}
   if(await ensureBT()){
