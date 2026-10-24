@@ -165,7 +165,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 10</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 11</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -418,9 +418,17 @@ $("pm").value=iso(new Date()).slice(0,7);
 /* Banka maaşları: son ödeme günü varsayılan olarak dönemin son günü; Kira: ayın 1'i; Et: 14 günlük perşembe döngüsü */
 let pvAuto=false;
 const lastDay=m=>{const[y,a]=m.split("-").map(Number);return iso(new Date(y,a,0))};
+/* default due date: never in the past; if this month's date has passed, the next one is used and Dönem follows it */
+function defaultDue(tur,m){const today=iso(new Date()),start=m+"-01",lo=start>today?start:today;
+  const nm=x=>{const[y,a]=x.split("-").map(Number);return iso(new Date(y,a,1)).slice(0,7)};
+  if(tur==="maas"){let mm=m;while(lastDay(mm)<lo)mm=nm(mm);return lastDay(mm)}
+  if(MONTH_DAY[tur]){let mm=m;const day=n=>n+"-"+String(MONTH_DAY[tur]).padStart(2,"0");while(day(mm)<lo)mm=nm(mm);return day(mm)}
+  const cyc=tur==="et"?[ET_ANCHOR,14]:tur==="kaymak"?[KAYMAK_ANCHOR,15]:null;
+  if(cyc){let d=cyc[0];while(d<lo)d=addDays(d,cyc[1]);return d}
+  return null}
 function pvDefault(){const tur=$("pt").value,m=$("pm").value,pv=$("pv");
-  const def=/^\d{4}-\d{2}$/.test(m)?(tur==="maas"?lastDay(m):MONTH_DAY[tur]?m+"-"+String(MONTH_DAY[tur]).padStart(2,"0"):tur==="et"?etInMonth(m):tur==="kaymak"?cycleInMonth(KAYMAK_ANCHOR,15,m):null):null;
-  if(def){if(!pv.value||pvAuto){pv.value=def;pvAuto=true}}
+  const def=/^\d{4}-\d{2}$/.test(m)?defaultDue(tur,m):null;
+  if(def){if(!pv.value||pvAuto){pv.value=def;pvAuto=true;if(def.slice(0,7)!==m)$("pm").value=def.slice(0,7)}}
   else if(pvAuto){pv.value="";pvAuto=false}}
 $("pt").addEventListener("change",pvDefault);$("pm").addEventListener("change",pvDefault);
 $("pv").addEventListener("input",()=>{pvAuto=false});
