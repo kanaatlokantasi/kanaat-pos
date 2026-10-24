@@ -142,7 +142,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 8</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 9</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -393,7 +393,7 @@ $("pm").value=iso(new Date()).slice(0,7);
 let pvAuto=false;
 const lastDay=m=>{const[y,a]=m.split("-").map(Number);return iso(new Date(y,a,0))};
 function pvDefault(){const tur=$("pt").value,m=$("pm").value,pv=$("pv");
-  const def=/^\d{4}-\d{2}$/.test(m)?(tur==="maas"?lastDay(m):MONTH_DAY[tur]?m+"-"+String(MONTH_DAY[tur]).padStart(2,"0"):tur==="et"?etInMonth(m):null):null;
+  const def=/^\d{4}-\d{2}$/.test(m)?(tur==="maas"?lastDay(m):MONTH_DAY[tur]?m+"-"+String(MONTH_DAY[tur]).padStart(2,"0"):tur==="et"?etInMonth(m):tur==="kaymak"?cycleInMonth(KAYMAK_ANCHOR,15,m):null):null;
   if(def){if(!pv.value||pvAuto){pv.value=def;pvAuto=true}}
   else if(pvAuto){pv.value="";pvAuto=false}}
 $("pt").addEventListener("change",pvDefault);$("pm").addEventListener("change",pvDefault);
@@ -411,12 +411,13 @@ document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.data
 /* ---------- recurring payments (Kira every 1st, Et every 14 days from 08.10.2026) ----------
    The next occurrences up to 35 days ahead are created automatically with an empty amount.
    payments/_seriler remembers the last date created, so a deleted entry is not recreated. */
-const SERIES_DOC="_seriler",AHEAD=35,ET_ANCHOR="2026-10-08";
+const SERIES_DOC="_seriler",AHEAD=35,ET_ANCHOR="2026-10-08",KAYMAK_ANCHOR="2026-10-22";
 const addDays=(d,n)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return iso(x)};
-function etInMonth(m){const today=iso(new Date());let d=ET_ANCHOR;const start=m+"-01",lo=start>today||m!==today.slice(0,7)?start:today;
-  while(d<lo)d=addDays(d,14);while(d.slice(0,7)>m)d=addDays(d,-14);return d.slice(0,7)===m&&d>=start?d:null}
-/* MONTH_DAY: fixed day of month for monthly items (used for the add form too); kaymak: 7th and 22nd */
-const MONTH_DAY={kira:1,turkcell:1,benzin:5,ekmek:5,yogurt:5,su:5,kaymak:7};
+function cycleInMonth(anchor,step,m){const today=iso(new Date());let d=anchor;const start=m+"-01",lo=start>today||m!==today.slice(0,7)?start:today;
+  while(d<lo)d=addDays(d,step);while(d.slice(0,7)>m)d=addDays(d,-step);return d.slice(0,7)===m&&d>=start?d:null}
+const etInMonth=m=>cycleInMonth(ET_ANCHOR,14,m);
+/* MONTH_DAY: fixed day of month for monthly items (used for the add form too); kaymak: every 15 days from 22.10.2026 */
+const MONTH_DAY={kira:1,turkcell:1,benzin:5,ekmek:5,yogurt:5,su:5};
 const nextMonthDay=(last,day)=>{const[y,a]=last.slice(0,7).split("-").map(Number);return iso(new Date(y,a,day))};
 const monthly=(key,day,start,acik)=>({key,start,next:last=>nextMonthDay(last,day),mkey:true,
   make:d=>({id:key+"-"+d.slice(0,7),tur:key,ay:d.slice(0,7),vade:d,acik:acik(d)})});
@@ -424,7 +425,7 @@ const SERIES=[
   monthly("kira",1,"2026-10",d=>mfmt(d.slice(0,7))+" kirası"),
   {key:"et",start:"2026-10-22",next:last=>addDays(last,14),
     make:d=>({id:"et-"+d,tur:"et",ay:d.slice(0,7),vade:d,acik:"Et ödemesi · "+dfmt(d)})},
-  {key:"kaymak",start:"2026-10-22",next:last=>{const g=+last.slice(8,10);return g<7?last.slice(0,8)+"07":g<22?last.slice(0,8)+"22":nextMonthDay(last,7)},
+  {key:"kaymak",start:KAYMAK_ANCHOR,next:last=>addDays(last,15),
     make:d=>({id:"kaymak-"+d,tur:"kaymak",ay:d.slice(0,7),vade:d,acik:"Kaymak ödemesi · "+dfmt(d)})},
   monthly("benzin",5,"2026-10",d=>mfmt(d.slice(0,7))+" benzin"),
   monthly("ekmek",5,"2026-10",d=>mfmt(d.slice(0,7))+" ekmek"),
@@ -435,6 +436,12 @@ let seriesDone=false;
 async function ensureSeries(){
   if(seriesDone||!me)return;seriesDone=true;
   const horizon=addDays(iso(new Date()),AHEAD),ref=db.collection("payments").doc(SERIES_DOC);
+  /* one-time fix: Sürüm 7 created kaymak on the 7th/22nd; move those unpaid entries onto the 15-day cycle */
+  try{const s0=await ref.get();const st0=s0.exists?s0.data():{};
+    if(st0.kaymak&&!st0.kaymak15){const wrong=payments.filter(x=>x.tur==="kaymak"&&x.auto&&!x.paid).sort((a,b)=>a.vade<b.vade?-1:1);
+      const bt=db.batch();let d=KAYMAK_ANCHOR;
+      for(const w of wrong){d=addDays(d,15);bt.update(db.collection("payments").doc(w.id),{vade:d,ay:d.slice(0,7),acik:"Kaymak ödemesi · "+dfmt(d)})}
+      bt.set(ref,{kaymak:wrong.length?d:KAYMAK_ANCHOR,kaymak15:true},{merge:true});await bt.commit()}}catch(e){seriesDone=false;return}
   try{const made=await db.runTransaction(async tx=>{
       const snap=await tx.get(ref);const st=snap.exists?snap.data():{};const upd={},docs=[];
       for(const S of SERIES){let last=st[S.key]||S.start;
@@ -442,7 +449,7 @@ async function ensureSeries(){
         if(last!==(st[S.key]||S.start)||!snap.exists)upd[S.key]=last}
       if(!docs.length&&snap.exists)return 0;
       for(const x of docs){const{id,...rest}=x;tx.set(db.collection("payments").doc(id),{...rest,tutar:null,paid:false,auto:true,addedBy:"Otomatik",addedAt:firebase.firestore.FieldValue.serverTimestamp()})}
-      tx.set(ref,{...st,...upd,at:firebase.firestore.FieldValue.serverTimestamp()});return docs.length});
+      tx.set(ref,{...st,...upd,kaymak15:true,at:firebase.firestore.FieldValue.serverTimestamp()});return docs.length});
     if(made)toast(made+" yeni düzenli ödeme eklendi");
   }catch(e){seriesDone=false}
 }
