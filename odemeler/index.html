@@ -142,7 +142,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 5</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 6</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -209,7 +209,7 @@ const DOMAIN="kanaat-odemeler.app";
 const SEED={"salt":"X009KRzBH9aPubi7kNW0gA==","iter":150000,"box":{"iv":"/vDUMO0cEcWngNWe","ct":"oaUxEKaambRZSyBj5QH8K4ImoRFw1DcwABDAUBmVqdVGoE4IcP+Bep7vztygaJpygPRnf2d8Eq8R2ovYAermFCgWEOlyJBzGHtlFybnIaxsHpqXJqSGjV4wQ/EKiBtjoHySuARQ8+NWIvfV+OEH82s1LeDXAMwV2jWihaALxTikHletKfh7Iu97Irwt8U2qQ5COs10HZTQgp9p/QRkaOybH8ZdZMuQIklR/mSEbEliJ3iR9WqcwbGpYv9hpJLVfy7ttYGhMbnBQS/22QYF4dtomgSdmgKC7dOptYpDk6yzvqRQrUrSHG4WRqeCoV9mBr1onLKjrilto+to+yfwYsEXLtYdhibSTIWA2DuagSF4It5QKCnysxEFVywtWWgO4btlD0UUEuxN6wfZPVPplhGpce0zhg8Wpe1emkrGwlbxcUPEcfZ1O8sIPw39G/zlXb6DGmeg8m2B3lx+duGkCGnPL8LDhgfnzpxuWIpsdQeYbMecKwKMvER3gkfP7wK+xdaFbDL1ESjZ18Cf6L0Rzld5dDSLvy22BXx/hd3tCdRPAu7N6Oa8b95r8mDJVstDJXePjzWfSfPD0QKvVflTX4vhT+6eHm9K+Us/s4YYO8GidJ812DA876mQ/O1Yc2l6D3nCWFwt5nfejTs1ch7EIieshdmVWcQdpsu+S9uUlJu4Ii1CMUUsK+7nHIui0y1zT4f23yL/Fl80mRLZKJfth+mVj+lRGn4raMqV6GREoMxxusUoirx3CjtwZjOoCb4QiB4s0SBY0ae+751XchavNT0xDeRJg9KhHx1dlVRG8c46XR2shNC4I3iHjWlMW7Ou6P4sDU04cOyAysAUWNmT2NAD7qgrPE+rfIlqLYSWPu6mjJSqMYYbZS4Q+vwCDlA1GJVkmZ9uAcK+tHkHUUt3qLuWQa7KitY1qHLIQ1qzGaA76xz5HyERjgIx14gjT0tFp49PvsHzjQweJNFSLluOMNU1bSO/UUW9C1jkJBq/OgCg=="}};
 const APP_URL=location.origin+location.pathname;
 
-const TUR={maas:"Banka maaşları",sgk:"SGK primi",stopaj:"Muhtasar / stopaj",kdv:"KDV",gecici:"Geçici vergi",kurumlar:"Kurumlar vergisi",oda:"Ticaret odası aidatı",resmi:"Diğer resmi gider (harç, ceza vb.)"};
+const TUR={maas:"Banka maaşları",kira:"Kira",et:"Et",sgk:"SGK primi",stopaj:"Muhtasar / stopaj",kdv:"KDV",gecici:"Geçici vergi",kurumlar:"Kurumlar vergisi",oda:"Ticaret odası aidatı",resmi:"Diğer resmi gider (harç, ceza vb.)"};
 const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
 const ALPHA="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const $=id=>document.getElementById(id);
@@ -291,7 +291,7 @@ async function decryptSeed(code){
 
 /* ---------- session ---------- */
 let setupBusy=false;
-function stopAll(){unsub.forEach(f=>{try{f()}catch(e){}});unsub=[];payments=[];people=[];secrets={};me=null;lastNew=null}
+function stopAll(){unsub.forEach(f=>{try{f()}catch(e){}});unsub=[];seriesDone=false;payments=[];people=[];secrets={};me=null;lastNew=null}
 async function enter(u){
   let snap;try{snap=await db.collection("users").doc(u.uid).get()}catch(e){snap=null}
   if(!snap||!snap.exists){stopAll();try{await auth.signOut()}catch(_){}showLogin("Bu hesabın erişimi yok ya da kaldırıldı. Yöneticiyle görüşün.");return}
@@ -302,7 +302,8 @@ async function enter(u){
   $("who").textContent=me.name+(admin?" · yönetici":"");
   if(admin)$("wm").hidden=true;else watermark();
   unsub.push(db.collection("payments").onSnapshot({includeMetadataChanges:true},s=>{
-    payments=s.docs.map(x=>({id:x.id,...x.data()}));
+    payments=s.docs.filter(x=>x.id!==SERIES_DOC).map(x=>({id:x.id,...x.data()}));
+    if(!s.metadata.fromCache)ensureSeries();
     const c=$("conn");if(s.metadata.hasPendingWrites){c.className="chip busy";c.textContent="Kaydediliyor…"}else if(s.metadata.fromCache){c.className="chip busy";c.textContent="Bağlantı yok"}else{c.className="chip ok";c.textContent="Güncel"}
     render()},e=>{if(e.code==="permission-denied"){stopAll();auth.signOut().catch(()=>{});showLogin("Erişiminiz kaldırıldı.")}else toast("Veriler alınamadı ("+e.code+")")}));
   if(admin){
@@ -376,11 +377,12 @@ function render(){
 }
 $("pt").innerHTML=Object.entries(TUR).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
 $("pm").value=iso(new Date()).slice(0,7);
-/* Banka maaşları: son ödeme günü varsayılan olarak dönemin son günü */
+/* Banka maaşları: son ödeme günü varsayılan olarak dönemin son günü; Kira: ayın 1'i; Et: 14 günlük perşembe döngüsü */
 let pvAuto=false;
 const lastDay=m=>{const[y,a]=m.split("-").map(Number);return iso(new Date(y,a,0))};
 function pvDefault(){const tur=$("pt").value,m=$("pm").value,pv=$("pv");
-  if(tur==="maas"&&/^\d{4}-\d{2}$/.test(m)){if(!pv.value||pvAuto){pv.value=lastDay(m);pvAuto=true}}
+  const def=/^\d{4}-\d{2}$/.test(m)?(tur==="maas"?lastDay(m):tur==="kira"?m+"-01":tur==="et"?etInMonth(m):null):null;
+  if(def){if(!pv.value||pvAuto){pv.value=def;pvAuto=true}}
   else if(pvAuto){pv.value="";pvAuto=false}}
 $("pt").addEventListener("change",pvDefault);$("pm").addEventListener("change",pvDefault);
 $("pv").addEventListener("input",()=>{pvAuto=false});
@@ -393,6 +395,34 @@ $("pf").addEventListener("submit",e=>{e.preventDefault();
     .then(()=>toast(`${TUR[tur]} eklendi`),er=>toast("Eklenemedi ("+er.code+")"));
   $("pa").value="";$("pn").value="";$("pv").value="";pvAuto=false;pvDefault();filter="open";render()});
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;render()});
+
+/* ---------- recurring payments (Kira every 1st, Et every 14 days from 08.10.2026) ----------
+   The next occurrences up to 35 days ahead are created automatically with an empty amount.
+   payments/_seriler remembers the last date created, so a deleted entry is not recreated. */
+const SERIES_DOC="_seriler",AHEAD=35,ET_ANCHOR="2026-10-08";
+const addDays=(d,n)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return iso(x)};
+function etInMonth(m){const today=iso(new Date());let d=ET_ANCHOR;const start=m+"-01",lo=start>today||m!==today.slice(0,7)?start:today;
+  while(d<lo)d=addDays(d,14);while(d.slice(0,7)>m)d=addDays(d,-14);return d.slice(0,7)===m&&d>=start?d:null}
+const SERIES=[
+  {key:"kira",start:"2026-10",next:last=>{const[y,a]=last.split("-").map(Number);const n=new Date(y,a,1);return iso(n)},
+    make:d=>({id:"kira-"+d.slice(0,7),tur:"kira",ay:d.slice(0,7),vade:d,acik:mfmt(d.slice(0,7))+" kirası"})},
+  {key:"et",start:"2026-10-22",next:last=>addDays(last,14),
+    make:d=>({id:"et-"+d,tur:"et",ay:d.slice(0,7),vade:d,acik:"Et ödemesi · "+dfmt(d)})}];
+let seriesDone=false;
+async function ensureSeries(){
+  if(seriesDone||!me)return;seriesDone=true;
+  const horizon=addDays(iso(new Date()),AHEAD),ref=db.collection("payments").doc(SERIES_DOC);
+  try{const made=await db.runTransaction(async tx=>{
+      const snap=await tx.get(ref);const st=snap.exists?snap.data():{};const upd={},docs=[];
+      for(const S of SERIES){let last=st[S.key]||S.start;
+        for(let i=0;i<40;i++){const n=S.next(last);const d=n.length===7?n+"-01":n;if(d>horizon)break;docs.push(S.make(d));last=S.key==="kira"?d.slice(0,7):d}
+        if(last!==(st[S.key]||S.start)||!snap.exists)upd[S.key]=last}
+      if(!docs.length&&snap.exists)return 0;
+      for(const x of docs){const{id,...rest}=x;tx.set(db.collection("payments").doc(id),{...rest,tutar:null,paid:false,auto:true,addedBy:"Otomatik",addedAt:firebase.firestore.FieldValue.serverTimestamp()})}
+      tx.set(ref,{...st,...upd,at:firebase.firestore.FieldValue.serverTimestamp()});return docs.length});
+    if(made)toast(made+" yeni düzenli ödeme eklendi (kira / et)");
+  }catch(e){seriesDone=false}
+}
 
 /* ---------- calendar: open payments as all-day events, reminder the day before at 10:00 ---------- */
 $("cal").onclick=()=>{
