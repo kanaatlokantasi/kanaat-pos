@@ -76,6 +76,10 @@ tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 .amtf{display:inline-flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
 .amtf input{width:130px!important;text-align:right}
 .amtf .btn{padding:6px 10px;font-size:13px}
+.ver{font:500 12px var(--f-mono);color:var(--muted);margin-top:2px}
+.gver{font:500 12px var(--f-mono);color:var(--muted);text-align:center;margin-top:-4px}
+.updbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:35;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--accent-soft);border-bottom:1px solid var(--accent);padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));font-weight:500}
+.updbar .btn{padding:6px 12px}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -132,11 +136,13 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
 <body>
 <div id="gate" class="gate"><div class="card"><p class="note" style="margin:0">Yükleniyor…</p></div></div>
 
+<div class="updbar" id="updBar" hidden><span>Yeni sürüm hazır.</span><button class="btn" type="button" id="updBtn">Yenile</button></div>
 <div class="wrap" id="app" hidden>
   <header>
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 4</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -233,7 +239,7 @@ function amtCell(x){
 
 /* ---------- screens ---------- */
 const lockIcon=`<div class="lock" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>`;
-function gate(html){$("app").hidden=true;$("wm").hidden=true;document.body.classList.remove("viewer");const g=$("gate");g.hidden=false;g.innerHTML=`<div class="card">${html}</div>`}
+function gate(html){$("app").hidden=true;$("wm").hidden=true;document.body.classList.remove("viewer");const g=$("gate");g.hidden=false;g.innerHTML=`<div class="card">${html}<div class="gver">Sürüm ${MY_VER}</div></div>`}
 function showLogin(msg){
   gate(`${lockIcon}<div><h1>Kanaat Ödemeler</h1><div class="sub">Size verilen ad soyad ve şifreyle girin.</div></div>
   <form id="lf"><label class="f">Ad soyad<input type="text" id="ln" autocomplete="username" required></label>
@@ -430,6 +436,26 @@ $("addPerson").addEventListener("submit",async e=>{e.preventDefault();
     lastNew={name,pw};$("np").value="";renderPeople();toast(`${name} eklendi`)}
   catch(x){toast(x.code==="auth/email-already-in-use"?"Bu isimle daha önce bir hesap açılmış. İsmi farklı yazın (ör. ikinci adıyla).":"Eklenemedi ("+(x.code||x)+")")}
   finally{btn.disabled=false}});
+
+/* ---------- update check (like Kanaat POS): compare the version on the server with this one ---------- */
+const MY_VER=parseInt(($("ver").textContent.match(/Sürüm (\d+)/)||[])[1]||"0");
+let NEW_VER=0;
+async function checkUpdate(){
+  if(!/^https?:/.test(location.protocol))return;
+  try{const r=await fetch(location.pathname+"?ver="+Date.now(),{cache:"no-store"});if(!r.ok)return;
+    const m=(await r.text()).match(/Ödemeler · Sürüm (\d+)/);const v=m?parseInt(m[1]):0;
+    if(v>MY_VER){NEW_VER=v;if(!autoUpdate())$("updBar").hidden=false}}catch(e){}
+}
+function busy(){const a=document.activeElement;return !!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))||amtEdit!=null}
+function autoUpdate(){if(!NEW_VER||busy())return false;
+  let last="";try{last=sessionStorage.getItem("odUpd")||""}catch(e){}
+  const [lv,lt]=last.split("|");if(+lv===NEW_VER&&Date.now()-(+lt||0)<180000)return false;
+  if(!$("gate").hidden||document.hidden){try{sessionStorage.setItem("odUpd",NEW_VER+"|"+Date.now())}catch(e){}doUpdate();return true}return false}
+function doUpdate(){location.replace(location.pathname+"?v="+(NEW_VER||Date.now()))}
+$("updBtn").onclick=doUpdate;
+setInterval(checkUpdate,120000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdate()});
+setTimeout(checkUpdate,3000);
 
 /* ---------- boot ---------- */
 function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>no(new Error(src));document.head.appendChild(s)})}
