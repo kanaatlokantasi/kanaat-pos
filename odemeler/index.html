@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f6e74">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ödemeler">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Kanaat Ödemeler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sign-in card first; once signed in: header, due-soon alerts, summary cards, add form, one dated list, (admin) people. */
+:root{
+  --bg:#f6f7f6; --panel:#ffffff; --ink:#18242a; --muted:#5d6b70; --line:#dde3e2; --soft:#eef2f1;
+  --accent:#0f6e74; --accent-ink:#ffffff; --accent-soft:#e1f0ef;
+  --up:#b3261e; --up-soft:#fbe9e7; --down:#1d7a46; --down-soft:#e4f3ea; --warn:#8a5a00; --warn-soft:#fbf1dc;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#111819; --panel:#172123; --ink:#e4ecec; --muted:#93a4a6; --line:#2a3a3c; --soft:#1d2a2c;
+  --accent:#4fb8bd; --accent-ink:#0b1415; --accent-soft:#163638;
+  --up:#ff8a80; --up-soft:#3a1d1b; --down:#6fd39a; --down-soft:#173325; --warn:#f2c36b; --warn-soft:#3a2e14; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+.wrap{max-width:1000px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--f-display);font-size:28px;line-height:1.1;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);margin-top:4px}
+.hact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{font-size:12px;padding:4px 9px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap;display:inline-block}
+.chip.ok{background:var(--down-soft);color:var(--down)} .chip.err{background:var(--up-soft);color:var(--up)} .chip.busy{background:var(--warn-soft);color:var(--warn)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kpi{background:var(--panel);padding:14px 16px;min-width:0}
+.kpi .l{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:600 24px var(--f-display);margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .h{font-size:12px;color:var(--muted)}
+.kpi.alert .v{color:var(--up)}
+@media (max-width:640px){.kpis{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.panel h2{font:600 17px var(--f-display);margin:0 0 4px}
+.note{color:var(--muted);font-size:13px;margin:0 0 12px;max-width:72ch}
+.btn{font:600 14px var(--f-body);border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:9px 14px;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.6;cursor:default}
+.link{background:none;border:0;color:var(--accent);font:500 13px var(--f-body);cursor:pointer;padding:4px 0}
+.btn:focus-visible,select:focus-visible,input:focus-visible,.seg button:focus-visible,.x:focus-visible,.link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.form{display:grid;grid-template-columns:200px 140px 160px minmax(0,1fr) 150px auto;gap:10px;align-items:end}
+@media (max-width:860px){.form{grid-template-columns:1fr 1fr}.form .wide{grid-column:1/-1}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+input[type=text],input[type=password],input[type=number],input[type=month],input[type=date],select{font:14px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
+.lh{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:500 13px var(--f-body);background:var(--panel);color:var(--muted);border:0;padding:7px 12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--soft);vertical-align:middle}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr.paid td{color:var(--muted)}
+tr.sum td{font-weight:600;border-top:1px solid var(--line)}
+.pname{font-weight:500} .psup{font-size:12px;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-size:13px}
+.x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
+.confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
+.confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
+.confirm button.no{background:none;color:var(--muted);border-color:var(--line)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex:0 0 auto}
+.empty{color:var(--muted);padding:18px 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;max-width:calc(100% - 32px);font-size:14px;z-index:40}
+.ml{display:none}
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{display:flex;gap:12px;align-items:flex-start;background:var(--warn-soft);color:var(--ink);border:1px solid var(--warn);border-radius:10px;padding:12px 14px}
+.alert.late{background:var(--up-soft);border-color:var(--up)}
+.alert .ic{flex:0 0 auto;color:var(--warn);margin-top:1px}
+.alert.late .ic{color:var(--up)}
+.alert .tt{font-weight:600}
+.alert .dd{font-size:13px;color:var(--muted)}
+.alert .am{margin-left:auto;font:600 15px var(--f-mono);white-space:nowrap}
+.gate{display:flex;justify-content:center;padding-block:10vh 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.card h1{font-size:26px}
+.card form{display:flex;flex-direction:column;gap:12px}
+.lock{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.err{color:var(--up);font-size:13px;margin:0}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:10px 12px;font-size:13px}
+input.code{font-family:var(--f-mono);letter-spacing:.12em;text-transform:uppercase}
+.people{display:flex;flex-direction:column}
+.person{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--soft)}
+.person:last-child{border-bottom:0}
+.newcode{border:1px solid var(--accent);background:var(--accent-soft);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.msg{white-space:pre-wrap;font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;user-select:all;-webkit-user-select:all}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.addp{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.addp label{flex:1 1 220px}
+.wm{position:fixed;inset:0;pointer-events:none;z-index:30;background-repeat:repeat}
+body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.pw{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:10px;align-items:end}
+@media (max-width:640px){.pw{grid-template-columns:1fr}}
+@media (max-width:560px){
+  .hide-s{display:none}
+  input[type=text],input[type=password],input[type=number],input[type=month],input[type=date],select{font-size:16px}
+  .tw{overflow:visible}
+  table thead{display:none}
+  table tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"k t" "v v" "c d";gap:6px 10px;padding:12px 0;border-bottom:1px solid var(--line)}
+  table tbody tr td{padding:0;border:0;text-align:left}
+  td.k{grid-area:k;min-width:0} td.t{grid-area:t;font-size:15px;font-weight:600} td.v{grid-area:v} td.c{grid-area:c} td.d{grid-area:d;text-align:right}
+  td.c label{display:inline-flex;gap:8px;align-items:center;cursor:pointer;color:var(--muted);font-size:13px}
+  .ml{display:inline}
+  tr.sum{grid-template-areas:"k t"!important;border-bottom:0!important}
+  tr.sum td.e{display:none}
+  .card{padding:20px}
+  .alert{flex-wrap:wrap}.alert .am{margin-left:32px;flex-basis:100%}
+}
+</style>
+</head>
+<body>
+<div id="gate" class="gate"><div class="card"><p class="note" style="margin:0">Yükleniyor…</p></div></div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <div>
+      <h1>Kanaat Ödemeler</h1>
+      <div class="sub" id="who"></div>
+    </div>
+    <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
+  </header>
+
+  <section class="panel" id="pwPanel" hidden>
+    <h2>Şifremi değiştir</h2>
+    <form class="pw" id="pwf">
+      <label class="f">Şu anki şifre<input type="password" id="pw0" autocomplete="current-password" required></label>
+      <label class="f">Yeni şifre (en az 8)<input type="password" id="pw1" autocomplete="new-password" minlength="8" required></label>
+      <label class="f">Yeni şifre tekrar<input type="password" id="pw2" autocomplete="new-password" minlength="8" required></label>
+      <button class="btn" type="submit">Değiştir</button>
+    </form>
+    <p class="err" id="pwe"></p>
+  </section>
+
+  <section class="alerts" id="alerts" hidden></section>
+  <section class="kpis" id="kpis" aria-label="Özet"></section>
+
+  <section class="panel">
+    <h2>Ödeme ekle</h2>
+    <form class="form" id="pf">
+      <label class="f">Kalem<select id="pt"></select></label>
+      <label class="f">Dönem<input type="month" id="pm" required></label>
+      <label class="f">Son ödeme tarihi<input type="date" id="pv"></label>
+      <label class="f wide">Açıklama<input type="text" id="pa" placeholder="ör. Ekim 2026 KDV"></label>
+      <label class="f">Tutar (₺)<input type="number" id="pn" min="0" step="0.01" inputmode="decimal" required></label>
+      <button class="btn" type="submit">Ekle</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="lh">
+      <h2 style="margin:0">Ödemeler</h2>
+      <div class="seg" role="group" aria-label="Göster">
+        <button type="button" data-f="open" aria-pressed="true">Bekleyen</button>
+        <button type="button" data-f="paid" aria-pressed="false">Ödenen</button>
+        <button type="button" data-f="all" aria-pressed="false">Tümü</button>
+      </div>
+    </div>
+    <div id="list"></div>
+  </section>
+
+  <section class="panel" id="peoplePanel" hidden>
+    <h2>Erişimi olan kişiler</h2>
+    <p class="note">Eklediğiniz kişi ad soyadı ve size verilen geçici şifreyle girer; ödemeleri görür, yeni ödeme ekler ve ödendi olarak işaretler. Silme yalnızca sizde. Birini çıkardığınızda erişimi hemen kapanır.</p>
+    <form class="addp" id="addPerson">
+      <label class="f">Ad soyad<input type="text" id="np" autocomplete="off" required></label>
+      <button class="btn" type="submit" id="npb">Kişi ekle</button>
+    </form>
+    <div id="newCode"></div>
+    <div class="people" id="people" style="margin-top:10px"></div>
+  </section>
+</div>
+<div class="wm" id="wm" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- settings ---------- */
+const FB_CFG=null; /* Firebase web app ayarları buraya gelecek */
+const FB_VER="10.14.1";
+const DOMAIN="kanaat-odemeler.app";
+const SEED={"salt":"X009KRzBH9aPubi7kNW0gA==","iter":150000,"box":{"iv":"/vDUMO0cEcWngNWe","ct":"oaUxEKaambRZSyBj5QH8K4ImoRFw1DcwABDAUBmVqdVGoE4IcP+Bep7vztygaJpygPRnf2d8Eq8R2ovYAermFCgWEOlyJBzGHtlFybnIaxsHpqXJqSGjV4wQ/EKiBtjoHySuARQ8+NWIvfV+OEH82s1LeDXAMwV2jWihaALxTikHletKfh7Iu97Irwt8U2qQ5COs10HZTQgp9p/QRkaOybH8ZdZMuQIklR/mSEbEliJ3iR9WqcwbGpYv9hpJLVfy7ttYGhMbnBQS/22QYF4dtomgSdmgKC7dOptYpDk6yzvqRQrUrSHG4WRqeCoV9mBr1onLKjrilto+to+yfwYsEXLtYdhibSTIWA2DuagSF4It5QKCnysxEFVywtWWgO4btlD0UUEuxN6wfZPVPplhGpce0zhg8Wpe1emkrGwlbxcUPEcfZ1O8sIPw39G/zlXb6DGmeg8m2B3lx+duGkCGnPL8LDhgfnzpxuWIpsdQeYbMecKwKMvER3gkfP7wK+xdaFbDL1ESjZ18Cf6L0Rzld5dDSLvy22BXx/hd3tCdRPAu7N6Oa8b95r8mDJVstDJXePjzWfSfPD0QKvVflTX4vhT+6eHm9K+Us/s4YYO8GidJ812DA876mQ/O1Yc2l6D3nCWFwt5nfejTs1ch7EIieshdmVWcQdpsu+S9uUlJu4Ii1CMUUsK+7nHIui0y1zT4f23yL/Fl80mRLZKJfth+mVj+lRGn4raMqV6GREoMxxusUoirx3CjtwZjOoCb4QiB4s0SBY0ae+751XchavNT0xDeRJg9KhHx1dlVRG8c46XR2shNC4I3iHjWlMW7Ou6P4sDU04cOyAysAUWNmT2NAD7qgrPE+rfIlqLYSWPu6mjJSqMYYbZS4Q+vwCDlA1GJVkmZ9uAcK+tHkHUUt3qLuWQa7KitY1qHLIQ1qzGaA76xz5HyERjgIx14gjT0tFp49PvsHzjQweJNFSLluOMNU1bSO/UUW9C1jkJBq/OgCg=="}};
+const APP_URL=location.origin+location.pathname;
+
+const TUR={sgk:"SGK primi",stopaj:"Muhtasar / stopaj",kdv:"KDV",gecici:"Geçici vergi",kurumlar:"Kurumlar vergisi",oda:"Ticaret odası aidatı",resmi:"Diğer resmi gider (harç, ceza vb.)"};
+const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const ALPHA="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tl=n=>(n==null||!isFinite(n))?"–":n.toLocaleString("tr-TR",{minimumFractionDigits:0,maximumFractionDigits:2})+" ₺";
+const dfmt=d=>{if(!d)return"";const[y,m,g]=d.split("-");return g+"."+m+"."+y};
+const mfmt=m=>{if(!m)return"";const[y,a]=m.split("-");return AYLAR[+a-1]+" "+y};
+const iso=dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const normCode=s=>String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+const cleanName=s=>String(s||"").replace(/\s+/g," ").trim();
+const slug=s=>cleanName(s).toLocaleLowerCase("tr-TR").replace(/[çğıöşüâîû]/g,c=>({"ç":"c","ğ":"g","ı":"i","ö":"o","ş":"s","ü":"u","â":"a","î":"i","û":"u"}[c])).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,".").replace(/^\.+|\.+$/g,"");
+const emailOf=n=>slug(n)+"@"+DOMAIN;
+function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,3800)}
+function genPw(){const r=crypto.getRandomValues(new Uint8Array(10));let s="";for(const x of r)s+=ALPHA[x&31];return s.slice(0,5)+"-"+s.slice(5)}
+const authMsg=e=>{const c=e&&e.code||"";if(/invalid-credential|wrong-password|user-not-found|invalid-email|invalid-login/.test(c))return"Ad soyad veya şifre hatalı.";if(/too-many-requests/.test(c))return"Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.";if(/network/.test(c))return"İnternet bağlantısı yok.";return"Giriş yapılamadı ("+c+")."};
+
+/* ---------- state ---------- */
+let auth=null,db=null,me=null; // me: {uid,name,role}
+let payments=[],people=[],secrets={};
+let unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null;
+
+/* ---------- screens ---------- */
+const lockIcon=`<div class="lock" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>`;
+function gate(html){$("app").hidden=true;$("wm").hidden=true;document.body.classList.remove("viewer");const g=$("gate");g.hidden=false;g.innerHTML=`<div class="card">${html}</div>`}
+function showLogin(msg){
+  gate(`${lockIcon}<div><h1>Kanaat Ödemeler</h1><div class="sub">Size verilen ad soyad ve şifreyle girin.</div></div>
+  <form id="lf"><label class="f">Ad soyad<input type="text" id="ln" autocomplete="username" required></label>
+    <label class="f">Şifre<input type="password" id="lp" autocomplete="current-password" required></label>
+    <p class="err" id="le">${esc(msg||"")}</p><button class="btn" type="submit" id="lb">Giriş yap</button></form>
+  <button class="link" type="button" id="toSetup" style="align-self:flex-start">İlk kurulum</button>`);
+  $("lf").onsubmit=async e=>{e.preventDefault();const b=$("lb");b.disabled=true;b.textContent="Giriş yapılıyor…";$("le").textContent="";
+    try{await auth.signInWithEmailAndPassword(emailOf($("ln").value),$("lp").value.trim())}
+    catch(x){b.disabled=false;b.textContent="Giriş yap";$("le").textContent=authMsg(x)}};
+  $("toSetup").onclick=showSetup;
+}
+function showSetup(){
+  gate(`${lockIcon}<div><h1>İlk kurulum</h1><div class="sub">Yalnızca yönetici, bir kez</div></div>
+  <form id="sf"><label class="f">Kurulum kodu<input type="text" id="sc" class="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX" required></label>
+    <label class="f">Ad soyad<input type="text" id="sn" autocomplete="name" required></label>
+    <label class="f">Şifre (en az 8 karakter)<input type="password" id="s1" autocomplete="new-password" minlength="8" required></label>
+    <label class="f">Şifre tekrar<input type="password" id="s2" autocomplete="new-password" minlength="8" required></label>
+    <div class="warnbox">Girişte bu ad soyadı ve şifreyi kullanacaksınız. Şifreyi güvenli bir yere not edin.</div>
+    <p class="err" id="se"></p><button class="btn" type="submit" id="sb">Kurulumu tamamla</button></form>
+  <button class="link" type="button" id="toLogin" style="align-self:flex-start">← Giriş ekranı</button>`);
+  $("toLogin").onclick=()=>showLogin();
+  $("sf").onsubmit=async e=>{e.preventDefault();const er=$("se"),b=$("sb");er.textContent="";
+    const code=normCode($("sc").value),name=cleanName($("sn").value),p1=$("s1").value,p2=$("s2").value;
+    if(!slug(name)){er.textContent="Ad soyad girin.";return}
+    if(p1.length<8){er.textContent="Şifre en az 8 karakter olmalı.";return}
+    if(p1!==p2){er.textContent="İki şifre aynı değil.";return}
+    let seed;try{seed=await decryptSeed(code)}catch(x){er.textContent="Kurulum kodu hatalı.";return}
+    b.disabled=true;b.textContent="Kuruluyor…";setupBusy=true;
+    try{
+      let cred;try{cred=await auth.createUserWithEmailAndPassword(emailOf(name),p1)}
+      catch(x){if(x.code==="auth/email-already-in-use")cred=await auth.signInWithEmailAndPassword(emailOf(name),p1);else throw x}
+      const u=cred.user,ts=firebase.firestore.FieldValue.serverTimestamp();
+      const batch=db.batch();
+      batch.set(db.collection("users").doc(u.uid),{name,role:"admin",at:ts});
+      batch.set(db.collection("meta").doc("setup"),{k:code,at:ts,by:u.uid});
+      await batch.commit();
+      const b2=db.batch();for(const p of seed){const{id,...rest}=p;b2.set(db.collection("payments").doc(id),{...rest,paid:!!rest.paid,addedBy:name,addedAt:ts})}await b2.commit();
+      setupBusy=false;await enter(u);toast("Kurulum tamamlandı");
+    }catch(x){try{await auth.signOut()}catch(_){}
+      setupBusy=false;b.disabled=false;b.textContent="Kurulumu tamamla";
+      er.textContent=x&&x.code==="permission-denied"?"Kurulum zaten yapılmış ya da kod hatalı. Giriş ekranını kullanın.":"Kurulum yapılamadı ("+(x&&x.code||x)+").";}};
+}
+async function decryptSeed(code){
+  const te=new TextEncoder(),ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+  const base=await crypto.subtle.importKey("raw",te.encode(code),"PBKDF2",false,["deriveKey"]);
+  const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:ub(SEED.salt),iterations:SEED.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(SEED.box.iv)},k,ub(SEED.box.ct))));
+}
+
+/* ---------- session ---------- */
+let setupBusy=false;
+function stopAll(){unsub.forEach(f=>{try{f()}catch(e){}});unsub=[];payments=[];people=[];secrets={};me=null;lastNew=null}
+async function enter(u){
+  let snap;try{snap=await db.collection("users").doc(u.uid).get()}catch(e){snap=null}
+  if(!snap||!snap.exists){stopAll();try{await auth.signOut()}catch(_){}showLogin("Bu hesabın erişimi yok ya da kaldırıldı. Yöneticiyle görüşün.");return}
+  const d=snap.data();me={uid:u.uid,name:d.name,role:d.role};
+  $("gate").hidden=true;$("app").hidden=false;
+  const admin=me.role==="admin";
+  $("peoplePanel").hidden=!admin;document.body.classList.toggle("viewer",!admin);
+  $("who").textContent=me.name+(admin?" · yönetici":"");
+  if(admin)$("wm").hidden=true;else watermark();
+  unsub.push(db.collection("payments").onSnapshot({includeMetadataChanges:true},s=>{
+    payments=s.docs.map(x=>({id:x.id,...x.data()}));
+    const c=$("conn");if(s.metadata.hasPendingWrites){c.className="chip busy";c.textContent="Kaydediliyor…"}else if(s.metadata.fromCache){c.className="chip busy";c.textContent="Bağlantı yok"}else{c.className="chip ok";c.textContent="Güncel"}
+    render()},e=>{if(e.code==="permission-denied"){stopAll();auth.signOut().catch(()=>{});showLogin("Erişiminiz kaldırıldı.")}else toast("Veriler alınamadı ("+e.code+")")}));
+  if(admin){
+    unsub.push(db.collection("users").onSnapshot(s=>{people=s.docs.map(x=>({uid:x.id,...x.data()})).sort((a,b)=>(a.role==="admin"?0:1)-(b.role==="admin"?0:1)||a.name.localeCompare(b.name,"tr"));renderPeople()}));
+    unsub.push(db.collection("secrets").onSnapshot(s=>{secrets={};s.docs.forEach(x=>secrets[x.id]=x.data().pw);renderPeople()}));
+  }
+  render();window.scrollTo({top:0});
+}
+$("logout").onclick=async()=>{stopAll();await auth.signOut().catch(()=>{});showLogin()};
+$("pwBtn").onclick=()=>{$("pwPanel").hidden=!$("pwPanel").hidden;$("pwe").textContent=""};
+$("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
+  const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
+  if(p1.length<8){er.textContent="Yeni şifre en az 8 karakter olmalı.";return}if(p1!==p2){er.textContent="İki yeni şifre aynı değil.";return}
+  try{const u=auth.currentUser;await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,p0));await u.updatePassword(p1);
+    db.collection("secrets").doc(u.uid).delete().catch(()=>{});
+    $("pwf").reset();$("pwPanel").hidden=true;toast("Şifreniz değişti")}
+  catch(x){er.textContent=/invalid-credential|wrong-password/.test(x.code||"")?"Şu anki şifre hatalı.":"Değiştirilemedi ("+(x.code||x)+")."}};
+
+function watermark(){
+  const t=(me.name+" · "+new Date().toLocaleDateString("tr-TR")).replace(/[&<>"']/g,"");
+  const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='180'><text x='160' y='95' text-anchor='middle' transform='rotate(-24 160 90)' font-family='IBM Plex Sans,Segoe UI,sans-serif' font-size='16' font-weight='600' fill='rgb(120,130,132)' fill-opacity='0.18'>${t}</text></svg>`;
+  const w=$("wm");w.style.backgroundImage=`url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}")`;w.hidden=false;
+}
+
+/* ---------- payments ---------- */
+function render(){
+  if(!me)return;
+  const admin=me.role==="admin";
+  const now=new Date(),today=iso(now),lim=iso(new Date(now.getTime()+30*86400000));
+  const days=v=>Math.round((new Date(v+"T00:00:00")-new Date(today+"T00:00:00"))/86400000);
+  const P=payments;
+  const open=P.filter(x=>!x.paid),n30=open.filter(x=>x.vade&&x.vade<=lim),late=open.filter(x=>x.vade&&x.vade<today);
+  const sum=l=>l.reduce((s,x)=>s+(x.tutar||0),0);
+  const soon=open.filter(x=>x.vade&&days(x.vade)<=1).sort((a,b)=>a.vade<b.vade?-1:1);
+  const al=$("alerts");al.hidden=!soon.length;
+  al.innerHTML=soon.map(x=>{const d=days(x.vade);const when=d<0?`${-d} gün gecikti`:d===0?"Son ödeme günü bugün":"Son ödeme günü yarın";
+    return`<div class="alert${d<=0?" late":""}" role="alert"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div><div class="tt">${esc(when)}: ${esc(TUR[x.tur]||x.tur)}</div><div class="dd">${esc(x.acik||mfmt(x.ay))} · son ödeme ${dfmt(x.vade)}</div></div><div class="am">${tl(x.tutar)}</div></div>`}).join("");
+  $("kpis").innerHTML=`
+    <div class="kpi"><div class="l">Önümüzdeki 30 gün</div><div class="v">${tl(sum(n30))}</div><div class="h">${n30.length} ödeme</div></div>
+    <div class="kpi${late.length?" alert":""}"><div class="l">Tarihi geçen</div><div class="v">${tl(sum(late))}</div><div class="h">${late.length?late.length+" ödeme":"yok"}</div></div>
+    <div class="kpi"><div class="l">Bekleyen toplam</div><div class="v">${tl(sum(open))}</div><div class="h">${open.length} ödeme</div></div>`;
+  document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===filter)));
+  const chip=x=>{if(x.paid)return`<span class="chip ok">Ödendi</span>${x.paidBy?`<div class="psup">${esc(x.paidBy)}${x.paidAt&&x.paidAt.toDate?" · "+x.paidAt.toDate().toLocaleDateString("tr-TR"):""}</div>`:""}`;if(!x.vade)return'<span class="chip">Tarih yok</span>';const d=days(x.vade);
+    return d<0?`<span class="chip err">${-d} gün gecikti</span>`:d===0?'<span class="chip err">Bugün</span>':d<=7?`<span class="chip busy">${d} gün kaldı</span>`:`<span class="chip">${d} gün kaldı</span>`};
+  const key=x=>(x.paid?"2":x.vade?"0":"1")+(x.vade||"")+(x.ay||"");
+  let L=P.slice().sort((a,b)=>key(a)<key(b)?-1:key(a)>key(b)?1:0);
+  if(filter==="open")L=L.filter(x=>!x.paid);else if(filter==="paid")L=L.filter(x=>x.paid).reverse();
+  const msg={open:"Bekleyen ödeme yok.",paid:"Henüz ödendi olarak işaretlenen yok.",all:"Henüz ödeme girilmedi."}[filter];
+  $("list").innerHTML=L.length?`<div class="tw"><table><thead><tr><th>Kalem</th><th class="hide-s">Dönem</th><th>Son ödeme</th><th class="n">Tutar</th><th class="n">Ödendi</th><th></th></tr></thead><tbody>${
+    L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${esc(TUR[x.tur]||x.tur)}</div>${x.acik?`<div class="psup">${esc(x.acik)}</div>`:""}</td>
+      <td class="mono hide-s">${mfmt(x.ay)}</td>
+      <td class="v">${x.vade?`<span class="mono">${dfmt(x.vade)}</span> `:""}${chip(x)}</td>
+      <td class="n mono t">${tl(x.tutar)}</td>
+      <td class="n c"><label><input type="checkbox" id="pd-${esc(x.id)}" data-paid="${esc(x.id)}" ${x.paid?"checked":""} aria-label="Ödendi"><span class="ml">Ödendi</span></label></td>
+      <td class="n d">${!admin?"":delAsk===x.id?`<span class="confirm">Silinsin mi? <button type="button" data-yes="${esc(x.id)}">Sil</button><button type="button" class="no" data-no>Vazgeç</button></span>`:`<button class="x" type="button" data-del="${esc(x.id)}" aria-label="Sil">×</button>`}</td></tr>`).join("")}
+    <tr class="sum"><td class="k">Toplam</td><td class="hide-s"></td><td class="e"></td><td class="n mono t">${tl(sum(L))}</td><td class="e"></td><td class="e"></td></tr></tbody></table></div>`:`<div class="empty">${msg}</div>`;
+  document.querySelectorAll("[data-paid]").forEach(c=>c.onchange=()=>{const del=firebase.firestore.FieldValue.delete();
+    db.collection("payments").doc(c.dataset.paid).update(c.checked?{paid:true,paidBy:me.name,paidAt:firebase.firestore.FieldValue.serverTimestamp()}:{paid:false,paidBy:del,paidAt:del})
+      .then(()=>toast(c.checked?"Ödendi olarak işaretlendi":"Bekleyene alındı"),e=>{toast("Kaydedilemedi ("+e.code+")");render()})});
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{delAsk=b.dataset.del;render()});
+  document.querySelectorAll("[data-no]").forEach(b=>b.onclick=()=>{delAsk=null;render()});
+  document.querySelectorAll("[data-yes]").forEach(b=>b.onclick=()=>{const id=b.dataset.yes;delAsk=null;db.collection("payments").doc(id).delete().then(()=>toast("Ödeme silindi"),e=>toast("Silinemedi ("+e.code+")"))});
+}
+$("pt").innerHTML=Object.entries(TUR).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
+$("pm").value=iso(new Date()).slice(0,7);
+$("pf").addEventListener("submit",e=>{e.preventDefault();
+  const tur=$("pt").value,ay=$("pm").value,vade=$("pv").value,acik=$("pa").value.trim(),tutar=parseFloat(String($("pn").value).replace(",","."));
+  if(!/^\d{4}-\d{2}$/.test(ay)||!(tutar>0)){toast("Dönem ve tutarı kontrol edin");return}
+  db.collection("payments").doc(uid()).set({ay,tur,acik,tutar,paid:false,...(vade?{vade}:{}),addedBy:me.name,addedAt:firebase.firestore.FieldValue.serverTimestamp()})
+    .then(()=>toast(`${TUR[tur]} eklendi`),er=>toast("Eklenemedi ("+er.code+")"));
+  $("pa").value="";$("pn").value="";$("pv").value="";filter="open";render()});
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;render()});
+
+/* ---------- calendar: open payments as all-day events, reminder the day before at 10:00 ---------- */
+$("cal").onclick=()=>{
+  const today=iso(new Date());const ex=s=>String(s||"").replace(/\\/g,"\\\\").replace(/([,;])/g,"\\$1").replace(/\n/g,"\\n");
+  const enc=new TextEncoder();const fold=l=>{const out=[];let cur="";for(const ch of l){if(enc.encode(cur+ch).length>73){out.push(cur);cur=" "+ch}else cur+=ch}out.push(cur);return out.join("\r\n")};
+  const st=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  const list=payments.filter(x=>!x.paid&&x.vade&&x.vade>=today);
+  if(!list.length){toast("Takvime eklenecek bekleyen ödeme yok");return}
+  const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Kanaat Lokantasi//Odemeler//TR","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:Kanaat Ödemeler"];
+  for(const x of list){const n=new Date(x.vade+"T12:00:00");n.setDate(n.getDate()+1);
+    const title=`${TUR[x.tur]||x.tur} · ${tl(x.tutar)}`,desc=`${x.acik||""}\nDönem: ${mfmt(x.ay)}\nTutar: ${tl(x.tutar)}\nSon ödeme: ${dfmt(x.vade)}`;
+    L.push("BEGIN:VEVENT",`UID:${x.id}@kanaat-odemeler`,`DTSTAMP:${st}`,`DTSTART;VALUE=DATE:${x.vade.replace(/-/g,"")}`,`DTEND;VALUE=DATE:${iso(n).replace(/-/g,"")}`,`SUMMARY:${ex(title)}`,`DESCRIPTION:${ex(desc)}`,
+      "BEGIN:VALARM","ACTION:DISPLAY","TRIGGER:-PT14H",`DESCRIPTION:${ex("Yarın son gün: "+title)}`,"END:VALARM","END:VEVENT")}
+  L.push("END:VCALENDAR");const text=L.map(fold).join("\r\n")+"\r\n";
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  if(ios){location.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(text);return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/calendar"}));a.download="kanaat-odemeler.ics";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+  toast(`${list.length} ödeme takvim dosyasına eklendi`);
+};
+
+/* ---------- people (admin) ---------- */
+const waText=(name,pw)=>`Kanaat Ödemeler giriş bilgileriniz\n\nBağlantı: ${APP_URL}\nAd soyad: ${name}\nŞifre: ${pw}\n\nİlk girişten sonra sağ üstteki "Şifre" düğmesinden kendi şifrenizi belirleyin. Bilgileri kimseyle paylaşmayın.`;
+async function copy(text){try{await navigator.clipboard.writeText(text);toast("Kopyalandı")}catch(e){toast("Kopyalanamadı; metni basılı tutup seçin")}}
+function renderPeople(){
+  if(!me||me.role!=="admin")return;
+  const nc=$("newCode");
+  nc.innerHTML=lastNew?`<div class="newcode"><div class="pname">${esc(lastNew.name)} için giriş bilgileri</div>
+    <div class="msg">${esc(waText(lastNew.name,lastNew.pw))}</div>
+    <div class="row"><a class="btn" href="https://wa.me/?text=${encodeURIComponent(waText(lastNew.name,lastNew.pw))}" target="_blank" rel="noopener">WhatsApp'ta gönder</a><button class="btn ghost" type="button" id="cpMsg">Kopyala</button><button class="link" type="button" id="hideNew">Kapat</button></div></div>`:"";
+  if(lastNew){$("cpMsg").onclick=()=>copy(waText(lastNew.name,lastNew.pw));$("hideNew").onclick=()=>{lastNew=null;renderPeople()}}
+  $("people").innerHTML=people.map(p=>{const self=p.uid===me.uid,has=!!secrets[p.uid];
+    return`<div class="person"><div><div class="pname">${esc(p.name)}</div><div class="psup">${p.role==="admin"?"Yönetici":has?"Geçici şifreyle":"Kendi şifresini belirledi"}</div></div>
+    <div class="row">${self?"":pDel===p.uid?`<span class="confirm">Erişimi kaldırılsın mı? <button type="button" data-pyes="${esc(p.uid)}">Kaldır</button><button type="button" class="no" data-pno>Vazgeç</button></span>`:
+      `${has?`<button class="btn ghost" type="button" data-show="${esc(p.uid)}">Bilgileri göster</button>`:""}<button class="x" type="button" data-pdel="${esc(p.uid)}" aria-label="${esc(p.name)} erişimini kaldır">×</button>`}</div></div>`}).join("")||`<div class="empty">Henüz kimse yok.</div>`;
+  document.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{const p=people.find(x=>x.uid===b.dataset.show);if(p&&secrets[p.uid]){lastNew={name:p.name,pw:secrets[p.uid]};renderPeople();$("newCode").scrollIntoView({block:"nearest"})}});
+  document.querySelectorAll("[data-pdel]").forEach(b=>b.onclick=()=>{pDel=b.dataset.pdel;renderPeople()});
+  document.querySelectorAll("[data-pno]").forEach(b=>b.onclick=()=>{pDel=null;renderPeople()});
+  document.querySelectorAll("[data-pyes]").forEach(b=>b.onclick=async()=>{const id=b.dataset.pyes;const p=people.find(x=>x.uid===id);pDel=null;
+    try{const bt=db.batch();bt.delete(db.collection("users").doc(id));bt.delete(db.collection("secrets").doc(id));await bt.commit();if(lastNew&&p&&lastNew.name===p.name)lastNew=null;toast(`${p?p.name:"Kişi"} erişimi kaldırıldı`)}
+    catch(e){toast("Kaldırılamadı ("+e.code+")")}});
+}
+$("addPerson").addEventListener("submit",async e=>{e.preventDefault();
+  const name=cleanName($("np").value);if(!slug(name))return;
+  if(people.some(p=>slug(p.name)===slug(name))){toast("Bu isimde bir kişi zaten var");return}
+  const btn=$("npb");btn.disabled=true;const pw=genPw();
+  let sec=null;
+  try{sec=firebase.apps.find(a=>a.name==="ekle")||firebase.initializeApp(FB_CFG,"ekle");
+    const cred=await sec.auth().createUserWithEmailAndPassword(emailOf(name),pw);const nu=cred.user.uid;await sec.auth().signOut();
+    const bt=db.batch();bt.set(db.collection("users").doc(nu),{name,role:"user",at:firebase.firestore.FieldValue.serverTimestamp()});bt.set(db.collection("secrets").doc(nu),{pw});await bt.commit();
+    lastNew={name,pw};$("np").value="";renderPeople();toast(`${name} eklendi`)}
+  catch(x){toast(x.code==="auth/email-already-in-use"?"Bu isimle daha önce bir hesap açılmış. İsmi farklı yazın (ör. ikinci adıyla).":"Eklenemedi ("+(x.code||x)+")")}
+  finally{btn.disabled=false}});
+
+/* ---------- boot ---------- */
+function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>no(new Error(src));document.head.appendChild(s)})}
+async function boot(){
+  if(!FB_CFG){gate(`${lockIcon}<h1>Kanaat Ödemeler</h1><p class="note" style="margin:0">Uygulama hazırlanıyor. Firebase ayarları henüz girilmedi.</p>`);return}
+  try{for(const m of["app","auth","firestore"])await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-${m}-compat.js`)}
+  catch(e){gate(`<h1>Kanaat Ödemeler</h1><p class="err">Bağlantı kurulamadı. İnternetinizi kontrol edip sayfayı yenileyin.</p>`);return}
+  firebase.initializeApp(FB_CFG);auth=firebase.auth();db=firebase.firestore();
+  auth.onAuthStateChanged(u=>{if(setupBusy)return;if(u){if(!me||me.uid!==u.uid)enter(u)}else{stopAll();showLogin()}});
+}
+boot();
+})();
+</script>
+</body>
+</html>
