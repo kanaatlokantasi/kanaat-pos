@@ -142,7 +142,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 4</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 5</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -376,13 +376,22 @@ function render(){
 }
 $("pt").innerHTML=Object.entries(TUR).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
 $("pm").value=iso(new Date()).slice(0,7);
+/* Banka maaşları: son ödeme günü varsayılan olarak dönemin son günü */
+let pvAuto=false;
+const lastDay=m=>{const[y,a]=m.split("-").map(Number);return iso(new Date(y,a,0))};
+function pvDefault(){const tur=$("pt").value,m=$("pm").value,pv=$("pv");
+  if(tur==="maas"&&/^\d{4}-\d{2}$/.test(m)){if(!pv.value||pvAuto){pv.value=lastDay(m);pvAuto=true}}
+  else if(pvAuto){pv.value="";pvAuto=false}}
+$("pt").addEventListener("change",pvDefault);$("pm").addEventListener("change",pvDefault);
+$("pv").addEventListener("input",()=>{pvAuto=false});
+pvDefault();
 $("pf").addEventListener("submit",e=>{e.preventDefault();
   const tur=$("pt").value,ay=$("pm").value,vade=$("pv").value,acik=$("pa").value.trim(),raw=String($("pn").value).trim(),tutar=raw?parseFloat(raw.replace(",",".")):null;
   if(!/^\d{4}-\d{2}$/.test(ay)){toast("Dönemi kontrol edin");return}
   if(raw&&!(tutar>0)){toast("Tutarı kontrol edin ya da boş bırakın");return}
   db.collection("payments").doc(uid()).set({ay,tur,acik,tutar,paid:false,...(vade?{vade}:{}),addedBy:me.name,addedAt:firebase.firestore.FieldValue.serverTimestamp()})
     .then(()=>toast(`${TUR[tur]} eklendi`),er=>toast("Eklenemedi ("+er.code+")"));
-  $("pa").value="";$("pn").value="";$("pv").value="";filter="open";render()});
+  $("pa").value="";$("pn").value="";$("pv").value="";pvAuto=false;pvDefault();filter="open";render()});
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;render()});
 
 /* ---------- calendar: open payments as all-day events, reminder the day before at 10:00 ---------- */
