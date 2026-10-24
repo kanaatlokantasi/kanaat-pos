@@ -80,6 +80,29 @@ tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 .gver{font:500 12px var(--f-mono);color:var(--muted);text-align:center;margin-top:-4px}
 .updbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:35;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--accent-soft);border-bottom:1px solid var(--accent);padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));font-weight:500}
 .updbar .btn{padding:6px 12px}
+.guide{position:fixed;inset:0;z-index:50;background:rgba(10,20,22,.55);display:flex;align-items:flex-end;justify-content:center;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+@media (min-width:600px){.guide{align-items:center}}
+.gcard{width:100%;max-width:540px;max-height:100%;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.gtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.gstep{font:500 12px var(--f-mono);color:var(--muted);letter-spacing:.04em}
+.gcard h2{font:600 21px var(--f-display);margin:0;text-wrap:balance}
+.gcard p{margin:0;font-size:15px;line-height:1.55}
+.gcard ul{margin:0;padding-left:20px;font-size:14px;line-height:1.6}
+.demo{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.drow{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;flex-wrap:wrap}
+.drow .r{display:flex;gap:10px;align-items:center}
+.tap{outline:3px solid var(--accent);outline-offset:3px;border-radius:6px;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{outline-color:transparent}}
+@media (prefers-reduced-motion:reduce){.tap{animation:none}}
+.dkpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.dkpi div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
+.dkpi b{display:block;font:600 15px var(--f-display)}
+.dkpi span{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.gnav{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--accent)}
+.gnav .row{flex-wrap:nowrap}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -142,9 +165,9 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 9</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 10</div>
     </div>
-    <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
+    <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
 
   <section class="panel" id="pwPanel" hidden>
@@ -197,6 +220,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
   </section>
 </div>
 <div class="wm" id="wm" hidden></div>
+<div class="guide" id="guide" hidden role="dialog" aria-modal="true" aria-labelledby="gTitle"><div class="gcard" id="gCard"></div></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -316,8 +340,10 @@ async function enter(u){
     unsub.push(db.collection("secrets").onSnapshot(s=>{secrets={};s.docs.forEach(x=>secrets[x.id]=x.data().pw);renderPeople()}));
   }
   render();window.scrollTo({top:0});
+  let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
+  if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{stopAll();await auth.signOut().catch(()=>{});showLogin()};
+$("logout").onclick=async()=>{$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
 $("pwBtn").onclick=()=>{$("pwPanel").hidden=!$("pwPanel").hidden;$("pwe").textContent=""};
 $("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
   const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
@@ -505,6 +531,52 @@ $("addPerson").addEventListener("submit",async e=>{e.preventDefault();
     lastNew={name,pw};$("np").value="";renderPeople();toast(`${name} eklendi`)}
   catch(x){toast(x.code==="auth/email-already-in-use"?"Bu isimle daha önce bir hesap açılmış. İsmi farklı yazın (ör. ikinci adıyla).":"Eklenemedi ("+(x.code||x)+")")}
   finally{btn.disabled=false}});
+
+/* ---------- kullanım kılavuzu (ilk girişte kendiliğinden açılır, sonra "Kılavuz" düğmesiyle) ---------- */
+const GUIDE_VER="1";
+const bell=`<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
+function guideSteps(){
+  const admin=me&&me.role==="admin";
+  const S=[
+  {t:"Hoş geldiniz",p:`Kanaat Ödemeler; vergi, SGK, maaş, kira ve tedarikçi ödemelerini tek listede tutar. Herkes aynı listeyi görür. Birinin yaptığı değişiklik birkaç saniyede herkesin ekranına düşer.`,
+   d:`<div class="drow"><div><div class="pname">Muhtasar / stopaj</div><div class="psup">Eylül 2026 muhtasar</div></div><div class="r"><span class="chip busy">2 gün kaldı</span><b class="mono">516.000 ₺</b></div></div>`},
+  {t:"Üstteki uyarılara bakın",p:`Son günü <b>yarın</b> olan ödemeler en üstte turuncu bantla çıkar. Son günü <b>bugün</b> olan ya da <b>geciken</b> ödemeler kırmızıdır. Uygulamayı açınca önce buraya bakın.`,
+   d:`<div class="alert">${bell}<div><div class="tt">Son ödeme günü yarın: KDV</div><div class="dd">Eylül 2026 KDV · son ödeme 28.10.2026</div></div><div class="am">1.265.000 ₺</div></div>`},
+  {t:"Özet kartlar",p:`Önümüzdeki 30 günde ne kadar ödeme olduğunu, tarihi geçenleri ve bekleyen toplamı gösterir. Tutarı henüz girilmemiş ödemeler toplama katılmaz.`,
+   d:`<div class="dkpi"><div><span>30 gün</span><b>2,6 mn ₺</b></div><div><span>Geçen</span><b>0 ₺</b></div><div><span>Bekleyen</span><b>7,9 mn ₺</b></div></div>`},
+  {t:"Ödemeyi yaptınız mı? İşaretleyin",p:`Ödemeyi yaptıktan sonra satırdaki <b>Ödendi</b> kutusunu işaretleyin. Altına adınız ve tarih yazılır, ödeme "Ödenen" listesine geçer. Yanlışlıkla işaretlediyseniz kutuyu kaldırmanız yeterli.`,
+   d:`<div class="drow"><div><div class="pname">SGK primi</div><div class="psup">Eylül 2026 SGK primleri</div></div><div class="r"><b class="mono">699.052 ₺</b><input type="checkbox" class="tap" checked tabindex="-1" aria-hidden="true"></div></div>`},
+  {t:"Tutarı belli olunca girin",p:`Kira, et, ekmek gibi düzenli ödemeler tutarsız gelir. Yanlarındaki turuncu <b>Tutar gir</b>'e dokunun, tutarı yazın, <b>Kaydet</b>'e basın. Altı kesikli çizgili bir tutara dokunarak onu da düzeltebilirsiniz.`,
+   d:`<div class="drow"><div><div class="pname">Kira</div><div class="psup">Kasım 2026 kirası</div></div><div class="r"><span class="amt need tap">Tutar gir</span></div></div>`},
+  {t:"Tarih değiştiyse düzeltin",p:`Bir ödemenin günü kaydıysa tarihine dokunun, takvimden yeni günü seçin ve <b>Kaydet</b>'e basın. Bu, sonraki ayların tarihlerini değiştirmez.`,
+   d:`<div class="drow"><div><div class="pname">Ekmek</div><div class="psup">Kasım 2026 ekmek</div></div><div class="r"><span class="amt tap">05.11.2026</span><span class="chip">12 gün kaldı</span></div></div>`},
+  {t:"Yeni ödeme ekleyin",p:`"Ödeme ekle" bölümünde sırayla doldurun:`,
+   l:[`<b>Kalem:</b> listeden seçin (Banka maaşları, KDV, SGK, Elektrik…).`,`<b>Dönem:</b> ödemenin ait olduğu ay.`,`<b>Son ödeme tarihi:</b> bazı kalemlerde kendiliğinden dolar; gerekirse değiştirin.`,`<b>Açıklama:</b> kısa bir not, ör. "Ekim 2026 KDV".`,`<b>Tutar:</b> belli değilse boş bırakın, sonra girersiniz.`,`Son olarak <b>Ekle</b>'ye basın.`]},
+  {t:"Düzenli ödemeler kendiliğinden gelir",p:`Aşağıdakiler yaklaşan 35 gün için listeye kendiliğinden eklenir. Bunları <b>elle eklemeyin</b>, yoksa çift kayıt olur. Sadece tutarlarını girin.`,
+   l:[`<b>Her ayın 1'i:</b> Kira, Turkcell`,`<b>Her ayın 5'i:</b> Benzin, Ekmek, Yoğurt, Taşkesti su`,`<b>14 günde bir perşembe:</b> Et`,`<b>15 günde bir:</b> Kaymak`]},
+  {t:"Listeyi süzün",p:`Liste başlığının yanındaki düğmelerle <b>Bekleyen</b>, <b>Ödenen</b> ya da <b>Tümü</b>'nü görebilirsiniz. Uygulama her açıldığında "Bekleyen"le başlar.`,
+   d:`<div class="seg" style="align-self:flex-start"><button type="button" aria-pressed="true" tabindex="-1">Bekleyen</button><button type="button" aria-pressed="false" tabindex="-1">Ödenen</button><button type="button" aria-pressed="false" tabindex="-1">Tümü</button></div>`},
+  {t:"Telefon takvimine ekleyin",p:`Üstteki <b>Takvime ekle</b> düğmesi bekleyen ödemeleri telefonunuzun takvimine aktarır. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın.`},
+  {t:"Uygulama gibi kullanın",p:`iPhone'da Safari'nin paylaş düğmesine basıp <b>Ana Ekrana Ekle</b>'yi seçin; uygulama telefonunuzda simge olarak durur. İlk girişten sonra üstteki <b>Şifre</b> düğmesiyle kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`},
+  ];
+  if(admin)S.push({t:"Yöneticiye özel",p:`Bunları yalnızca siz görürsünüz:`,
+   l:[`<b>Kişi ekleme:</b> en alttaki "Erişimi olan kişiler"e ad soyad yazıp <b>Kişi ekle</b>'ye basın. Çıkan mesajı <b>WhatsApp'ta gönder</b> ile iletin.`,`<b>Erişimi kaldırma:</b> kişinin yanındaki ×; erişimi hemen kapanır.`,`<b>Ödeme silme:</b> satırın sonundaki ×. Silinen düzenli ödeme geri gelmez.`,`Yeni sürüm çıktığında üstte <b>Yenile</b> bandı belirir.`]});
+  S.push({t:"Hazırsınız",p:`Bu kılavuzu istediğiniz zaman üstteki <b>Kılavuz</b> düğmesiyle yeniden açabilirsiniz.`});
+  return S;
+}
+let gi=0,gS=[];
+function openGuide(){gS=guideSteps();gi=0;$("guide").hidden=false;drawGuide()}
+function closeGuide(){$("guide").hidden=true;if(me)try{localStorage.setItem("odKilavuz:"+me.uid,GUIDE_VER)}catch(e){}}
+function drawGuide(){const x=gS[gi],last=gi===gS.length-1;
+  $("gCard").innerHTML=`<div class="gtop"><span class="gstep">${gi+1} / ${gS.length}</span><button class="link" type="button" id="gSkip">${last?"Kapat":"Atla"}</button></div>
+   <h2 id="gTitle">${x.t}</h2><p>${x.p}</p>${x.l?`<ul>${x.l.map(i=>`<li>${i}</li>`).join("")}</ul>`:""}${x.d?`<div class="demo" aria-hidden="true">${x.d}</div>`:""}
+   <div class="gnav"><div class="dots" aria-hidden="true">${gS.map((_,i)=>`<i class="${i===gi?"on":""}"></i>`).join("")}</div>
+   <div class="row">${gi?`<button class="btn ghost" type="button" id="gBack">Geri</button>`:""}<button class="btn" type="button" id="gNext">${last?"Bitir":"İleri"}</button></div></div>`;
+  $("gSkip").onclick=closeGuide;$("gNext").onclick=()=>{if(last)closeGuide();else{gi++;drawGuide()}};
+  const b=$("gBack");if(b)b.onclick=()=>{gi--;drawGuide()};$("gNext").focus();$("gCard").scrollTop=0}
+$("helpBtn").onclick=openGuide;
+document.addEventListener("keydown",e=>{if($("guide").hidden)return;if(e.key==="Escape")closeGuide();else if(e.key==="ArrowRight"&&gi<gS.length-1){gi++;drawGuide()}else if(e.key==="ArrowLeft"&&gi>0){gi--;drawGuide()}});
+$("guide").addEventListener("click",e=>{if(e.target.id==="guide")closeGuide()});
 
 /* ---------- update check (like Kanaat POS): compare the version on the server with this one ---------- */
 const MY_VER=parseInt(($("ver").textContent.match(/Sürüm (\d+)/)||[])[1]||"0");
