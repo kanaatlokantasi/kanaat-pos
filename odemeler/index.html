@@ -71,6 +71,11 @@ tr.paid td{color:var(--muted)}
 tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 .pname{font-weight:500} .psup{font-size:12px;color:var(--muted)}
 .mono{font-family:var(--f-mono);font-size:13px}
+.amt{font:500 13px var(--f-mono);background:none;border:0;border-bottom:1px dashed var(--muted);color:var(--ink);padding:2px 0;cursor:pointer}
+.amt.need{font-family:var(--f-body);font-weight:600;color:var(--warn);border:1px solid var(--warn);background:var(--warn-soft);border-radius:6px;padding:4px 8px}
+.amtf{display:inline-flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.amtf input{width:130px!important;text-align:right}
+.amtf .btn{padding:6px 10px;font-size:13px}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -157,7 +162,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
       <label class="f">Dönem<input type="month" id="pm" required></label>
       <label class="f">Son ödeme tarihi<input type="date" id="pv"></label>
       <label class="f wide">Açıklama<input type="text" id="pa" placeholder="ör. Ekim 2026 KDV"></label>
-      <label class="f">Tutar (₺)<input type="number" id="pn" min="0" step="0.01" inputmode="decimal" required></label>
+      <label class="f">Tutar (₺)<input type="number" id="pn" min="0" step="0.01" inputmode="decimal" placeholder="Belli değilse boş"></label>
       <button class="btn" type="submit">Ekle</button>
     </form>
   </section>
@@ -198,7 +203,7 @@ const DOMAIN="kanaat-odemeler.app";
 const SEED={"salt":"X009KRzBH9aPubi7kNW0gA==","iter":150000,"box":{"iv":"/vDUMO0cEcWngNWe","ct":"oaUxEKaambRZSyBj5QH8K4ImoRFw1DcwABDAUBmVqdVGoE4IcP+Bep7vztygaJpygPRnf2d8Eq8R2ovYAermFCgWEOlyJBzGHtlFybnIaxsHpqXJqSGjV4wQ/EKiBtjoHySuARQ8+NWIvfV+OEH82s1LeDXAMwV2jWihaALxTikHletKfh7Iu97Irwt8U2qQ5COs10HZTQgp9p/QRkaOybH8ZdZMuQIklR/mSEbEliJ3iR9WqcwbGpYv9hpJLVfy7ttYGhMbnBQS/22QYF4dtomgSdmgKC7dOptYpDk6yzvqRQrUrSHG4WRqeCoV9mBr1onLKjrilto+to+yfwYsEXLtYdhibSTIWA2DuagSF4It5QKCnysxEFVywtWWgO4btlD0UUEuxN6wfZPVPplhGpce0zhg8Wpe1emkrGwlbxcUPEcfZ1O8sIPw39G/zlXb6DGmeg8m2B3lx+duGkCGnPL8LDhgfnzpxuWIpsdQeYbMecKwKMvER3gkfP7wK+xdaFbDL1ESjZ18Cf6L0Rzld5dDSLvy22BXx/hd3tCdRPAu7N6Oa8b95r8mDJVstDJXePjzWfSfPD0QKvVflTX4vhT+6eHm9K+Us/s4YYO8GidJ812DA876mQ/O1Yc2l6D3nCWFwt5nfejTs1ch7EIieshdmVWcQdpsu+S9uUlJu4Ii1CMUUsK+7nHIui0y1zT4f23yL/Fl80mRLZKJfth+mVj+lRGn4raMqV6GREoMxxusUoirx3CjtwZjOoCb4QiB4s0SBY0ae+751XchavNT0xDeRJg9KhHx1dlVRG8c46XR2shNC4I3iHjWlMW7Ou6P4sDU04cOyAysAUWNmT2NAD7qgrPE+rfIlqLYSWPu6mjJSqMYYbZS4Q+vwCDlA1GJVkmZ9uAcK+tHkHUUt3qLuWQa7KitY1qHLIQ1qzGaA76xz5HyERjgIx14gjT0tFp49PvsHzjQweJNFSLluOMNU1bSO/UUW9C1jkJBq/OgCg=="}};
 const APP_URL=location.origin+location.pathname;
 
-const TUR={sgk:"SGK primi",stopaj:"Muhtasar / stopaj",kdv:"KDV",gecici:"Geçici vergi",kurumlar:"Kurumlar vergisi",oda:"Ticaret odası aidatı",resmi:"Diğer resmi gider (harç, ceza vb.)"};
+const TUR={maas:"Banka maaşları",sgk:"SGK primi",stopaj:"Muhtasar / stopaj",kdv:"KDV",gecici:"Geçici vergi",kurumlar:"Kurumlar vergisi",oda:"Ticaret odası aidatı",resmi:"Diğer resmi gider (harç, ceza vb.)"};
 const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
 const ALPHA="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const $=id=>document.getElementById(id);
@@ -219,7 +224,12 @@ const authMsg=e=>{const c=e&&e.code||"";if(/invalid-credential|wrong-password|us
 /* ---------- state ---------- */
 let auth=null,db=null,me=null; // me: {uid,name,role}
 let payments=[],people=[],secrets={};
-let unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null;
+let unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null,amtEdit=null,amtDraft=null;
+function amtCell(x){
+  if(amtEdit===x.id)return`<form class="amtf" id="amtForm" data-id="${esc(x.id)}"><input type="number" id="amtIn" min="0" step="0.01" inputmode="decimal" value="${esc(amtDraft!=null?amtDraft:(x.tutar??""))}" aria-label="Tutar (₺)"><button class="btn" type="submit">Kaydet</button><button class="link" type="button" data-amtno>Vazgeç</button></form>`;
+  if(x.tutar==null)return x.paid?"–":`<button class="amt need" type="button" data-amt="${esc(x.id)}">Tutar gir</button>`;
+  return x.paid?tl(x.tutar):`<button class="amt" type="button" data-amt="${esc(x.id)}" title="Tutarı değiştir">${tl(x.tutar)}</button>`;
+}
 
 /* ---------- screens ---------- */
 const lockIcon=`<div class="lock" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>`;
@@ -317,17 +327,19 @@ function render(){
   const admin=me.role==="admin";
   const now=new Date(),today=iso(now),lim=iso(new Date(now.getTime()+30*86400000));
   const days=v=>Math.round((new Date(v+"T00:00:00")-new Date(today+"T00:00:00"))/86400000);
+  const ai=$("amtIn"),amtFocus=!!ai&&document.activeElement===ai;amtDraft=ai?ai.value:null;
   const P=payments;
   const open=P.filter(x=>!x.paid),n30=open.filter(x=>x.vade&&x.vade<=lim),late=open.filter(x=>x.vade&&x.vade<today);
   const sum=l=>l.reduce((s,x)=>s+(x.tutar||0),0);
   const soon=open.filter(x=>x.vade&&days(x.vade)<=1).sort((a,b)=>a.vade<b.vade?-1:1);
+  const noAmt=open.filter(x=>x.tutar==null).length;
   const al=$("alerts");al.hidden=!soon.length;
   al.innerHTML=soon.map(x=>{const d=days(x.vade);const when=d<0?`${-d} gün gecikti`:d===0?"Son ödeme günü bugün":"Son ödeme günü yarın";
-    return`<div class="alert${d<=0?" late":""}" role="alert"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div><div class="tt">${esc(when)}: ${esc(TUR[x.tur]||x.tur)}</div><div class="dd">${esc(x.acik||mfmt(x.ay))} · son ödeme ${dfmt(x.vade)}</div></div><div class="am">${tl(x.tutar)}</div></div>`}).join("");
+    return`<div class="alert${d<=0?" late":""}" role="alert"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div><div class="tt">${esc(when)}: ${esc(TUR[x.tur]||x.tur)}</div><div class="dd">${esc(x.acik||mfmt(x.ay))} · son ödeme ${dfmt(x.vade)}</div></div><div class="am">${x.tutar==null?"Tutar girilmedi":tl(x.tutar)}</div></div>`}).join("");
   $("kpis").innerHTML=`
     <div class="kpi"><div class="l">Önümüzdeki 30 gün</div><div class="v">${tl(sum(n30))}</div><div class="h">${n30.length} ödeme</div></div>
     <div class="kpi${late.length?" alert":""}"><div class="l">Tarihi geçen</div><div class="v">${tl(sum(late))}</div><div class="h">${late.length?late.length+" ödeme":"yok"}</div></div>
-    <div class="kpi"><div class="l">Bekleyen toplam</div><div class="v">${tl(sum(open))}</div><div class="h">${open.length} ödeme</div></div>`;
+    <div class="kpi"><div class="l">Bekleyen toplam</div><div class="v">${tl(sum(open))}</div><div class="h">${open.length} ödeme${noAmt?` · ${noAmt} tanesinin tutarı girilmedi`:""}</div></div>`;
   document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===filter)));
   const chip=x=>{if(x.paid)return`<span class="chip ok">Ödendi</span>${x.paidBy?`<div class="psup">${esc(x.paidBy)}${x.paidAt&&x.paidAt.toDate?" · "+x.paidAt.toDate().toLocaleDateString("tr-TR"):""}</div>`:""}`;if(!x.vade)return'<span class="chip">Tarih yok</span>';const d=days(x.vade);
     return d<0?`<span class="chip err">${-d} gün gecikti</span>`:d===0?'<span class="chip err">Bugün</span>':d<=7?`<span class="chip busy">${d} gün kaldı</span>`:`<span class="chip">${d} gün kaldı</span>`};
@@ -339,13 +351,19 @@ function render(){
     L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${esc(TUR[x.tur]||x.tur)}</div>${x.acik?`<div class="psup">${esc(x.acik)}</div>`:""}</td>
       <td class="mono hide-s">${mfmt(x.ay)}</td>
       <td class="v">${x.vade?`<span class="mono">${dfmt(x.vade)}</span> `:""}${chip(x)}</td>
-      <td class="n mono t">${tl(x.tutar)}</td>
+      <td class="n mono t">${amtCell(x)}</td>
       <td class="n c"><label><input type="checkbox" id="pd-${esc(x.id)}" data-paid="${esc(x.id)}" ${x.paid?"checked":""} aria-label="Ödendi"><span class="ml">Ödendi</span></label></td>
       <td class="n d">${!admin?"":delAsk===x.id?`<span class="confirm">Silinsin mi? <button type="button" data-yes="${esc(x.id)}">Sil</button><button type="button" class="no" data-no>Vazgeç</button></span>`:`<button class="x" type="button" data-del="${esc(x.id)}" aria-label="Sil">×</button>`}</td></tr>`).join("")}
     <tr class="sum"><td class="k">Toplam</td><td class="hide-s"></td><td class="e"></td><td class="n mono t">${tl(sum(L))}</td><td class="e"></td><td class="e"></td></tr></tbody></table></div>`:`<div class="empty">${msg}</div>`;
   document.querySelectorAll("[data-paid]").forEach(c=>c.onchange=()=>{const del=firebase.firestore.FieldValue.delete();
     db.collection("payments").doc(c.dataset.paid).update(c.checked?{paid:true,paidBy:me.name,paidAt:firebase.firestore.FieldValue.serverTimestamp()}:{paid:false,paidBy:del,paidAt:del})
       .then(()=>toast(c.checked?"Ödendi olarak işaretlendi":"Bekleyene alındı"),e=>{toast("Kaydedilemedi ("+e.code+")");render()})});
+  if(amtFocus&&$("amtIn"))$("amtIn").focus();
+  document.querySelectorAll("[data-amt]").forEach(b=>b.onclick=()=>{amtEdit=b.dataset.amt;amtDraft=null;const o=$("amtIn");if(o)o.remove();render();const i=$("amtIn");if(i){i.focus();i.select()}});
+  document.querySelectorAll("[data-amtno]").forEach(b=>b.onclick=()=>{amtEdit=null;render()});
+  const af=$("amtForm");if(af)af.onsubmit=ev=>{ev.preventDefault();const id=af.dataset.id,v=parseFloat(String($("amtIn").value).replace(",","."));
+    if(!(v>0)){toast("Tutarı kontrol edin");return}amtEdit=null;
+    db.collection("payments").doc(id).update({tutar:v,tutarBy:me.name,tutarAt:firebase.firestore.FieldValue.serverTimestamp()}).then(()=>toast("Tutar kaydedildi"),e=>toast("Kaydedilemedi ("+e.code+")"));render()};
   document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{delAsk=b.dataset.del;render()});
   document.querySelectorAll("[data-no]").forEach(b=>b.onclick=()=>{delAsk=null;render()});
   document.querySelectorAll("[data-yes]").forEach(b=>b.onclick=()=>{const id=b.dataset.yes;delAsk=null;db.collection("payments").doc(id).delete().then(()=>toast("Ödeme silindi"),e=>toast("Silinemedi ("+e.code+")"))});
@@ -353,8 +371,9 @@ function render(){
 $("pt").innerHTML=Object.entries(TUR).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
 $("pm").value=iso(new Date()).slice(0,7);
 $("pf").addEventListener("submit",e=>{e.preventDefault();
-  const tur=$("pt").value,ay=$("pm").value,vade=$("pv").value,acik=$("pa").value.trim(),tutar=parseFloat(String($("pn").value).replace(",","."));
-  if(!/^\d{4}-\d{2}$/.test(ay)||!(tutar>0)){toast("Dönem ve tutarı kontrol edin");return}
+  const tur=$("pt").value,ay=$("pm").value,vade=$("pv").value,acik=$("pa").value.trim(),raw=String($("pn").value).trim(),tutar=raw?parseFloat(raw.replace(",",".")):null;
+  if(!/^\d{4}-\d{2}$/.test(ay)){toast("Dönemi kontrol edin");return}
+  if(raw&&!(tutar>0)){toast("Tutarı kontrol edin ya da boş bırakın");return}
   db.collection("payments").doc(uid()).set({ay,tur,acik,tutar,paid:false,...(vade?{vade}:{}),addedBy:me.name,addedAt:firebase.firestore.FieldValue.serverTimestamp()})
     .then(()=>toast(`${TUR[tur]} eklendi`),er=>toast("Eklenemedi ("+er.code+")"));
   $("pa").value="";$("pn").value="";$("pv").value="";filter="open";render()});
@@ -369,7 +388,7 @@ $("cal").onclick=()=>{
   if(!list.length){toast("Takvime eklenecek bekleyen ödeme yok");return}
   const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Kanaat Lokantasi//Odemeler//TR","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:Kanaat Ödemeler"];
   for(const x of list){const n=new Date(x.vade+"T12:00:00");n.setDate(n.getDate()+1);
-    const title=`${TUR[x.tur]||x.tur} · ${tl(x.tutar)}`,desc=`${x.acik||""}\nDönem: ${mfmt(x.ay)}\nTutar: ${tl(x.tutar)}\nSon ödeme: ${dfmt(x.vade)}`;
+    const amt=x.tutar==null?"tutar belli değil":tl(x.tutar);const title=`${TUR[x.tur]||x.tur} · ${amt}`,desc=`${x.acik||""}\nDönem: ${mfmt(x.ay)}\nTutar: ${amt}\nSon ödeme: ${dfmt(x.vade)}`;
     L.push("BEGIN:VEVENT",`UID:${x.id}@kanaat-odemeler`,`DTSTAMP:${st}`,`DTSTART;VALUE=DATE:${x.vade.replace(/-/g,"")}`,`DTEND;VALUE=DATE:${iso(n).replace(/-/g,"")}`,`SUMMARY:${ex(title)}`,`DESCRIPTION:${ex(desc)}`,
       "BEGIN:VALARM","ACTION:DISPLAY","TRIGGER:-PT14H",`DESCRIPTION:${ex("Yarın son gün: "+title)}`,"END:VALARM","END:VEVENT")}
   L.push("END:VCALENDAR");const text=L.map(fold).join("\r\n")+"\r\n";
