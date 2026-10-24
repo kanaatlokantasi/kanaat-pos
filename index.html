@@ -312,7 +312,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 171</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 172</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -335,7 +335,9 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 /* ============ veri ============ */
 /* eğitim (deneme) modu: kayıtlar gerçek tutulur, masalar/adisyonlar 'eğitim' olarak işaretlenir, fişin en altında siyah bantta EĞİTİM AMAÇLIDIR yazar */
 const TRAIN=(()=>{try{return localStorage.getItem('kTrain')==='1'}catch(e){return false}})();
-const LS='kanaat-pos-v1';try{localStorage.removeItem('kanaat-pos-train')}catch(e){}
+const LS='kanaat-pos-v1';
+/* eğitim videosunu sonuna kadar izleyen garson: video ?egitim=tamam ile geri döner */
+try{if(new URLSearchParams(location.search).get('egitim')==='tamam'){localStorage.setItem('kEgitim',String(Date.now()));history.replaceState(null,'',location.pathname+location.hash)}}catch(e){}try{localStorage.removeItem('kanaat-pos-train')}catch(e){}
 const uid=()=>Math.random().toString(36).slice(2,10);
 /* müşteri görünümü: QR ile açılan hesap (#h=...) — POS'a ve depolamaya dokunmaz */
 const VIEW=/^#h=/.test(location.hash);
@@ -895,6 +897,11 @@ let INSTALL_EV=null;const IS_APP=()=>matchMedia('(display-mode: standalone)').ma
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL_EV=e;if(ui.view==='settings'&&!$layer.innerHTML)render()});
 window.addEventListener('appinstalled',()=>{INSTALL_EV=null;toast('Kanaat POS uygulama olarak yüklendi');if(ui.view==='settings')render()});
 if('serviceWorker' in navigator&&location.protocol==='https:'&&!VIEW)navigator.serviceWorker.register('sw.js').catch(()=>{});
+function egitimCard(){if(!isTrusted()||!CL.on)return '';const R=roster().map(r=>r.n),E=CL.egitim||{};const names=[...new Set([...R,...Object.keys(E)])];
+  const done=names.filter(n=>E[n]).sort((a,b)=>E[b]-E[a]),todo=names.filter(n=>!E[n]);
+  return `<div class="card stack"><h3 style="margin:0">Eğitim videosunu tamamlayanlar</h3>
+    ${done.length?`<div style="display:grid;gap:4px">${done.map(n=>`<div class="row" style="justify-content:space-between"><span>✅ ${esc(n)}</span><span class="muted num">${dmy(E[n])} ${hm(E[n])}</span></div>`).join('')}</div>`:'<p class="muted" style="margin:0">Henüz tamamlayan yok.</p>'}
+    ${todo.length?`<p class="muted" style="margin:0;font-size:13px">Henüz izlemeyen: ${esc(todo.join(', '))}</p>`:''}</div>`}
 function trainCard(){return TRAIN?`<div class="card stack" style="border:3px solid #f97316"><h3 style="margin:0;color:#c2410c">Eğitim modu AÇIK</h3>
     <p class="muted" style="margin:0;font-size:13px">Siparişler ve hesaplar normal kaydedilir. Bu telefondan açılan masalar ve adisyonlar “eğitim” olarak işaretlenir; kasada görünür. Fişlerin en altında siyah zemin üzerine “EĞİTİM AMAÇLIDIR” yazar.</p>
     <button class="btn pri" data-act="trainOff" style="min-height:52px">Eğitimden çık</button></div>`
@@ -917,6 +924,7 @@ function vSettings(){
    ${installCard()}
    <div class="card stack"><h3 style="margin:0">Garson eğitim videosu</h3><p class="muted" style="margin:0;font-size:13px">Uygulamanın nasıl kullanıldığını 5 dakikada anlatan animasyonlu eğitim (sesli anlatımlı).</p><a class="btn pri" href="https://claude.ai/artifact/T1WKjZhYg5fXGLSZiHohQg" target="_blank" rel="noopener" style="min-height:52px;font-size:17px;display:flex;align-items:center;justify-content:center;text-decoration:none">🎬 Eğitim videosunu aç</a></div>
    ${trainCard()}
+   ${egitimCard()}
    <div class="card stack" id="cloudCard">${cloudCard()}</div>
    <div class="card stack"><h3 style="margin:0">Mikrofon testi</h3><p class="muted" style="margin:0;font-size:13px">Bu telefonda bas-konuş için hangi yolların çalıştığını dener (en fazla 10 saniye). Sonucu ekran görüntüsü olarak gönderin.</p><button class="btn" data-act="micTest">Mikrofonu test et</button><pre id="micOut" style="white-space:pre-wrap;font-size:13px;margin:0"></pre></div>
    <div class="card stack">
@@ -1756,7 +1764,7 @@ function askWaiter(change){
       const m=hit[0]||(first.length===1&&(f.split(' ').length===1||fold(first[0].n).startsWith(f))?first[0]:null);
       if(!m){document.getElementById('wErr').textContent='Bu ad garson listesinde yok. Aşağıdan adınıza dokunun ya da kasaya sorun.';return}v=m.n}
     if(!(isAdmin()&&v.length>=2)&&(v.split(' ').length<2||v.length<4)){document.getElementById('wErr').textContent='Lütfen ad ve soyad yazın.';return}
-    S.settings.waiter=v.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');save();closeLayer();renderWaiterTag();render();toast('Garson: '+S.settings.waiter);if(CL&&CL.on)CL.db.collection('staff').doc(fid(S.settings.waiter)).set({n:S.settings.waiter,at:Date.now()}).catch(()=>{})};
+    S.settings.waiter=v.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' ');save();closeLayer();renderWaiterTag();render();toast('Garson: '+S.settings.waiter);setTimeout(egitimFlush,1500);if(CL&&CL.on)CL.db.collection('staff').doc(fid(S.settings.waiter)).set({n:S.settings.waiter,at:Date.now()}).catch(()=>{})};
   document.getElementById('wOk').onclick=go;i.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
   if(!change){const sc=$layer.querySelector('[data-scrim]');if(sc)sc.removeAttribute('data-scrim')}
 }
@@ -2051,7 +2059,7 @@ async function custView(){
    Bu yapılandırma gizli değildir; erişimi giriş + Firestore kuralları korur. */
 const FB_CFG={apiKey:"AIzaSyAClzgK945RPjPwY7xKTH5f4RzwzfxEI2M",authDomain:"kanaat-pos.firebaseapp.com",projectId:"kanaat-pos",storageBucket:"kanaat-pos.firebasestorage.app",messagingSenderId:"115307541152",appId:"1:115307541152:web:566b27d3cad0008dc4cfc5"};
 const FB_VER='10.14.1';
-var CL={msgs:{},staff:{},on:false,user:null,db:null,known:{t:{},s:{}},ready:false,status:'off',unsub:[],timer:null,loading:null};
+var CL={egitim:{},egReady:false,msgs:{},staff:{},on:false,user:null,db:null,known:{t:{},s:{}},ready:false,status:'off',unsub:[],timer:null,loading:null};
 const fid=k=>encodeURIComponent(k).replace(/\./g,'%2E');
 function loadScript(u){return new Promise((res,rej)=>{const x=document.createElement('script');x.src=u;x.onload=res;x.onerror=()=>rej(new Error('Firebase yüklenemedi (internet?)'));document.head.appendChild(x)})}
 function cloudInit(){if(VIEW)return Promise.resolve(false);if(CL.loading)return CL.loading;
@@ -2097,7 +2105,14 @@ function cloudStart(){if(CL.on)return;CL.on=true;CL.ready=false;CL.menuReady=fal
   /* kasadan garsona mesaj */
   CL.unsub.push(db.collection('msgs').where('at','>=',Date.now()-7*86400e3).onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(!d)return;
       if(c.type==='removed'){delete CL.msgs[c.doc.id];return}CL.msgs[c.doc.id]={...d,id:c.doc.id}});msgCheck();if(document.getElementById('msgSent'))msgSentRender()},()=>{}));
+  /* eğitimi tamamlayanlar */
+  CL.unsub.push(db.collection('egitim').onSnapshot(snap=>{snap.docChanges().forEach(c=>{const d=c.doc.data();if(!d||c.type==='removed')return;const isNew=CL.egReady&&!CL.egitim[d.n];CL.egitim[d.n]=d.at;
+      if(isNew&&isTrusted())toast('🎓 '+d.n+' eğitim videosunu tamamladı')});CL.egReady=true;if(ui.view==='settings'&&isTrusted()&&!$layer.innerHTML)render()},()=>{}));
+  egitimFlush();
   renderCloud()}
+function egitimFlush(){let at=0;try{at=+localStorage.getItem('kEgitim')||0}catch(e){}const n=(S.settings.waiter||'').trim();if(!at||!n)return;
+  if(CL.on){CL.db.collection('egitim').doc(fid(n)).set({n,at}).then(()=>{try{localStorage.removeItem('kEgitim')}catch(e){}toast('🎓 Eğitim tamamlandı, kasaya bildirildi. Teşekkürler!')}).catch(()=>{})}
+  else if(!S.settings.cloudOn){try{localStorage.removeItem('kEgitim')}catch(e){}toast('🎓 Eğitim tamamlandı')}}
 function cloudStop(){clearInterval(CL.ping);CL.unsub.forEach(f=>{try{f()}catch(e){}});CL.unsub=[];CL.on=false;CL.ready=false;CL.status=CL.user?'off':'out'}
 /* menü başka cihazdan gelince açık masalardaki ürünleri yeni menüye isimden eşle */
 function remapLines(){const ids=new Set(S.menu.items.map(i=>i.id)),byName={};S.menu.items.forEach(i=>byName[baseName(i.name)]=i.id);
@@ -2247,6 +2262,7 @@ A.handTo=d=>{const k=ui.table,t=S.tables[k];if(!t)return;let n=(d.n||document.ge
   const from=t.waiter||S.settings.waiter||'';t.waiter=n;t.from=from;save();closeLayer();ui.view='tables';render();toast(`${tName(k)} → ${n} devredildi`)};
 if(W_REN[S.settings.waiter]){S.settings.waiter=W_REN[S.settings.waiter];localSave()}
 if(!VIEW&&S.settings.cloudOn)cloudInit();
+if(!VIEW&&!S.settings.cloudOn)setTimeout(egitimFlush,1200);
 if(TRAIN&&!VIEW){document.querySelector('header.top').insertAdjacentHTML('afterend','<div class="trainbar" role="status"><span>🎓 EĞİTİM MODU · DENEME</span><button data-act="trainOff">Çık</button></div>');setTimeout(()=>{if(!$layer.innerHTML)trainIntro()},400)}
 if(!VIEW&&handOf(S.settings.handFont))setTimeout(()=>handReady(),1500);
 if(VIEW)custView();
