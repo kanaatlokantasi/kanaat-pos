@@ -142,7 +142,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 7</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 8</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -209,7 +209,7 @@ const DOMAIN="kanaat-odemeler.app";
 const SEED={"salt":"X009KRzBH9aPubi7kNW0gA==","iter":150000,"box":{"iv":"/vDUMO0cEcWngNWe","ct":"oaUxEKaambRZSyBj5QH8K4ImoRFw1DcwABDAUBmVqdVGoE4IcP+Bep7vztygaJpygPRnf2d8Eq8R2ovYAermFCgWEOlyJBzGHtlFybnIaxsHpqXJqSGjV4wQ/EKiBtjoHySuARQ8+NWIvfV+OEH82s1LeDXAMwV2jWihaALxTikHletKfh7Iu97Irwt8U2qQ5COs10HZTQgp9p/QRkaOybH8ZdZMuQIklR/mSEbEliJ3iR9WqcwbGpYv9hpJLVfy7ttYGhMbnBQS/22QYF4dtomgSdmgKC7dOptYpDk6yzvqRQrUrSHG4WRqeCoV9mBr1onLKjrilto+to+yfwYsEXLtYdhibSTIWA2DuagSF4It5QKCnysxEFVywtWWgO4btlD0UUEuxN6wfZPVPplhGpce0zhg8Wpe1emkrGwlbxcUPEcfZ1O8sIPw39G/zlXb6DGmeg8m2B3lx+duGkCGnPL8LDhgfnzpxuWIpsdQeYbMecKwKMvER3gkfP7wK+xdaFbDL1ESjZ18Cf6L0Rzld5dDSLvy22BXx/hd3tCdRPAu7N6Oa8b95r8mDJVstDJXePjzWfSfPD0QKvVflTX4vhT+6eHm9K+Us/s4YYO8GidJ812DA876mQ/O1Yc2l6D3nCWFwt5nfejTs1ch7EIieshdmVWcQdpsu+S9uUlJu4Ii1CMUUsK+7nHIui0y1zT4f23yL/Fl80mRLZKJfth+mVj+lRGn4raMqV6GREoMxxusUoirx3CjtwZjOoCb4QiB4s0SBY0ae+751XchavNT0xDeRJg9KhHx1dlVRG8c46XR2shNC4I3iHjWlMW7Ou6P4sDU04cOyAysAUWNmT2NAD7qgrPE+rfIlqLYSWPu6mjJSqMYYbZS4Q+vwCDlA1GJVkmZ9uAcK+tHkHUUt3qLuWQa7KitY1qHLIQ1qzGaA76xz5HyERjgIx14gjT0tFp49PvsHzjQweJNFSLluOMNU1bSO/UUW9C1jkJBq/OgCg=="}};
 const APP_URL=location.origin+location.pathname;
 
-const TUR={maas:"Banka maaşları",kira:"Kira",et:"Et",kaymak:"Kaymak",benzin:"Benzin",ekmek:"Ekmek",yogurt:"Yoğurt",su:"Taşkesti su",sgk:"SGK primi",stopaj:"Muhtasar / stopaj",kdv:"KDV",gecici:"Geçici vergi",kurumlar:"Kurumlar vergisi",oda:"Ticaret odası aidatı",resmi:"Diğer resmi gider (harç, ceza vb.)"};
+const TUR={maas:"Banka maaşları",kira:"Kira",et:"Et",kaymak:"Kaymak",benzin:"Benzin",ekmek:"Ekmek",yogurt:"Yoğurt",su:"Taşkesti su",turkcell:"Turkcell",iski:"İSKİ",dogalgaz:"Doğalgaz",elektrik:"Elektrik",sgk:"SGK primi",stopaj:"Muhtasar / stopaj",kdv:"KDV",gecici:"Geçici vergi",kurumlar:"Kurumlar vergisi",oda:"Ticaret odası aidatı",resmi:"Diğer resmi gider (harç, ceza vb.)"};
 const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
 const ALPHA="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const $=id=>document.getElementById(id);
@@ -230,7 +230,12 @@ const authMsg=e=>{const c=e&&e.code||"";if(/invalid-credential|wrong-password|us
 /* ---------- state ---------- */
 let auth=null,db=null,me=null; // me: {uid,name,role}
 let payments=[],people=[],secrets={};
-let unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null,amtEdit=null,amtDraft=null;
+let unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null,amtEdit=null,amtDraft=null,vEdit=null,vDraft=null;
+function vCell(x,chip){
+  if(vEdit===x.id)return`<form class="amtf" id="vForm" data-id="${esc(x.id)}" style="justify-content:flex-start"><input type="date" id="vIn" value="${esc(vDraft!=null?vDraft:(x.vade||""))}" aria-label="Son ödeme tarihi" style="width:160px!important;text-align:left"><button class="btn" type="submit">Kaydet</button><button class="link" type="button" data-vno>Vazgeç</button></form>`;
+  if(x.paid)return`${x.vade?`<span class="mono">${dfmt(x.vade)}</span> `:""}${chip}`;
+  return`<button class="amt" type="button" data-v="${esc(x.id)}" title="Tarihi değiştir">${x.vade?dfmt(x.vade):"Tarih ekle"}</button> ${chip}`;
+}
 function amtCell(x){
   if(amtEdit===x.id)return`<form class="amtf" id="amtForm" data-id="${esc(x.id)}"><input type="number" id="amtIn" min="0" step="0.01" inputmode="decimal" value="${esc(amtDraft!=null?amtDraft:(x.tutar??""))}" aria-label="Tutar (₺)"><button class="btn" type="submit">Kaydet</button><button class="link" type="button" data-amtno>Vazgeç</button></form>`;
   if(x.tutar==null)return x.paid?"–":`<button class="amt need" type="button" data-amt="${esc(x.id)}">Tutar gir</button>`;
@@ -335,6 +340,7 @@ function render(){
   const now=new Date(),today=iso(now),lim=iso(new Date(now.getTime()+30*86400000));
   const days=v=>Math.round((new Date(v+"T00:00:00")-new Date(today+"T00:00:00"))/86400000);
   const ai=$("amtIn"),amtFocus=!!ai&&document.activeElement===ai;amtDraft=ai?ai.value:null;
+  const vi=$("vIn"),vFocus=!!vi&&document.activeElement===vi;vDraft=vi?vi.value:null;
   const P=payments;
   const open=P.filter(x=>!x.paid),n30=open.filter(x=>x.vade&&x.vade<=lim),late=open.filter(x=>x.vade&&x.vade<today);
   const sum=l=>l.reduce((s,x)=>s+(x.tutar||0),0);
@@ -357,7 +363,7 @@ function render(){
   $("list").innerHTML=L.length?`<div class="tw"><table><thead><tr><th>Kalem</th><th class="hide-s">Dönem</th><th>Son ödeme</th><th class="n">Tutar</th><th class="n">Ödendi</th><th></th></tr></thead><tbody>${
     L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${esc(TUR[x.tur]||x.tur)}</div>${x.acik?`<div class="psup">${esc(x.acik)}</div>`:""}</td>
       <td class="mono hide-s">${mfmt(x.ay)}</td>
-      <td class="v">${x.vade?`<span class="mono">${dfmt(x.vade)}</span> `:""}${chip(x)}</td>
+      <td class="v">${vCell(x,chip(x))}</td>
       <td class="n mono t">${amtCell(x)}</td>
       <td class="n c"><label><input type="checkbox" id="pd-${esc(x.id)}" data-paid="${esc(x.id)}" ${x.paid?"checked":""} aria-label="Ödendi"><span class="ml">Ödendi</span></label></td>
       <td class="n d">${!admin?"":delAsk===x.id?`<span class="confirm">Silinsin mi? <button type="button" data-yes="${esc(x.id)}">Sil</button><button type="button" class="no" data-no>Vazgeç</button></span>`:`<button class="x" type="button" data-del="${esc(x.id)}" aria-label="Sil">×</button>`}</td></tr>`).join("")}
@@ -366,6 +372,12 @@ function render(){
     db.collection("payments").doc(c.dataset.paid).update(c.checked?{paid:true,paidBy:me.name,paidAt:firebase.firestore.FieldValue.serverTimestamp()}:{paid:false,paidBy:del,paidAt:del})
       .then(()=>toast(c.checked?"Ödendi olarak işaretlendi":"Bekleyene alındı"),e=>{toast("Kaydedilemedi ("+e.code+")");render()})});
   if(amtFocus&&$("amtIn"))$("amtIn").focus();
+  if(vFocus&&$("vIn"))$("vIn").focus();
+  document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{vEdit=b.dataset.v;vDraft=null;const o=$("vIn");if(o)o.remove();render();const i=$("vIn");if(i)i.focus()});
+  document.querySelectorAll("[data-vno]").forEach(b=>b.onclick=()=>{vEdit=null;render()});
+  const vf=$("vForm");if(vf)vf.onsubmit=ev=>{ev.preventDefault();const id=vf.dataset.id,v=$("vIn").value;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){toast("Tarihi seçin");return}vEdit=null;
+    db.collection("payments").doc(id).update({vade:v,vadeBy:me.name,vadeAt:firebase.firestore.FieldValue.serverTimestamp()}).then(()=>toast("Tarih değişti: "+dfmt(v)),e=>toast("Kaydedilemedi ("+e.code+")"));render()};
   document.querySelectorAll("[data-amt]").forEach(b=>b.onclick=()=>{amtEdit=b.dataset.amt;amtDraft=null;const o=$("amtIn");if(o)o.remove();render();const i=$("amtIn");if(i){i.focus();i.select()}});
   document.querySelectorAll("[data-amtno]").forEach(b=>b.onclick=()=>{amtEdit=null;render()});
   const af=$("amtForm");if(af)af.onsubmit=ev=>{ev.preventDefault();const id=af.dataset.id,v=parseFloat(String($("amtIn").value).replace(",","."));
@@ -404,7 +416,7 @@ const addDays=(d,n)=>{const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);r
 function etInMonth(m){const today=iso(new Date());let d=ET_ANCHOR;const start=m+"-01",lo=start>today||m!==today.slice(0,7)?start:today;
   while(d<lo)d=addDays(d,14);while(d.slice(0,7)>m)d=addDays(d,-14);return d.slice(0,7)===m&&d>=start?d:null}
 /* MONTH_DAY: fixed day of month for monthly items (used for the add form too); kaymak: 7th and 22nd */
-const MONTH_DAY={kira:1,benzin:5,ekmek:5,yogurt:5,su:5,kaymak:7};
+const MONTH_DAY={kira:1,turkcell:1,benzin:5,ekmek:5,yogurt:5,su:5,kaymak:7};
 const nextMonthDay=(last,day)=>{const[y,a]=last.slice(0,7).split("-").map(Number);return iso(new Date(y,a,day))};
 const monthly=(key,day,start,acik)=>({key,start,next:last=>nextMonthDay(last,day),mkey:true,
   make:d=>({id:key+"-"+d.slice(0,7),tur:key,ay:d.slice(0,7),vade:d,acik:acik(d)})});
@@ -417,7 +429,8 @@ const SERIES=[
   monthly("benzin",5,"2026-10",d=>mfmt(d.slice(0,7))+" benzin"),
   monthly("ekmek",5,"2026-10",d=>mfmt(d.slice(0,7))+" ekmek"),
   monthly("yogurt",5,"2026-10",d=>mfmt(d.slice(0,7))+" yoğurt"),
-  monthly("su",5,"2026-10",d=>mfmt(d.slice(0,7))+" Taşkesti su")];
+  monthly("su",5,"2026-10",d=>mfmt(d.slice(0,7))+" Taşkesti su"),
+  monthly("turkcell",1,"2026-10",d=>mfmt(d.slice(0,7))+" Turkcell")];
 let seriesDone=false;
 async function ensureSeries(){
   if(seriesDone||!me)return;seriesDone=true;
@@ -495,7 +508,7 @@ async function checkUpdate(){
     const m=(await r.text()).match(/Ödemeler · Sürüm (\d+)/);const v=m?parseInt(m[1]):0;
     if(v>MY_VER){NEW_VER=v;if(!autoUpdate())$("updBar").hidden=false}}catch(e){}
 }
-function busy(){const a=document.activeElement;return !!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))||amtEdit!=null}
+function busy(){const a=document.activeElement;return !!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))||amtEdit!=null||vEdit!=null}
 function autoUpdate(){if(!NEW_VER||busy())return false;
   let last="";try{last=sessionStorage.getItem("odUpd")||""}catch(e){}
   const [lv,lt]=last.split("|");if(+lv===NEW_VER&&Date.now()-(+lt||0)<180000)return false;
