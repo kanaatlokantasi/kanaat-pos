@@ -103,6 +103,8 @@ tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 .dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
 .dots i.on{background:var(--accent)}
 .gnav .row{flex-wrap:nowrap}
+.newk{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.newk label{flex:1 1 220px}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -165,7 +167,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 13</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 14</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -194,6 +196,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
       <label class="f">Tutar (₺)<input type="number" id="pn" min="0" step="0.01" inputmode="decimal" placeholder="Belli değilse boş"></label>
       <button class="btn" type="submit">Ekle</button>
     </form>
+    <div class="newk" id="newK" hidden><label class="f">Yeni kalemin adı<input type="text" id="nk" maxlength="40" autocomplete="off" placeholder="ör. Yaprak"></label><button class="btn" type="button" id="nkSave">Kalemi ekle</button><button class="link" type="button" id="nkNo">Vazgeç</button></div>
   </section>
 
   <section class="panel">
@@ -331,7 +334,8 @@ async function enter(u){
   $("who").textContent=me.name+(admin?" · yönetici":"");
   if(admin)$("wm").hidden=true;else watermark();
   unsub.push(db.collection("payments").onSnapshot({includeMetadataChanges:true},s=>{
-    payments=s.docs.filter(x=>x.id!==SERIES_DOC).map(x=>({id:x.id,...x.data()}));
+    const kd=s.docs.find(x=>x.id===KALEM_DOC);const nc=kd?(kd.data().items||{}):{};if(JSON.stringify(nc)!==JSON.stringify(CUSTOM)){CUSTOM=nc;fillKalem()}
+    payments=s.docs.filter(x=>x.id!==SERIES_DOC&&x.id!==KALEM_DOC).map(x=>({id:x.id,...x.data()}));
     if(!s.metadata.fromCache)ensureSeries();
     const c=$("conn");if(s.metadata.hasPendingWrites){c.className="chip busy";c.textContent="Kaydediliyor…"}else if(s.metadata.fromCache){c.className="chip busy";c.textContent="Bağlantı yok"}else{c.className="chip ok";c.textContent="Güncel"}
     render()},e=>{if(e.code==="permission-denied"){stopAll();auth.signOut().catch(()=>{});showLogin("Erişiminiz kaldırıldı.")}else toast("Veriler alınamadı ("+e.code+")")}));
@@ -374,7 +378,7 @@ function render(){
   const noAmt=open.filter(x=>x.tutar==null).length;
   const al=$("alerts");al.hidden=!soon.length;
   al.innerHTML=soon.map(x=>{const d=days(x.vade);const when=d<0?`${-d} gün gecikti`:d===0?"Son ödeme günü bugün":"Son ödeme günü yarın";
-    return`<div class="alert${d<=0?" late":""}" role="alert"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div><div class="tt">${esc(when)}: ${esc(TUR[x.tur]||x.tur)}</div><div class="dd">${esc(x.acik||mfmt(x.ay))} · son ödeme ${dfmt(x.vade)}</div></div><div class="am">${x.tutar==null?"Tutar girilmedi":tl(x.tutar)}</div></div>`}).join("");
+    return`<div class="alert${d<=0?" late":""}" role="alert"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div><div class="tt">${esc(when)}: ${esc(lab(x.tur))}</div><div class="dd">${esc(x.acik||mfmt(x.ay))} · son ödeme ${dfmt(x.vade)}</div></div><div class="am">${x.tutar==null?"Tutar girilmedi":tl(x.tutar)}</div></div>`}).join("");
   $("kpis").innerHTML=`
     <div class="kpi"><div class="l">Önümüzdeki 30 gün</div><div class="v">${tl(sum(n30))}</div><div class="h">${n30.length} ödeme</div></div>
     <div class="kpi${late.length?" alert":""}"><div class="l">Tarihi geçen</div><div class="v">${tl(sum(late))}</div><div class="h">${late.length?late.length+" ödeme":"yok"}</div></div>
@@ -387,7 +391,7 @@ function render(){
   if(filter==="open")L=L.filter(x=>!x.paid);else if(filter==="paid")L=L.filter(x=>x.paid).reverse();
   const msg={open:"Bekleyen ödeme yok.",paid:"Henüz ödendi olarak işaretlenen yok.",all:"Henüz ödeme girilmedi."}[filter];
   $("list").innerHTML=L.length?`<div class="tw"><table><thead><tr><th>Kalem</th><th class="hide-s">Dönem</th><th>Son ödeme</th><th class="n">Tutar</th><th class="n">Ödendi</th><th></th></tr></thead><tbody>${
-    L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${esc(TUR[x.tur]||x.tur)}</div>${x.acik?`<div class="psup">${esc(x.acik)}</div>`:""}</td>
+    L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${esc(lab(x.tur))}</div>${x.acik?`<div class="psup">${esc(x.acik)}</div>`:""}</td>
       <td class="mono hide-s">${mfmt(x.ay)}</td>
       <td class="v">${vCell(x,chip(x))}</td>
       <td class="n mono t">${amtCell(x)}</td>
@@ -413,7 +417,25 @@ function render(){
   document.querySelectorAll("[data-no]").forEach(b=>b.onclick=()=>{delAsk=null;render()});
   document.querySelectorAll("[data-yes]").forEach(b=>b.onclick=()=>{const id=b.dataset.yes;delAsk=null;db.collection("payments").doc(id).delete().then(()=>toast("Ödeme silindi"),e=>toast("Silinemedi ("+e.code+")"))});
 }
-$("pt").innerHTML=Object.entries(TUR).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join("");
+/* kalemler: fixed list + kalemler the users add themselves (stored in payments/_kalemler, shown after the fixed ones in the order added) */
+const KALEM_DOC="_kalemler";let CUSTOM={},ptPrev="maas";
+const lab=t=>TUR[t]||CUSTOM[t]||t;
+function fillKalem(sel){const pt=$("pt"),cur=sel||pt.value||ptPrev;
+  const extra=Object.entries(CUSTOM).sort((a,b)=>a[0]<b[0]?-1:1);
+  pt.innerHTML=[...Object.entries(TUR),...extra].map(([k,v])=>`<option value="${esc(k)}">${esc(v)}</option>`).join("")+`<option value="__new">+ Yeni kalem…</option>`;
+  pt.value=(TUR[cur]||CUSTOM[cur]||cur==="__new")?cur:"maas"}
+fillKalem("maas");
+$("pt").addEventListener("change",()=>{const v=$("pt").value;
+  if(v==="__new"){$("newK").hidden=false;$("nk").value="";$("nk").focus()}else{ptPrev=v;$("newK").hidden=true}});
+$("nkNo").onclick=()=>{$("newK").hidden=true;$("pt").value=ptPrev;pvDefault()};
+$("nk").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("nkSave").click()}});
+$("nkSave").onclick=async()=>{const name=cleanName($("nk").value);if(!name){toast("Kalemin adını yazın");$("nk").focus();return}
+  const same=Object.entries({...TUR,...CUSTOM}).find(([k,v])=>v.toLocaleLowerCase("tr-TR")===name.toLocaleLowerCase("tr-TR"));
+  if(same){ptPrev=same[0];fillKalem(same[0]);$("newK").hidden=true;pvDefault();toast(`"${same[1]}" listede zaten var, o seçildi`);return}
+  const key="k"+Date.now().toString(36),b=$("nkSave");b.disabled=true;
+  try{await db.collection("payments").doc(KALEM_DOC).set({items:{[key]:name}},{merge:true});
+    CUSTOM={...CUSTOM,[key]:name};ptPrev=key;fillKalem(key);$("newK").hidden=true;pvDefault();toast(`"${name}" kalemi eklendi`);$("pa").focus()}
+  catch(e){toast("Kalem eklenemedi ("+(e.code||e)+")")}finally{b.disabled=false}};
 $("pm").value=iso(new Date()).slice(0,7);
 /* Banka maaşları: son ödeme günü varsayılan olarak dönemin son günü; Kira: ayın 1'i; Et: 14 günlük perşembe döngüsü */
 let pvAuto=false;
@@ -434,11 +456,12 @@ $("pt").addEventListener("change",pvDefault);$("pm").addEventListener("change",p
 $("pv").addEventListener("input",()=>{pvAuto=false});
 pvDefault();
 $("pf").addEventListener("submit",e=>{e.preventDefault();
+  if($("pt").value==="__new"){toast("Önce yeni kalemin adını yazıp Kalemi ekle'ye basın");$("nk").focus();return}
   const tur=$("pt").value,ay=$("pm").value,vade=$("pv").value,acik=$("pa").value.trim(),raw=String($("pn").value).trim(),tutar=raw?parseFloat(raw.replace(",",".")):null;
   if(!/^\d{4}-\d{2}$/.test(ay)){toast("Dönemi kontrol edin");return}
   if(raw&&!(tutar>0)){toast("Tutarı kontrol edin ya da boş bırakın");return}
   db.collection("payments").doc(uid()).set({ay,tur,acik,tutar,paid:false,...(vade?{vade}:{}),addedBy:me.name,addedAt:firebase.firestore.FieldValue.serverTimestamp()})
-    .then(()=>toast(`${TUR[tur]} eklendi`),er=>toast("Eklenemedi ("+er.code+")"));
+    .then(()=>toast(`${lab(tur)} eklendi`),er=>toast("Eklenemedi ("+er.code+")"));
   $("pa").value="";$("pn").value="";$("pv").value="";pvAuto=false;pvDefault();filter="open";render()});
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;render()});
 
@@ -497,7 +520,7 @@ $("cal").onclick=()=>{
   if(!list.length){toast("Takvime eklenecek bekleyen ödeme yok");return}
   const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Kanaat Lokantasi//Odemeler//TR","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:Kanaat Ödemeler"];
   for(const x of list){const n=new Date(x.vade+"T12:00:00");n.setDate(n.getDate()+1);
-    const amt=x.tutar==null?"tutar belli değil":tl(x.tutar);const title=`${TUR[x.tur]||x.tur} · ${amt}`,desc=`${x.acik||""}\nDönem: ${mfmt(x.ay)}\nTutar: ${amt}\nSon ödeme: ${dfmt(x.vade)}`;
+    const amt=x.tutar==null?"tutar belli değil":tl(x.tutar);const title=`${lab(x.tur)} · ${amt}`,desc=`${x.acik||""}\nDönem: ${mfmt(x.ay)}\nTutar: ${amt}\nSon ödeme: ${dfmt(x.vade)}`;
     L.push("BEGIN:VEVENT",`UID:${x.id}@kanaat-odemeler`,`DTSTAMP:${st}`,`DTSTART;VALUE=DATE:${x.vade.replace(/-/g,"")}`,`DTEND;VALUE=DATE:${iso(n).replace(/-/g,"")}`,`SUMMARY:${ex(title)}`,`DESCRIPTION:${ex(desc)}`,
       "BEGIN:VALARM","ACTION:DISPLAY","TRIGGER:-PT14H",`DESCRIPTION:${ex("Yarın son gün: "+title)}`,"END:VALARM","END:VEVENT")}
   L.push("END:VCALENDAR");const text=L.map(fold).join("\r\n")+"\r\n";
@@ -559,7 +582,7 @@ function guideSteps(){
   {t:"Tarih değiştiyse düzeltin",p:`Bir ödemenin günü kaydıysa tarihine dokunun, takvimden yeni günü seçin ve <b>Kaydet</b>'e basın. Bu, sonraki ayların tarihlerini değiştirmez.`,
    d:`<div class="drow"><div><div class="pname">Ekmek</div><div class="psup">Kasım 2026 ekmek</div></div><div class="r"><span class="amt tap">05.11.2026</span><span class="chip">12 gün kaldı</span></div></div>`},
   {t:"Yeni ödeme ekleyin",p:`"Ödeme ekle" bölümünde sırayla doldurun:`,
-   l:[`<b>Kalem:</b> listeden seçin (Banka maaşları, KDV, SGK, Elektrik…).`,`<b>Dönem:</b> ödemenin ait olduğu ay.`,`<b>Son ödeme tarihi:</b> bazı kalemlerde kendiliğinden dolar; gerekirse değiştirin.`,`<b>Açıklama:</b> kısa bir not, ör. "Ekim 2026 KDV".`,`<b>Tutar:</b> belli değilse boş bırakın, sonra girersiniz.`,`Son olarak <b>Ekle</b>'ye basın.`]},
+   l:[`<b>Kalem:</b> listeden seçin (Banka maaşları, KDV, SGK, Elektrik…). Listede yoksa en alttaki <b>+ Yeni kalem…</b>yi seçip adını yazın; bir kez eklenen kalem herkesin listesinde kalır.`,`<b>Dönem:</b> ödemenin ait olduğu ay.`,`<b>Son ödeme tarihi:</b> bazı kalemlerde kendiliğinden dolar; gerekirse değiştirin.`,`<b>Açıklama:</b> kısa bir not, ör. "Ekim 2026 KDV".`,`<b>Tutar:</b> belli değilse boş bırakın, sonra girersiniz.`,`Son olarak <b>Ekle</b>'ye basın.`]},
   {t:"Düzenli ödemeler kendiliğinden gelir",p:`Aşağıdakiler yaklaşan 35 gün için listeye kendiliğinden eklenir. Bunları <b>elle eklemeyin</b>, yoksa çift kayıt olur. Sadece tutarlarını girin.`,
    l:[`<b>Her ayın 1'i:</b> Kira, Turkcell`,`<b>Her ayın 5'i:</b> Benzin, Ekmek, Yoğurt, Taşkesti su`,`<b>14 günde bir perşembe:</b> Et`,`<b>15 günde bir:</b> Kaymak`]},
   {t:"Listeyi süzün",p:`Liste başlığının yanındaki düğmelerle <b>Bekleyen</b>, <b>Ödenen</b> ya da <b>Tümü</b>'nü görebilirsiniz. Uygulama her açıldığında "Bekleyen"le başlar.`,
