@@ -182,7 +182,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 18</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 19</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -614,7 +614,7 @@ $("addPerson").addEventListener("submit",async e=>{e.preventDefault();
   finally{btn.disabled=false}});
 
 /* ---------- kullanım kılavuzu (ilk girişte kendiliğinden açılır, sonra "Kılavuz" düğmesiyle) ---------- */
-const GUIDE_VER="1";
+const GUIDE_VER="2";
 const bell=`<svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>`;
 function guideSteps(){
   const admin=me&&me.role==="admin";
@@ -632,13 +632,17 @@ function guideSteps(){
   {t:"Tarih değiştiyse düzeltin",p:`Bir ödemenin günü kaydıysa tarihine dokunun, takvimden yeni günü seçin ve <b>Kaydet</b>'e basın. Bu, sonraki ayların tarihlerini değiştirmez.`,
    d:`<div class="drow"><div><div class="pname">Ekmek</div><div class="psup">Kasım 2026 ekmek</div></div><div class="r"><span class="amt tap">05.11.2026</span><span class="chip">12 gün kaldı</span></div></div>`},
   {t:"Yeni ödeme ekleyin",p:`<b>+ Ödeme ekle</b> düğmesine basın, açılan bölümü sırayla doldurun. Ödeme eklenince bölüm kendiliğinden kapanır.`,
-   l:[`<b>Kalem:</b> listeden seçin (Banka maaşları, KDV, SGK, Elektrik…). Listede yoksa en alttaki <b>+ Yeni kalem…</b>yi seçip adını yazın; bir kez eklenen kalem herkesin listesinde kalır.`,`<b>Dönem:</b> ödemenin ait olduğu ay.`,`<b>Son ödeme tarihi:</b> bazı kalemlerde kendiliğinden dolar; gerekirse değiştirin.`,`<b>Açıklama:</b> kısa bir not, ör. "Ekim 2026 KDV".`,`<b>Tutar:</b> belli değilse boş bırakın, sonra girersiniz.`,`Son olarak <b>Ekle</b>'ye basın.`]},
+   l:[`<b>Kalem:</b> listeden seçin (Banka maaşları, Et, KDV, Kredi kartları, SGK…). Listede yoksa en alttaki <b>+ Yeni kalem…</b>yi seçip adını yazın; bir kez eklenen kalem herkesin listesinde kalır.`,`<b>Dönem:</b> ödemenin ait olduğu ay.`,`<b>Son ödeme tarihi:</b> maaş, kira, et, kaymak gibi kalemlerde sıradaki tarihle kendiliğinden dolar (hiç geçmiş bir gün gelmez); gerekirse değiştirin.`,`<b>Açıklama:</b> kısa bir not, ör. "Ekim 2026 KDV".`,`<b>Tutar:</b> belli değilse boş bırakın, sonra girersiniz.`,`Son olarak <b>Ekle</b>'ye basın.`]},
   {t:"Düzenli ödemeler kendiliğinden gelir",p:`Aşağıdakiler yaklaşan 35 gün için listeye kendiliğinden eklenir. Bunları <b>elle eklemeyin</b>, yoksa çift kayıt olur. Sadece tutarlarını girin.`,
    l:[`<b>Her ayın 1'i:</b> Kira, Turkcell`,`<b>Her ayın 5'i:</b> Benzin, Ekmek, Yoğurt, Taşkesti su`,`<b>14 günde bir perşembe:</b> Et`,`<b>15 günde bir:</b> Kaymak`]},
-  {t:"Listeyi süzün",p:`Liste başlığının yanındaki düğmelerle <b>Bekleyen</b>, <b>Ödenen</b> ya da <b>Tümü</b>'nü görebilirsiniz. Uygulama her açıldığında "Bekleyen"le başlar. Aradığınızı hemen bulmak için listenin üstündeki <b>arama kutusuna</b> kalem adını, açıklamadan bir kelimeyi, tutarı ya da tarihi yazın; arama hem bekleyen hem ödenen ödemelerde yapılır.`,
+  {t:"Listeyi süzün",p:`Liste başlığının yanındaki düğmelerle <b>Bekleyen</b>, <b>Ödenen</b> ya da <b>Tümü</b>'nü görebilirsiniz. Uygulama her açıldığında "Bekleyen"le başlar.`,
    d:`<div class="seg" style="align-self:flex-start"><button type="button" aria-pressed="true" tabindex="-1">Bekleyen</button><button type="button" aria-pressed="false" tabindex="-1">Ödenen</button><button type="button" aria-pressed="false" tabindex="-1">Tümü</button></div>`},
+  {t:"Aradığınızı hemen bulun",p:`Listenin üstündeki arama kutusuna <b>ilk harfleri</b> yazın. Yazdıkça o harflerle başlayan ödemeler kalır, eşleşen kısım sarıyla işaretlenir. Kutunun altındaki önerilere dokunarak bir kalemin bütün ödemelerini görebilirsiniz.`,
+   l:[`Kalem ya da açıklama: <b>kay</b> → Kaymak`,`Ay: <b>kas</b> → Kasım ödemeleri`,`Tarih: <b>05.11</b>, tutar: <b>516</b>`,`Arama hem bekleyen hem ödenen ödemelere bakar. Temizlemek için ×'e basın.`],
+   d:`<div class="srch" style="margin:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span style="padding:10px 0;flex:1">ka</span></div><div class="sugg" style="margin:0"><button type="button" tabindex="-1" class="tap"><mark>Ka</mark>ymak<span>4</span></button><button type="button" tabindex="-1">Kredi <mark>ka</mark>rtları<span>2</span></button></div>`},
   {t:"Telefon takvimine ekleyin",p:`Üstteki <b>Takvime ekle</b> düğmesi bekleyen ödemeleri telefonunuzun takvimine aktarır. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın.`},
-  {t:"Uygulama gibi kullanın",p:`iPhone'da Safari'nin paylaş düğmesine basıp <b>Ana Ekrana Ekle</b>'yi seçin; uygulama telefonunuzda simge olarak durur. İlk girişten sonra üstteki <b>Şifre</b> düğmesiyle kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`},
+  {t:"Uygulama gibi kullanın",p:`iPhone'da Safari'nin paylaş düğmesine basıp <b>Ana Ekrana Ekle</b>'yi seçin; uygulama telefonunuzda simge olarak durur. İlk girişten sonra üstteki <b>Şifre</b> düğmesiyle kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`,
+   l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
   ];
   if(admin)S.push({t:"Yöneticiye özel",p:`Bunları yalnızca siz görürsünüz:`,
    l:[`<b>Kişi ekleme:</b> en alttaki "Erişimi olan kişiler"e ad soyad yazıp <b>Kişi ekle</b>'ye basın. Çıkan mesajı <b>WhatsApp'ta gönder</b> ile iletin.`,`<b>Erişimi kaldırma:</b> kişinin yanındaki ×; erişimi hemen kapanır.`,`<b>Ödeme silme:</b> satırın sonundaki ×. Silinen düzenli ödeme geri gelmez.`,`Yeni sürüm çıktığında üstte <b>Yenile</b> bandı belirir.`]});
