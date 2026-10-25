@@ -134,6 +134,13 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .btn.back{display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:15px}
 .btn.back2{width:100%;margin-top:16px;padding:12px;font-size:15px}
 .wrap.set #homeT{cursor:pointer}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.opt input{width:22px;height:22px;margin:1px 0 0;flex:0 0 auto}
+.opt span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.opt b{font-size:15px}.opt small{font-size:13px;color:var(--muted);line-height:1.45}
+.opt.off{cursor:default;opacity:.85}.opt.off b{color:var(--muted)}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -196,7 +203,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 25</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 26</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -204,8 +211,8 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
   <section class="panel" id="pwPanel" hidden>
     <button class="btn back" type="button" id="pwClose">← Ödemelere dön</button>
     <h2 style="margin:14px 0 0">Ayarlar</h2>
-    <h3 class="sh">Bildirimler</h3>
-    <div id="nfBox" class="nfbox"></div>
+    <h3 class="sh">Hatırlatmalar</h3>
+    <div id="nfBox" class="opts"></div>
     <h3 class="sh">Şifremi değiştir</h3>
     <form class="pw" id="pwf">
       <label class="f">Şu anki şifre<input type="password" id="pw0" autocomplete="current-password" required></label>
@@ -386,6 +393,7 @@ async function enter(u){
   }
   render();window.scrollTo({top:0});
   showCalPending();
+  calApply();
   nfAfterLogin();
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
@@ -470,6 +478,7 @@ function render(){
   document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{delAsk=b.dataset.del;render()});
   document.querySelectorAll("[data-no]").forEach(b=>b.onclick=()=>{delAsk=null;render()});
   document.querySelectorAll("[data-yes]").forEach(b=>b.onclick=()=>{const id=b.dataset.yes;delAsk=null;db.collection("payments").doc(id).delete().then(()=>toast("Ödeme silindi"),e=>toast("Silinemedi ("+e.code+")"))});
+  calNudge();
 }
 /* kalemler: fixed list + kalemler the users add themselves (stored in payments/_kalemler, shown after the fixed ones in the order added) */
 const KALEM_DOC="_kalemler";let CUSTOM={},ptPrev="maas";
@@ -595,13 +604,13 @@ const calKey=()=>"odCal:"+(me?me.uid:"");
 function calSent(){try{return JSON.parse(localStorage.getItem(calKey())||"{}")}catch(e){return{}}}
 function calPend(){try{return JSON.parse(localStorage.getItem(calKey()+":p")||"null")}catch(e){return null}}
 function calSave(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-function calAsk(html){const b=$("calAsk");b.innerHTML=html;b.hidden=!html}
+function calAsk(html){const b=$("calAsk");b.innerHTML=html;b.hidden=!html;b.dataset.k=""}
 function showCalPending(){const p=calPend();if(!p||!p.ids||!p.ids.length){calAsk("");return}
   calAsk(`<div><div class="tt">${p.ids.length} ödeme takvim dosyasına kondu</div><div class="dd">Takviminize eklediniz mi? "Evet" derseniz bir dahaki sefere bunlar tekrar gönderilmez.</div></div><div class="row"><button class="btn" type="button" id="calYes">Evet, ekledim</button><button class="btn ghost" type="button" id="calNo">Hayır</button></div>`);
   $("calYes").onclick=()=>{const s=calSent(),today=iso(new Date());for(const id of p.ids)s[id]=1;
     for(const id of Object.keys(s)){const x=payments.find(y=>y.id===id);if(x&&(x.paid||!x.vade||x.vade<today))delete s[id]}
-    calSave(calKey(),s);calSave(calKey()+":p",null);calAsk("");toast("Tamam, bunlar takvimde sayıldı")};
-  $("calNo").onclick=()=>{calSave(calKey()+":p",null);calAsk("");toast("Bir dahaki basışta bunlar yine gönderilecek")}}
+    calSave(calKey(),s);calSave(calKey()+":p",null);calAsk("");toast("Tamam, bunlar takvimde sayıldı");calNudge()};
+  $("calNo").onclick=()=>{calSave(calKey()+":p",null);calAsk("");try{sessionStorage.setItem("odCalLater",String(p.ids.length))}catch(e){}toast("Bir dahaki basışta bunlar yine gönderilecek")}}
 function calExport(list){
   const ex=s=>String(s||"").replace(/\\/g,"\\\\").replace(/([,;])/g,"\\$1").replace(/\n/g,"\\n");
   const enc=new TextEncoder();const fold=l=>{const out=[];let cur="";for(const ch of l){if(enc.encode(cur+ch).length>73){out.push(cur);cur=" "+ch}else cur+=ch}out.push(cur);return out.join("\r\n")};
@@ -686,8 +695,8 @@ function guideSteps(){
   {t:"Aradığınızı hemen bulun",p:`Listenin üstündeki arama kutusuna <b>ilk harfleri</b> yazın. Yazdıkça o harflerle başlayan ödemeler kalır, eşleşen kısım sarıyla işaretlenir. Kutunun altındaki önerilere dokunarak bir kalemin bütün ödemelerini görebilirsiniz.`,
    l:[`Kalem ya da açıklama: <b>kay</b> → Kaymak`,`Ay: <b>kas</b> → Kasım ödemeleri`,`Tarih: <b>05.11</b>, tutar: <b>516</b>`,`Arama hem bekleyen hem ödenen ödemelere bakar. Temizlemek için ×'e basın.`],
    d:`<div class="srch" style="margin:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span style="padding:10px 0;flex:1">ka</span></div><div class="sugg" style="margin:0"><button type="button" tabindex="-1" class="tap"><mark>Ka</mark>ymak<span>4</span></button><button type="button" tabindex="-1">Kredi <mark>ka</mark>rtları<span>2</span></button></div>`},
-  {t:"Bildirimleri açın",p:`Son günü yarın olan ödemeler için her sabah <b>10:00'da</b> telefonunuza bildirim gelir; yeni eklenen ödemeler de kendiliğinden kapsanır. Açmak için üstteki <b>Ayarlar</b> → <b>Bildirimleri aç</b>'a basın ve iPhone'un sorusuna <b>İzin Ver</b> deyin. iPhone'da bu yalnızca ana ekrana eklenen uygulamada çalışır.`},
-  {t:"Telefon takvimine ekleyin",p:`Üstteki <b>Takvime ekle</b> düğmesi bekleyen ödemeleri telefonunuzun takvimine aktarır. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın; bu telefondan daha önce gönderilenler atlanır, yalnızca yeniler eklenir. Takvime ekledikten sonra uygulamada çıkan <b>Evet, ekledim</b>'e basın. Tutarı ya da tarihi sonradan değişen bir ödemeyi takvimde elle düzeltin.`},
+  {t:"Bildirimleri açın",p:`Son günü yarın olan ödemeler için her sabah <b>10:00'da</b> telefonunuza bildirim gelir; yeni eklenen ödemeler de kendiliğinden kapsanır. Açmak için <b>Ayarlar</b> → <b>Hatırlatmalar</b>'da <b>Telefon bildirimi</b> kutusunu işaretleyin ve iPhone'un sorusuna <b>İzin Ver</b> deyin. iPhone'da bu yalnızca ana ekrana eklenen uygulamada çalışır.`},
+  {t:"Telefon takvimine ekleyin",p:`İsterseniz ödemeleri iPhone takviminize de ekleyebilirsiniz: <b>Ayarlar</b> → <b>Hatırlatmalar</b>'da <b>Telefon takvimi</b> kutusunu işaretleyin. Üstte çıkan <b>Takvime ekle</b> düğmesi bekleyen ödemeleri takviminize aktarır; yeni ödemeler olunca uygulama ana ekranda haber verir. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın; bu telefondan daha önce gönderilenler atlanır, yalnızca yeniler eklenir. Takvime ekledikten sonra uygulamada çıkan <b>Evet, ekledim</b>'e basın. Tutarı ya da tarihi sonradan değişen bir ödemeyi takvimde elle düzeltin.`},
   {t:"Uygulama gibi kullanın",p:`iPhone'da Safari'nin paylaş düğmesine basıp <b>Ana Ekrana Ekle</b>'yi seçin; uygulama telefonunuzda simge olarak durur. İlk girişten sonra üstteki <b>Ayarlar</b> düğmesinden kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`,
    l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
   ];
@@ -743,15 +752,32 @@ async function nfDisable(btn){if(btn)btn.disabled=true;const tok=nfGet(nfKey());
   try{if(tok)await db.collection("tokens").doc(tok).delete();try{const{m}=await nfMessaging();await m.deleteToken()}catch(_){ }
     nfSet(nfKey(),null);toast("Bu telefonda bildirimler kapandı")}
   catch(e){toast("Kapatılamadı ("+(e.code||e)+")")}finally{if(btn)btn.disabled=false;nfRender()}}
-function nfRender(){const box=$("nfBox");if(!box||!me)return;const st=nfState();
-  const msg={home:`Bildirimler iPhone'da yalnızca ana ekrana eklenen uygulamada çalışır. Safari'de paylaş → <b>Ana Ekrana Ekle</b> deyin ve uygulamayı oradan açın.`,
-    unsupported:`Bu cihaz bildirimleri desteklemiyor. iPhone'da iOS 16.4 veya daha yenisi gerekir.`,
-    setup:`Bildirim kurulumu henüz tamamlanmadı.`,
-    denied:`Bu telefonda bildirimlere izin verilmemiş. iPhone <b>Ayarlar → Bildirimler → Ödemeler</b>'den izni açıp buraya dönün.`,
-    on:`Bu telefonda bildirimler <b>açık</b>. Her sabah 10:00'da, son günü yarın olan ödemeler bildirilir.`,
-    off:`Son günü yarın olan ödemeler için her sabah 10:00'da bu telefona bildirim gelsin.`}[st];
-  box.innerHTML=`<p>${msg}</p>${st==="on"?`<button class="btn ghost" type="button" id="nfOff">Kapat</button>`:st==="off"?`<button class="btn" type="button" id="nfOn">Bildirimleri aç</button>`:""}`;
-  const on=$("nfOn");if(on)on.onclick=()=>nfEnable(on);const off=$("nfOff");if(off)off.onclick=()=>nfDisable(off)}
+function nfRender(){const box=$("nfBox");if(!box||!me)return;const st=nfState(),cal=calOn();
+  const why={home:`iPhone'da yalnızca ana ekrana eklenen uygulamada çalışır. Safari'de paylaş → <b>Ana Ekrana Ekle</b> deyip uygulamayı oradan açın.`,
+    unsupported:`Bu cihaz desteklemiyor. iPhone'da iOS 16.4 veya daha yenisi gerekir.`,
+    setup:`Kurulum henüz tamamlanmadı.`,
+    denied:`İzin verilmemiş. iPhone <b>Ayarlar → Bildirimler → Ödemeler</b>'den izni açıp buraya dönün.`}[st];
+  box.innerHTML=`
+  <label class="opt${why?" off":""}"><input type="checkbox" id="optNf" ${st==="on"?"checked":""} ${why?"disabled":""}><span><b>Telefon bildirimi</b><small>${why||`Her sabah 10:00'da, son günü yarın olan ödemeler telefonunuza bildirim olarak gelir. Yeni eklenen ödemeler ve tutar/tarih değişiklikleri kendiliğinden kapsanır.`}</small></span></label>
+  <label class="opt"><input type="checkbox" id="optCal" ${cal?"checked":""}><span><b>Telefon takvimi</b><small>Ödemeler iPhone takviminize eklenir; her birinden bir gün önce 10:00'da takvim hatırlatır. Yeni ödemeler olunca uygulama size haber verir, tek dokunuşla eklersiniz.</small></span></label>
+  ${cal?`<button class="btn ghost" type="button" id="calNow" style="align-self:flex-start">Takvime şimdi ekle</button>`:""}`;
+  const nf=$("optNf");nf.onchange=()=>{nf.checked?nfEnable(nf):nfDisable(nf)};
+  const c=$("optCal");c.onchange=()=>{calSetOn(c.checked);nfRender();toast(c.checked?"Takvim açıldı":"Takvim kapandı")};
+  const cn=$("calNow");if(cn)cn.onclick=()=>{closeSet();$("cal").click()}}
+/* takvim tercihi bu telefona özel; daha önce takvime gönderen telefonlarda açık başlar */
+function calOn(){const v=nfGet("odCalOn:"+(me?me.uid:""));if(v==="1")return true;if(v==="0")return false;return Object.keys(calSent()).length>0}
+function calSetOn(on){nfSet("odCalOn:"+me.uid,on?"1":"0");calApply()}
+function calApply(){$("cal").hidden=!calOn();if(!calOn()){const p=calPend();if(!p)calAsk("")}else calNudge()}
+/* takvim açıkken takvime henüz gönderilmemiş yeni ödemeler varsa ana ekranda haber ver */
+function calNudge(){if(!me||!calOn()||calPend())return;
+  const today=iso(new Date()),sent=calSent(),n=payments.filter(x=>!x.paid&&x.vade&&x.vade>=today&&!sent[x.id]).length;
+  let dis="";try{dis=sessionStorage.getItem("odCalLater")||""}catch(e){}
+  const b=$("calAsk");if(!n||dis===String(n)){if(b.dataset.k==="nudge"){calAsk("");b.dataset.k=""}return}
+  if(b.dataset.k==="nudge"&&b.dataset.n===String(n)&&!b.hidden)return;
+  calAsk(`<div><div class="tt">${n} ödeme takviminizde yok</div><div class="dd">Takvime eklerseniz her birinden bir gün önce 10:00'da takvim hatırlatır.</div></div><div class="row"><button class="btn" type="button" id="calGo">Takvime ekle</button><button class="btn ghost" type="button" id="calLater">Sonra</button></div>`);
+  b.dataset.k="nudge";b.dataset.n=String(n);
+  $("calGo").onclick=()=>{b.dataset.k="";$("cal").click()};
+  $("calLater").onclick=()=>{try{sessionStorage.setItem("odCalLater",String(n))}catch(e){}calAsk("");b.dataset.k=""}}
 function nfAfterLogin(){const st=nfState();
   /* keep this phone's address fresh (iPhone can change it) */
   if(st==="on")setTimeout(async()=>{try{const{m,reg}=await nfMessaging();const tok=await m.getToken({vapidKey:VAPID,serviceWorkerRegistration:reg});if(tok)await nfSaveToken(tok)}catch(e){}},4000);
