@@ -122,6 +122,8 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .ver .chip{margin-left:4px;vertical-align:1px}
 /* iPhone zooms into any field under 16px when tapped: keep every field at 16px on phones and touch screens */
 @media (max-width:900px),(pointer:coarse){input,select,textarea{font-size:16px!important}}
+.calask{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px}
+.calask .tt{font-weight:600}.calask .dd{font-size:13px;color:var(--muted);max-width:60ch}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -184,7 +186,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 20</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 21</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -200,6 +202,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <p class="err" id="pwe"></p>
   </section>
 
+  <section class="calask" id="calAsk" hidden></section>
   <section class="alerts" id="alerts" hidden></section>
   <section class="kpis" id="kpis" aria-label="Özet"></section>
 
@@ -365,10 +368,11 @@ async function enter(u){
     unsub.push(db.collection("secrets").onSnapshot(s=>{secrets={};s.docs.forEach(x=>secrets[x.id]=x.data().pw);renderPeople()}));
   }
   render();window.scrollTo({top:0});
+  showCalPending();
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
+$("logout").onclick=async()=>{calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
 $("pwBtn").onclick=()=>{$("pwPanel").hidden=!$("pwPanel").hidden;$("pwe").textContent=""};
 $("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
   const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
@@ -564,22 +568,40 @@ async function ensureSeries(){
 }
 
 /* ---------- calendar: open payments as all-day events, reminder the day before at 10:00 ---------- */
-$("cal").onclick=()=>{
-  const today=iso(new Date());const ex=s=>String(s||"").replace(/\\/g,"\\\\").replace(/([,;])/g,"\\$1").replace(/\n/g,"\\n");
+/* calendar: each phone remembers which payments it already sent, so pressing again adds only the new ones */
+const calKey=()=>"odCal:"+(me?me.uid:"");
+function calSent(){try{return JSON.parse(localStorage.getItem(calKey())||"{}")}catch(e){return{}}}
+function calPend(){try{return JSON.parse(localStorage.getItem(calKey()+":p")||"null")}catch(e){return null}}
+function calSave(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function calAsk(html){const b=$("calAsk");b.innerHTML=html;b.hidden=!html}
+function showCalPending(){const p=calPend();if(!p||!p.ids||!p.ids.length){calAsk("");return}
+  calAsk(`<div><div class="tt">${p.ids.length} ödeme takvim dosyasına kondu</div><div class="dd">Takviminize eklediniz mi? "Evet" derseniz bir dahaki sefere bunlar tekrar gönderilmez.</div></div><div class="row"><button class="btn" type="button" id="calYes">Evet, ekledim</button><button class="btn ghost" type="button" id="calNo">Hayır</button></div>`);
+  $("calYes").onclick=()=>{const s=calSent(),today=iso(new Date());for(const id of p.ids)s[id]=1;
+    for(const id of Object.keys(s)){const x=payments.find(y=>y.id===id);if(x&&(x.paid||!x.vade||x.vade<today))delete s[id]}
+    calSave(calKey(),s);calSave(calKey()+":p",null);calAsk("");toast("Tamam, bunlar takvimde sayıldı")};
+  $("calNo").onclick=()=>{calSave(calKey()+":p",null);calAsk("");toast("Bir dahaki basışta bunlar yine gönderilecek")}}
+function calExport(list){
+  const ex=s=>String(s||"").replace(/\\/g,"\\\\").replace(/([,;])/g,"\\$1").replace(/\n/g,"\\n");
   const enc=new TextEncoder();const fold=l=>{const out=[];let cur="";for(const ch of l){if(enc.encode(cur+ch).length>73){out.push(cur);cur=" "+ch}else cur+=ch}out.push(cur);return out.join("\r\n")};
   const st=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
-  const list=payments.filter(x=>!x.paid&&x.vade&&x.vade>=today);
-  if(!list.length){toast("Takvime eklenecek bekleyen ödeme yok");return}
   const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Kanaat Lokantasi//Odemeler//TR","CALSCALE:GREGORIAN","METHOD:PUBLISH","X-WR-CALNAME:Kanaat Ödemeler"];
   for(const x of list){const n=new Date(x.vade+"T12:00:00");n.setDate(n.getDate()+1);
     const amt=x.tutar==null?"tutar belli değil":tl(x.tutar);const title=`${lab(x.tur)} · ${amt}`,desc=`${x.acik||""}\nDönem: ${mfmt(x.ay)}\nTutar: ${amt}\nSon ödeme: ${dfmt(x.vade)}`;
     L.push("BEGIN:VEVENT",`UID:${x.id}@kanaat-odemeler`,`DTSTAMP:${st}`,`DTSTART;VALUE=DATE:${x.vade.replace(/-/g,"")}`,`DTEND;VALUE=DATE:${iso(n).replace(/-/g,"")}`,`SUMMARY:${ex(title)}`,`DESCRIPTION:${ex(desc)}`,
       "BEGIN:VALARM","ACTION:DISPLAY","TRIGGER:-PT14H",`DESCRIPTION:${ex("Yarın son gün: "+title)}`,"END:VALARM","END:VEVENT")}
   L.push("END:VCALENDAR");const text=L.map(fold).join("\r\n")+"\r\n";
+  calSave(calKey()+":p",{ids:list.map(x=>x.id),at:Date.now()});showCalPending();
   const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   if(ios){location.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(text);return}
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/calendar"}));a.download="kanaat-odemeler.ics";document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
-  toast(`${list.length} ödeme takvim dosyasına eklendi`);
+}
+$("cal").onclick=()=>{
+  const today=iso(new Date());const open=payments.filter(x=>!x.paid&&x.vade&&x.vade>=today);
+  if(!open.length){calAsk("");toast("Takvime eklenecek bekleyen ödeme yok");return}
+  const sent=calSent(),list=open.filter(x=>!sent[x.id]);
+  if(!list.length){calAsk(`<div><div class="tt">Yeni ödeme yok</div><div class="dd">Bekleyen ${open.length} ödemenin hepsi bu telefondan daha önce takvime gönderildi. Takviminizden sildiyseniz hepsini yeniden gönderebilirsiniz.</div></div><div class="row"><button class="btn ghost" type="button" id="calAll">Hepsini yeniden gönder</button><button class="btn ghost" type="button" id="calOk">Tamam</button></div>`);
+    $("calOk").onclick=()=>calAsk("");$("calAll").onclick=()=>calExport(open);return}
+  calExport(list);
 };
 
 /* ---------- people (admin) ---------- */
@@ -642,7 +664,7 @@ function guideSteps(){
   {t:"Aradığınızı hemen bulun",p:`Listenin üstündeki arama kutusuna <b>ilk harfleri</b> yazın. Yazdıkça o harflerle başlayan ödemeler kalır, eşleşen kısım sarıyla işaretlenir. Kutunun altındaki önerilere dokunarak bir kalemin bütün ödemelerini görebilirsiniz.`,
    l:[`Kalem ya da açıklama: <b>kay</b> → Kaymak`,`Ay: <b>kas</b> → Kasım ödemeleri`,`Tarih: <b>05.11</b>, tutar: <b>516</b>`,`Arama hem bekleyen hem ödenen ödemelere bakar. Temizlemek için ×'e basın.`],
    d:`<div class="srch" style="margin:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span style="padding:10px 0;flex:1">ka</span></div><div class="sugg" style="margin:0"><button type="button" tabindex="-1" class="tap"><mark>Ka</mark>ymak<span>4</span></button><button type="button" tabindex="-1">Kredi <mark>ka</mark>rtları<span>2</span></button></div>`},
-  {t:"Telefon takvimine ekleyin",p:`Üstteki <b>Takvime ekle</b> düğmesi bekleyen ödemeleri telefonunuzun takvimine aktarır. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın.`},
+  {t:"Telefon takvimine ekleyin",p:`Üstteki <b>Takvime ekle</b> düğmesi bekleyen ödemeleri telefonunuzun takvimine aktarır. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın; bu telefondan daha önce gönderilenler atlanır, yalnızca yeniler eklenir. Takvime ekledikten sonra uygulamada çıkan <b>Evet, ekledim</b>'e basın. Tutarı ya da tarihi sonradan değişen bir ödemeyi takvimde elle düzeltin.`},
   {t:"Uygulama gibi kullanın",p:`iPhone'da Safari'nin paylaş düğmesine basıp <b>Ana Ekrana Ekle</b>'yi seçin; uygulama telefonunuzda simge olarak durur. İlk girişten sonra üstteki <b>Şifre</b> düğmesiyle kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`,
    l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
   ];
