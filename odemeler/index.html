@@ -127,6 +127,10 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .sh{font:600 12px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
 .nfbox{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px}
 .nfbox p{margin:0;max-width:60ch}
+/* Ayarlar is its own screen: while it is open only the header, settings and (for the admin) people are shown */
+.wrap.set>*:not(header):not(#pwPanel):not(#peoplePanel){display:none!important}
+.wrap:not(.set)>#peoplePanel{display:none!important}
+.hact .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -189,13 +193,13 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 23</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 24</span> <span class="chip" id="conn" hidden></span></div>
     </div>
-    <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
+    <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
 
   <section class="panel" id="pwPanel" hidden>
-    <div class="lh"><h2 style="margin:0">Ayarlar</h2><button class="link" type="button" id="pwClose">Kapat</button></div>
+    <div class="lh"><h2 style="margin:0">Ayarlar</h2><button class="link" type="button" id="pwClose">← Ödemelere dön</button></div>
     <h3 class="sh">Bildirimler</h3>
     <div id="nfBox" class="nfbox"></div>
     <h3 class="sh">Şifremi değiştir</h3>
@@ -381,15 +385,17 @@ async function enter(u){
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{$("nfAsk").hidden=true;$("pwPanel").hidden=true;calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
-$("pwBtn").onclick=()=>{$("pwPanel").hidden=!$("pwPanel").hidden;$("pwe").textContent="";if(!$("pwPanel").hidden)nfRender()};
-$("pwClose").onclick=()=>{$("pwPanel").hidden=true};
+$("logout").onclick=async()=>{$("nfAsk").hidden=true;closeSet();calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
+function openSet(){$("pwPanel").hidden=false;$("app").classList.add("set");$("pwBtn").setAttribute("aria-pressed","true");$("pwe").textContent="";nfRender();window.scrollTo({top:0})}
+function closeSet(){$("pwPanel").hidden=true;$("app").classList.remove("set");$("pwBtn").setAttribute("aria-pressed","false");window.scrollTo({top:0})}
+$("pwBtn").onclick=()=>{$("app").classList.contains("set")?closeSet():openSet()};
+$("pwClose").onclick=closeSet;
 $("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
   const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
   if(p1.length<8){er.textContent="Yeni şifre en az 8 karakter olmalı.";return}if(p1!==p2){er.textContent="İki yeni şifre aynı değil.";return}
   try{const u=auth.currentUser;await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,p0));await u.updatePassword(p1);
     db.collection("secrets").doc(u.uid).delete().catch(()=>{});
-    $("pwf").reset();$("pwPanel").hidden=true;toast("Şifreniz değişti")}
+    $("pwf").reset();toast("Şifreniz değişti")}
   catch(x){er.textContent=/invalid-credential|wrong-password/.test(x.code||"")?"Şu anki şifre hatalı.":"Değiştirilemedi ("+(x.code||x)+")."}};
 
 function watermark(){
@@ -680,7 +686,7 @@ function guideSteps(){
    l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
   ];
   if(admin)S.push({t:"Yöneticiye özel",p:`Bunları yalnızca siz görürsünüz:`,
-   l:[`<b>Kişi ekleme:</b> en alttaki "Erişimi olan kişiler"e ad soyad yazıp <b>Kişi ekle</b>'ye basın. Çıkan mesajı <b>WhatsApp'ta gönder</b> ile iletin.`,`<b>Erişimi kaldırma:</b> kişinin yanındaki ×; erişimi hemen kapanır.`,`<b>Ödeme silme:</b> satırın sonundaki ×. Silinen düzenli ödeme geri gelmez.`,`Yeni sürüm çıktığında üstte <b>Yenile</b> bandı belirir.`]});
+   l:[`<b>Kişi ekleme:</b> <b>Ayarlar</b> → "Erişimi olan kişiler"e ad soyad yazıp <b>Kişi ekle</b>'ye basın. Çıkan mesajı <b>WhatsApp'ta gönder</b> ile iletin.`,`<b>Erişimi kaldırma:</b> kişinin yanındaki ×; erişimi hemen kapanır.`,`<b>Ödeme silme:</b> satırın sonundaki ×. Silinen düzenli ödeme geri gelmez.`,`Yeni sürüm çıktığında üstte <b>Yenile</b> bandı belirir.`]});
   S.push({t:"Hazırsınız",p:`Bu kılavuzu istediğiniz zaman üstteki <b>Kılavuz</b> düğmesiyle yeniden açabilirsiniz.`});
   return S;
 }
