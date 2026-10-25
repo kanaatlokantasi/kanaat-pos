@@ -76,6 +76,7 @@ def main():
 
     if test:
         title, body, tag = "Test bildirimi", "Kanaat Ödemeler bildirimleri bu telefonda çalışıyor.", "test"
+        url = APP_URL
     else:
         tomorrow = (datetime.datetime.now(ZoneInfo("Europe/Istanbul")).date() + datetime.timedelta(days=1)).isoformat()
         pays = dict(docs("payments"))
@@ -95,6 +96,7 @@ def main():
             if len(body) > 230:
                 body = body[:227] + "…"
         tag = "odeme-" + tomorrow
+        url = APP_URL + "?gun=" + tomorrow
 
     sent = removed = failed = 0
     for tok, d in tokens:
@@ -103,7 +105,7 @@ def main():
             removed += 1
             continue
         msg = {"message": {"token": tok,
-                           "data": {"title": title, "body": body, "url": APP_URL, "tag": tag},
+                           "data": {"title": title, "body": body, "url": url, "tag": tag},
                            "webpush": {"headers": {"Urgency": "high", "TTL": "43200"}}}}
         r = s.post(f"https://fcm.googleapis.com/v1/projects/{pid}/messages:send", json=msg, timeout=30)
         if r.ok:

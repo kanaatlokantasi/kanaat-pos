@@ -141,6 +141,8 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .opt span{display:flex;flex-direction:column;gap:3px;min-width:0}
 .opt b{font-size:15px}.opt small{font-size:13px;color:var(--muted);line-height:1.45}
 .opt.off{cursor:default;opacity:.85}.opt.off b{color:var(--muted)}
+.focusbar{display:flex;gap:8px 12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--warn-soft);border:1px solid var(--warn);border-radius:8px;padding:8px 10px;color:var(--ink);font-size:14px}
+.focusbar .btn{padding:6px 10px;font-size:13px}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -203,7 +205,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 26</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 27</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -305,7 +307,7 @@ const authMsg=e=>{const c=e&&e.code||"";if(/invalid-credential|wrong-password|us
 /* ---------- state ---------- */
 let auth=null,db=null,me=null; // me: {uid,name,role}
 let payments=[],people=[],secrets={};
-let unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null,amtEdit=null,amtDraft=null,vEdit=null,vDraft=null;
+let focusDay=null,unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null,amtEdit=null,amtDraft=null,vEdit=null,vDraft=null;
 function vCell(x,chip){
   if(vEdit===x.id)return`<form class="amtf" id="vForm" data-id="${esc(x.id)}" style="justify-content:flex-start"><input type="date" id="vIn" value="${esc(vDraft!=null?vDraft:(x.vade||""))}" aria-label="Son ödeme tarihi" style="width:160px!important;text-align:left"><button class="btn" type="submit">Kaydet</button><button class="link" type="button" data-vno>Vazgeç</button></form>`;
   if(x.paid)return`${x.vade?`<span class="mono">${dfmt(x.vade)}</span> `:""}${chip}`;
@@ -394,11 +396,12 @@ async function enter(u){
   render();window.scrollTo({top:0});
   showCalPending();
   calApply();
+  if(focusDay)focusScroll();
   nfAfterLogin();
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{$("nfAsk").hidden=true;closeSet();calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
+$("logout").onclick=async()=>{focusDay=null;$("nfAsk").hidden=true;closeSet();calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
 function openSet(){$("pwPanel").hidden=false;$("app").classList.add("set");$("pwBtn").setAttribute("aria-pressed","true");$("pwe").textContent="";nfRender();window.scrollTo({top:0})}
 function closeSet(){$("pwPanel").hidden=true;$("app").classList.remove("set");$("pwBtn").setAttribute("aria-pressed","false");window.scrollTo({top:0})}
 $("pwBtn").onclick=()=>{$("app").classList.contains("set")?closeSet():openSet()};
@@ -444,14 +447,19 @@ function render(){
   const key=x=>(x.paid?"2":x.vade?"0":"1")+(x.vade||"")+(x.ay||"");
   let L=P.slice().sort((a,b)=>key(a)<key(b)?-1:key(a)>key(b)?1:0);
   const qRaw=$("q").value.trim(),words=qn(qRaw).split(/\s+/).filter(Boolean);
-  if(words.length){
+  if(focusDay&&!words.length){
+    /* opened from a notification: show only that day's payments */
+    L=L.filter(x=>x.vade===focusDay);
+    $("qinfo").hidden=false;$("qinfo").innerHTML=`<div class="focusbar"><span><b>Bildirimdeki ödemeler</b> · son ödeme ${dfmt(focusDay)}</span><button class="btn ghost" type="button" id="focusAll">Tüm ödemeleri göster</button></div>`;
+    $("focusAll").onclick=()=>{focusDay=null;render()};
+  }else if(words.length){
     /* search looks through all payments (bekleyen + ödenen), newest due date first among paid ones */
     L=L.filter(x=>{const h=hayW(x);return words.every(w=>h.some(t=>t.startsWith(w)))});
     $("qinfo").hidden=false;$("qinfo").textContent=L.length?`“${qRaw}” için ${L.length} ödeme bulundu (bekleyen ve ödenen).`:"";
   }else{$("qinfo").hidden=true;
     if(filter==="open")L=L.filter(x=>!x.paid);else if(filter==="paid")L=L.filter(x=>x.paid).reverse();}
-  document.querySelector(".seg").style.opacity=words.length?".45":"";
-  const msg=words.length?`“${esc(qRaw)}” için sonuç yok. Kalem adını, açıklamadan bir kelimeyi, tutarı (ör. 516000) ya da tarihi (ör. 05.11) deneyin.`:{open:"Bekleyen ödeme yok.",paid:"Henüz ödendi olarak işaretlenen yok.",all:"Henüz ödeme girilmedi."}[filter];
+  document.querySelector(".seg").style.opacity=words.length||focusDay?".45":"";
+  const msg=focusDay&&!words.length?`${dfmt(focusDay)} tarihli ödeme bulunamadı; silinmiş olabilir.`:words.length?`“${esc(qRaw)}” için sonuç yok. Kalem adını, açıklamadan bir kelimeyi, tutarı (ör. 516000) ya da tarihi (ör. 05.11) deneyin.`:{open:"Bekleyen ödeme yok.",paid:"Henüz ödendi olarak işaretlenen yok.",all:"Henüz ödeme girilmedi."}[filter];
   $("list").innerHTML=L.length?`<div class="tw"><table><thead><tr><th>Kalem</th><th class="hide-s">Dönem</th><th>Son ödeme</th><th class="n">Tutar</th><th class="n">Ödendi</th><th></th></tr></thead><tbody>${
     L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${hl(lab(x.tur),words)}</div>${x.acik?`<div class="psup">${hl(x.acik,words)}</div>`:""}</td>
       <td class="mono hide-s">${mfmt(x.ay)}</td>
@@ -529,7 +537,7 @@ $("pf").addEventListener("submit",e=>{e.preventDefault();
 function openAdd(){$("addPanel").hidden=false;$("addOpen").hidden=true;$("addOpen").setAttribute("aria-expanded","true");$("pt").focus()}
 function closeAdd(){$("addPanel").hidden=true;$("newK").hidden=true;if($("pt").value==="__new")$("pt").value=ptPrev;$("addOpen").hidden=false;$("addOpen").setAttribute("aria-expanded","false")}
 $("addOpen").onclick=openAdd;$("addClose").onclick=()=>{closeAdd();$("addOpen").focus()};
-document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;$("q").value="";$("qx").hidden=true;render();drawSugg()});
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;focusDay=null;$("q").value="";$("qx").hidden=true;render();drawSugg()});
 /* search: Turkish-insensitive (İ/ı, ş/s, ç/c…), matches every word typed */
 const qn=t=>String(t??"").toLocaleLowerCase("tr-TR").replace(/[çğıöşüâîû]/g,c=>({"ç":"c","ğ":"g","ı":"i","ö":"o","ş":"s","ü":"u","â":"a","î":"i","û":"u"}[c])).normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 /* prefix search: every typed word must be the beginning of some word in the payment (kalem, açıklama, dönem, tarih, tutar, kişi) */
@@ -817,6 +825,12 @@ async function boot(){
   firebase.initializeApp(FB_CFG);auth=firebase.auth();db=firebase.firestore();
   auth.onAuthStateChanged(u=>{if(setupBusy)return;if(u){if(!me||me.uid!==u.uid)enter(u)}else{stopAll();showLogin()}});
 }
+/* bildirime dokunulunca: ?gun=YYYY-MM-DD ile açılır ya da açık uygulamaya servis çalışanı haber verir */
+function setFocusDay(d){if(!/^\d{4}-\d{2}-\d{2}$/.test(d||""))return;focusDay=d;$("q").value="";$("qx").hidden=true;
+  if(me){closeSet();closeAdd();render();focusScroll()}}
+function focusScroll(){setTimeout(()=>{const sec=$("list").closest("section");if(sec)sec.scrollIntoView({block:"start",behavior:"smooth"})},150)}
+try{const g=new URLSearchParams(location.search).get("gun");if(g){setFocusDay(g);history.replaceState(null,"",location.pathname)}}catch(e){}
+if("serviceWorker" in navigator)navigator.serviceWorker.addEventListener("message",e=>{if(e.data&&e.data.gun)setFocusDay(e.data.gun)});
 boot();
 })();
 </script>

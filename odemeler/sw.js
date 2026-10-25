@@ -12,11 +12,18 @@ self.addEventListener('push', e => {
     data: { url: d.url || './' }
   }));
 });
+/* Bildirime dokununca: uygulama açıksa o güne ait ödemeleri göstermesini söyle, değilse o günle aç */
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope);
+  const gun = url.searchParams.get('gun');
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-    for (const c of list) if (c.url.startsWith(self.registration.scope) && 'focus' in c) return c.focus();
-    return self.clients.openWindow(url);
+    for (const c of list) {
+      if (c.url.startsWith(self.registration.scope) && 'focus' in c) {
+        if (gun) c.postMessage({ gun });
+        return c.focus();
+      }
+    }
+    return self.clients.openWindow(url.href);
   }));
 });
