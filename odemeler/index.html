@@ -106,6 +106,12 @@ tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 .newk{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
 .newk label{flex:1 1 220px}
 .addopen{align-self:flex-start;padding:11px 18px;font-size:15px}
+.srch{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:0 6px 0 10px;background:var(--panel);margin-bottom:10px;color:var(--muted)}
+.srch:focus-within{border-color:var(--accent);outline:2px solid var(--accent-soft)}
+.srch input[type=search]{border:0!important;outline:none;padding:10px 0!important;background:transparent;flex:1 1 auto}
+.srch input::-webkit-search-cancel-button{display:none}
+.qinfo{font-size:13px;color:var(--muted);margin:-2px 0 8px}
+mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -168,7 +174,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 15</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 16</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -210,6 +216,8 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
         <button type="button" data-f="all" aria-pressed="false">Tümü</button>
       </div>
     </div>
+    <div class="srch"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="q" placeholder="Ara: kalem, açıklama, tutar, tarih…" aria-label="Ödemelerde ara" autocomplete="off" enterkeyhint="search"><button class="x" type="button" id="qx" hidden aria-label="Aramayı temizle">×</button></div>
+    <div class="qinfo" id="qinfo" hidden></div>
     <div id="list"></div>
   </section>
 
@@ -349,7 +357,7 @@ async function enter(u){
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
+$("logout").onclick=async()=>{$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
 $("pwBtn").onclick=()=>{$("pwPanel").hidden=!$("pwPanel").hidden;$("pwe").textContent=""};
 $("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
   const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
@@ -390,8 +398,15 @@ function render(){
     return d<0?`<span class="chip err">${-d} gün gecikti</span>`:d===0?'<span class="chip err">Bugün</span>':d<=7?`<span class="chip busy">${d} gün kaldı</span>`:`<span class="chip">${d} gün kaldı</span>`};
   const key=x=>(x.paid?"2":x.vade?"0":"1")+(x.vade||"")+(x.ay||"");
   let L=P.slice().sort((a,b)=>key(a)<key(b)?-1:key(a)>key(b)?1:0);
-  if(filter==="open")L=L.filter(x=>!x.paid);else if(filter==="paid")L=L.filter(x=>x.paid).reverse();
-  const msg={open:"Bekleyen ödeme yok.",paid:"Henüz ödendi olarak işaretlenen yok.",all:"Henüz ödeme girilmedi."}[filter];
+  const qRaw=$("q").value.trim(),words=qn(qRaw).split(/\s+/).filter(Boolean);
+  if(words.length){
+    /* search looks through all payments (bekleyen + ödenen), newest due date first among paid ones */
+    L=L.filter(x=>{const h=hay(x);return words.every(w=>h.includes(w))});
+    $("qinfo").hidden=false;$("qinfo").textContent=L.length?`“${qRaw}” için ${L.length} ödeme bulundu (bekleyen ve ödenen).`:"";
+  }else{$("qinfo").hidden=true;
+    if(filter==="open")L=L.filter(x=>!x.paid);else if(filter==="paid")L=L.filter(x=>x.paid).reverse();}
+  document.querySelector(".seg").style.opacity=words.length?".45":"";
+  const msg=words.length?`“${esc(qRaw)}” için sonuç yok. Kalem adını, açıklamadan bir kelimeyi, tutarı (ör. 516000) ya da tarihi (ör. 05.11) deneyin.`:{open:"Bekleyen ödeme yok.",paid:"Henüz ödendi olarak işaretlenen yok.",all:"Henüz ödeme girilmedi."}[filter];
   $("list").innerHTML=L.length?`<div class="tw"><table><thead><tr><th>Kalem</th><th class="hide-s">Dönem</th><th>Son ödeme</th><th class="n">Tutar</th><th class="n">Ödendi</th><th></th></tr></thead><tbody>${
     L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${esc(lab(x.tur))}</div>${x.acik?`<div class="psup">${esc(x.acik)}</div>`:""}</td>
       <td class="mono hide-s">${mfmt(x.ay)}</td>
@@ -468,7 +483,13 @@ $("pf").addEventListener("submit",e=>{e.preventDefault();
 function openAdd(){$("addPanel").hidden=false;$("addOpen").hidden=true;$("addOpen").setAttribute("aria-expanded","true");$("pt").focus()}
 function closeAdd(){$("addPanel").hidden=true;$("newK").hidden=true;if($("pt").value==="__new")$("pt").value=ptPrev;$("addOpen").hidden=false;$("addOpen").setAttribute("aria-expanded","false")}
 $("addOpen").onclick=openAdd;$("addClose").onclick=()=>{closeAdd();$("addOpen").focus()};
-document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;render()});
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;$("q").value="";$("qx").hidden=true;render()});
+/* search: Turkish-insensitive (İ/ı, ş/s, ç/c…), matches every word typed */
+const qn=t=>String(t??"").toLocaleLowerCase("tr-TR").replace(/[çğıöşüâîû]/g,c=>({"ç":"c","ğ":"g","ı":"i","ö":"o","ş":"s","ü":"u","â":"a","î":"i","û":"u"}[c])).normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+function hay(x){const t=x.tutar;return qn([lab(x.tur),x.acik,mfmt(x.ay),x.vade?dfmt(x.vade):"",t!=null?tl(t):"tutar girilmedi",t!=null?String(t):"",t!=null?String(Math.round(t)):"",x.paid?"ödendi":"bekliyor bekleyen",x.paidBy,x.addedBy].join(" "))}
+let qT=null;$("q").addEventListener("input",()=>{$("qx").hidden=!$("q").value;clearTimeout(qT);qT=setTimeout(render,120)});
+$("q").addEventListener("keydown",e=>{if(e.key==="Escape"){$("q").value="";$("qx").hidden=true;render()}});
+$("qx").onclick=()=>{$("q").value="";$("qx").hidden=true;render();$("q").focus()};
 
 /* ---------- recurring payments (Kira every 1st, Et every 14 days from 08.10.2026) ----------
    The next occurrences up to 35 days ahead are created automatically with an empty amount.
@@ -590,7 +611,7 @@ function guideSteps(){
    l:[`<b>Kalem:</b> listeden seçin (Banka maaşları, KDV, SGK, Elektrik…). Listede yoksa en alttaki <b>+ Yeni kalem…</b>yi seçip adını yazın; bir kez eklenen kalem herkesin listesinde kalır.`,`<b>Dönem:</b> ödemenin ait olduğu ay.`,`<b>Son ödeme tarihi:</b> bazı kalemlerde kendiliğinden dolar; gerekirse değiştirin.`,`<b>Açıklama:</b> kısa bir not, ör. "Ekim 2026 KDV".`,`<b>Tutar:</b> belli değilse boş bırakın, sonra girersiniz.`,`Son olarak <b>Ekle</b>'ye basın.`]},
   {t:"Düzenli ödemeler kendiliğinden gelir",p:`Aşağıdakiler yaklaşan 35 gün için listeye kendiliğinden eklenir. Bunları <b>elle eklemeyin</b>, yoksa çift kayıt olur. Sadece tutarlarını girin.`,
    l:[`<b>Her ayın 1'i:</b> Kira, Turkcell`,`<b>Her ayın 5'i:</b> Benzin, Ekmek, Yoğurt, Taşkesti su`,`<b>14 günde bir perşembe:</b> Et`,`<b>15 günde bir:</b> Kaymak`]},
-  {t:"Listeyi süzün",p:`Liste başlığının yanındaki düğmelerle <b>Bekleyen</b>, <b>Ödenen</b> ya da <b>Tümü</b>'nü görebilirsiniz. Uygulama her açıldığında "Bekleyen"le başlar.`,
+  {t:"Listeyi süzün",p:`Liste başlığının yanındaki düğmelerle <b>Bekleyen</b>, <b>Ödenen</b> ya da <b>Tümü</b>'nü görebilirsiniz. Uygulama her açıldığında "Bekleyen"le başlar. Aradığınızı hemen bulmak için listenin üstündeki <b>arama kutusuna</b> kalem adını, açıklamadan bir kelimeyi, tutarı ya da tarihi yazın; arama hem bekleyen hem ödenen ödemelerde yapılır.`,
    d:`<div class="seg" style="align-self:flex-start"><button type="button" aria-pressed="true" tabindex="-1">Bekleyen</button><button type="button" aria-pressed="false" tabindex="-1">Ödenen</button><button type="button" aria-pressed="false" tabindex="-1">Tümü</button></div>`},
   {t:"Telefon takvimine ekleyin",p:`Üstteki <b>Takvime ekle</b> düğmesi bekleyen ödemeleri telefonunuzun takvimine aktarır. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın.`},
   {t:"Uygulama gibi kullanın",p:`iPhone'da Safari'nin paylaş düğmesine basıp <b>Ana Ekrana Ekle</b>'yi seçin; uygulama telefonunuzda simge olarak durur. İlk girişten sonra üstteki <b>Şifre</b> düğmesiyle kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`},
