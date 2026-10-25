@@ -110,6 +110,10 @@ tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 .srch:focus-within{border-color:var(--accent);outline:2px solid var(--accent-soft)}
 .srch input[type=search]{border:0!important;outline:none;padding:10px 0!important;background:transparent;flex:1 1 auto}
 .srch input::-webkit-search-cancel-button{display:none}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 10px}
+.sugg button{font:500 13px var(--f-body);background:var(--accent-soft);color:var(--ink);border:1px solid transparent;border-radius:999px;padding:6px 12px;cursor:pointer}
+.sugg button:hover,.sugg button:focus-visible{border-color:var(--accent);outline:none}
+.sugg button span{color:var(--muted);margin-left:4px}
 .qinfo{font-size:13px;color:var(--muted);margin:-2px 0 8px}
 mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .hact{flex-wrap:nowrap}
@@ -178,7 +182,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 17</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 18</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -221,6 +225,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
       </div>
     </div>
     <div class="srch"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="q" placeholder="Ara: kalem, açıklama, tutar, tarih…" aria-label="Ödemelerde ara" autocomplete="off" enterkeyhint="search"><button class="x" type="button" id="qx" hidden aria-label="Aramayı temizle">×</button></div>
+    <div class="sugg" id="sugg" hidden></div>
     <div class="qinfo" id="qinfo" hidden></div>
     <div id="list"></div>
   </section>
@@ -405,14 +410,14 @@ function render(){
   const qRaw=$("q").value.trim(),words=qn(qRaw).split(/\s+/).filter(Boolean);
   if(words.length){
     /* search looks through all payments (bekleyen + ödenen), newest due date first among paid ones */
-    L=L.filter(x=>{const h=hay(x);return words.every(w=>h.includes(w))});
+    L=L.filter(x=>{const h=hayW(x);return words.every(w=>h.some(t=>t.startsWith(w)))});
     $("qinfo").hidden=false;$("qinfo").textContent=L.length?`“${qRaw}” için ${L.length} ödeme bulundu (bekleyen ve ödenen).`:"";
   }else{$("qinfo").hidden=true;
     if(filter==="open")L=L.filter(x=>!x.paid);else if(filter==="paid")L=L.filter(x=>x.paid).reverse();}
   document.querySelector(".seg").style.opacity=words.length?".45":"";
   const msg=words.length?`“${esc(qRaw)}” için sonuç yok. Kalem adını, açıklamadan bir kelimeyi, tutarı (ör. 516000) ya da tarihi (ör. 05.11) deneyin.`:{open:"Bekleyen ödeme yok.",paid:"Henüz ödendi olarak işaretlenen yok.",all:"Henüz ödeme girilmedi."}[filter];
   $("list").innerHTML=L.length?`<div class="tw"><table><thead><tr><th>Kalem</th><th class="hide-s">Dönem</th><th>Son ödeme</th><th class="n">Tutar</th><th class="n">Ödendi</th><th></th></tr></thead><tbody>${
-    L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${esc(lab(x.tur))}</div>${x.acik?`<div class="psup">${esc(x.acik)}</div>`:""}</td>
+    L.map(x=>`<tr class="${x.paid?"paid":""}"><td class="k"><div class="pname">${hl(lab(x.tur),words)}</div>${x.acik?`<div class="psup">${hl(x.acik,words)}</div>`:""}</td>
       <td class="mono hide-s">${mfmt(x.ay)}</td>
       <td class="v">${vCell(x,chip(x))}</td>
       <td class="n mono t">${amtCell(x)}</td>
@@ -487,13 +492,28 @@ $("pf").addEventListener("submit",e=>{e.preventDefault();
 function openAdd(){$("addPanel").hidden=false;$("addOpen").hidden=true;$("addOpen").setAttribute("aria-expanded","true");$("pt").focus()}
 function closeAdd(){$("addPanel").hidden=true;$("newK").hidden=true;if($("pt").value==="__new")$("pt").value=ptPrev;$("addOpen").hidden=false;$("addOpen").setAttribute("aria-expanded","false")}
 $("addOpen").onclick=openAdd;$("addClose").onclick=()=>{closeAdd();$("addOpen").focus()};
-document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;$("q").value="";$("qx").hidden=true;render()});
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;$("q").value="";$("qx").hidden=true;render();drawSugg()});
 /* search: Turkish-insensitive (İ/ı, ş/s, ç/c…), matches every word typed */
 const qn=t=>String(t??"").toLocaleLowerCase("tr-TR").replace(/[çğıöşüâîû]/g,c=>({"ç":"c","ğ":"g","ı":"i","ö":"o","ş":"s","ü":"u","â":"a","î":"i","û":"u"}[c])).normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-function hay(x){const t=x.tutar;return qn([lab(x.tur),x.acik,mfmt(x.ay),x.vade?dfmt(x.vade):"",t!=null?tl(t):"tutar girilmedi",t!=null?String(t):"",t!=null?String(Math.round(t)):"",x.paid?"ödendi":"bekliyor bekleyen",x.paidBy,x.addedBy].join(" "))}
-let qT=null;$("q").addEventListener("input",()=>{$("qx").hidden=!$("q").value;clearTimeout(qT);qT=setTimeout(render,120)});
-$("q").addEventListener("keydown",e=>{if(e.key==="Escape"){$("q").value="";$("qx").hidden=true;render()}});
-$("qx").onclick=()=>{$("q").value="";$("qx").hidden=true;render();$("q").focus()};
+/* prefix search: every typed word must be the beginning of some word in the payment (kalem, açıklama, dönem, tarih, tutar, kişi) */
+const splitW=t=>qn(t).split(/[\s\/(),·:;\-–—]+/).filter(Boolean);
+function hayW(x){const t=x.tutar;return splitW([lab(x.tur),x.acik,mfmt(x.ay),x.vade?dfmt(x.vade):"",t!=null?tl(t):"tutar girilmedi",t!=null?String(t):"",t!=null?String(Math.round(t)):"",x.paid?"ödendi":"bekliyor bekleyen",x.paidBy,x.addedBy].join(" "))}
+/* mark the matched beginnings of words; qn() keeps the text length, so positions line up with the original */
+function hl(text,words){text=String(text??"");if(!words||!words.length)return esc(text);const n=qn(text);if(n.length!==text.length)return esc(text);
+  const on=new Array(text.length).fill(false);const sep=/[\s\/(),·:;\-–—]/;
+  for(let i=0;i<n.length;i++){if(i>0&&!sep.test(n[i-1]))continue;let best=0;for(const w of words)if(w.length>best&&n.startsWith(w,i))best=w.length;for(let k=0;k<best;k++)on[i+k]=true}
+  let out="",cur=false,buf="";for(let i=0;i<=text.length;i++){const v=i<text.length?on[i]:!cur;if(v!==cur||i===text.length){out+=cur?`<mark>${esc(buf)}</mark>`:esc(buf);buf="";cur=v}if(i<text.length)buf+=text[i]}return out}
+/* suggestions: kalemler whose name starts with the typed letters, with how many payments each has */
+function drawSugg(){const box=$("sugg"),raw=$("q").value.trim(),ws=qn(raw).split(/\s+/).filter(Boolean);
+  if(!ws.length){box.hidden=true;box.innerHTML="";return}
+  const all={...TUR,...CUSTOM},cnt={};payments.forEach(x=>{cnt[x.tur]=(cnt[x.tur]||0)+1});
+  const hits=Object.entries(all).filter(([k,v])=>{const vw=splitW(v);return ws.every(w=>vw.some(t=>t.startsWith(w)))&&qn(v)!==qn(raw)})
+    .sort((a,b)=>(cnt[b[0]]||0)-(cnt[a[0]]||0)||a[1].localeCompare(b[1],"tr")).slice(0,6);
+  box.hidden=!hits.length;box.innerHTML=hits.map(([k,v])=>`<button type="button" data-sg="${esc(v)}">${hl(v,ws)}<span>${cnt[k]||0}</span></button>`).join("");
+  box.querySelectorAll("[data-sg]").forEach(b=>b.onclick=()=>{$("q").value=b.dataset.sg;$("qx").hidden=false;render();drawSugg();$("q").focus()})}
+let qT=null;$("q").addEventListener("input",()=>{$("qx").hidden=!$("q").value;clearTimeout(qT);qT=setTimeout(()=>{render();drawSugg()},100)});
+$("q").addEventListener("keydown",e=>{if(e.key==="Escape"){$("q").value="";$("qx").hidden=true;render();drawSugg()}});
+$("qx").onclick=()=>{$("q").value="";$("qx").hidden=true;render();drawSugg();$("q").focus()};
 
 /* ---------- recurring payments (Kira every 1st, Et every 14 days from 08.10.2026) ----------
    The next occurrences up to 35 days ahead are created automatically with an empty amount.
