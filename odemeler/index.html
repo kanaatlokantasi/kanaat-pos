@@ -105,6 +105,7 @@ tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 .gnav .row{flex-wrap:nowrap}
 .newk{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
 .newk label{flex:1 1 220px}
+.addopen{align-self:flex-start;padding:11px 18px;font-size:15px}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -167,7 +168,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 14</div>
+      <div class="ver" id="ver">Ödemeler · Sürüm 15</div>
     </div>
     <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -186,8 +187,9 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
   <section class="alerts" id="alerts" hidden></section>
   <section class="kpis" id="kpis" aria-label="Özet"></section>
 
-  <section class="panel">
-    <h2>Ödeme ekle</h2>
+  <button class="btn addopen" type="button" id="addOpen" aria-expanded="false" aria-controls="addPanel">+ Ödeme ekle</button>
+  <section class="panel" id="addPanel" hidden>
+    <div class="lh"><h2 style="margin:0">Ödeme ekle</h2><button class="link" type="button" id="addClose">Kapat</button></div>
     <form class="form" id="pf">
       <label class="f">Kalem<select id="pt"></select></label>
       <label class="f">Dönem<input type="month" id="pm" required></label>
@@ -347,7 +349,7 @@ async function enter(u){
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
+$("logout").onclick=async()=>{closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
 $("pwBtn").onclick=()=>{$("pwPanel").hidden=!$("pwPanel").hidden;$("pwe").textContent=""};
 $("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
   const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
@@ -462,7 +464,10 @@ $("pf").addEventListener("submit",e=>{e.preventDefault();
   if(raw&&!(tutar>0)){toast("Tutarı kontrol edin ya da boş bırakın");return}
   db.collection("payments").doc(uid()).set({ay,tur,acik,tutar,paid:false,...(vade?{vade}:{}),addedBy:me.name,addedAt:firebase.firestore.FieldValue.serverTimestamp()})
     .then(()=>toast(`${lab(tur)} eklendi`),er=>toast("Eklenemedi ("+er.code+")"));
-  $("pa").value="";$("pn").value="";$("pv").value="";pvAuto=false;pvDefault();filter="open";render()});
+  $("pa").value="";$("pn").value="";$("pv").value="";pvAuto=false;pvDefault();filter="open";closeAdd();render()});
+function openAdd(){$("addPanel").hidden=false;$("addOpen").hidden=true;$("addOpen").setAttribute("aria-expanded","true");$("pt").focus()}
+function closeAdd(){$("addPanel").hidden=true;$("newK").hidden=true;if($("pt").value==="__new")$("pt").value=ptPrev;$("addOpen").hidden=false;$("addOpen").setAttribute("aria-expanded","false")}
+$("addOpen").onclick=openAdd;$("addClose").onclick=()=>{closeAdd();$("addOpen").focus()};
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;render()});
 
 /* ---------- recurring payments (Kira every 1st, Et every 14 days from 08.10.2026) ----------
@@ -581,7 +586,7 @@ function guideSteps(){
    d:`<div class="drow"><div><div class="pname">Kira</div><div class="psup">Kasım 2026 kirası</div></div><div class="r"><span class="amt need tap">Tutar gir</span></div></div>`},
   {t:"Tarih değiştiyse düzeltin",p:`Bir ödemenin günü kaydıysa tarihine dokunun, takvimden yeni günü seçin ve <b>Kaydet</b>'e basın. Bu, sonraki ayların tarihlerini değiştirmez.`,
    d:`<div class="drow"><div><div class="pname">Ekmek</div><div class="psup">Kasım 2026 ekmek</div></div><div class="r"><span class="amt tap">05.11.2026</span><span class="chip">12 gün kaldı</span></div></div>`},
-  {t:"Yeni ödeme ekleyin",p:`"Ödeme ekle" bölümünde sırayla doldurun:`,
+  {t:"Yeni ödeme ekleyin",p:`<b>+ Ödeme ekle</b> düğmesine basın, açılan bölümü sırayla doldurun. Ödeme eklenince bölüm kendiliğinden kapanır.`,
    l:[`<b>Kalem:</b> listeden seçin (Banka maaşları, KDV, SGK, Elektrik…). Listede yoksa en alttaki <b>+ Yeni kalem…</b>yi seçip adını yazın; bir kez eklenen kalem herkesin listesinde kalır.`,`<b>Dönem:</b> ödemenin ait olduğu ay.`,`<b>Son ödeme tarihi:</b> bazı kalemlerde kendiliğinden dolar; gerekirse değiştirin.`,`<b>Açıklama:</b> kısa bir not, ör. "Ekim 2026 KDV".`,`<b>Tutar:</b> belli değilse boş bırakın, sonra girersiniz.`,`Son olarak <b>Ekle</b>'ye basın.`]},
   {t:"Düzenli ödemeler kendiliğinden gelir",p:`Aşağıdakiler yaklaşan 35 gün için listeye kendiliğinden eklenir. Bunları <b>elle eklemeyin</b>, yoksa çift kayıt olur. Sadece tutarlarını girin.`,
    l:[`<b>Her ayın 1'i:</b> Kira, Turkcell`,`<b>Her ayın 5'i:</b> Benzin, Ekmek, Yoğurt, Taşkesti su`,`<b>14 günde bir perşembe:</b> Et`,`<b>15 günde bir:</b> Kaymak`]},
