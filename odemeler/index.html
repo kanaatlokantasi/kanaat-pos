@@ -112,6 +112,10 @@ tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 .srch input::-webkit-search-cancel-button{display:none}
 .qinfo{font-size:13px;color:var(--muted);margin:-2px 0 8px}
 mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
+.hact{flex-wrap:nowrap}
+.hact .btn{white-space:nowrap}
+@media (max-width:440px){.hact{gap:6px}.hact .btn{padding:7px 10px;font-size:13px}}
+.ver .chip{margin-left:4px;vertical-align:1px}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -174,9 +178,9 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver" id="ver">Ödemeler · Sürüm 16</div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 17</span> <span class="chip" id="conn" hidden></span></div>
     </div>
-    <div class="hact"><span class="chip" id="conn"></span><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
+    <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
 
   <section class="panel" id="pwPanel" hidden>
@@ -347,7 +351,7 @@ async function enter(u){
     const kd=s.docs.find(x=>x.id===KALEM_DOC);const nc=kd?(kd.data().items||{}):{};if(JSON.stringify(nc)!==JSON.stringify(CUSTOM)){CUSTOM=nc;fillKalem()}
     payments=s.docs.filter(x=>x.id!==SERIES_DOC&&x.id!==KALEM_DOC).map(x=>({id:x.id,...x.data()}));
     if(!s.metadata.fromCache)ensureSeries();
-    const c=$("conn");if(s.metadata.hasPendingWrites){c.className="chip busy";c.textContent="Kaydediliyor…"}else if(s.metadata.fromCache){c.className="chip busy";c.textContent="Bağlantı yok"}else{c.className="chip ok";c.textContent="Güncel"}
+    const c=$("conn");if(s.metadata.hasPendingWrites){c.className="chip busy";c.textContent="Kaydediliyor…";c.hidden=false}else if(s.metadata.fromCache){c.className="chip err";c.textContent="Bağlantı yok";c.hidden=false}else c.hidden=true
     render()},e=>{if(e.code==="permission-denied"){stopAll();auth.signOut().catch(()=>{});showLogin("Erişiminiz kaldırıldı.")}else toast("Veriler alınamadı ("+e.code+")")}));
   if(admin){
     unsub.push(db.collection("users").onSnapshot(s=>{people=s.docs.map(x=>({uid:x.id,...x.data()})).sort((a,b)=>(a.role==="admin"?0:1)-(b.role==="admin"?0:1)||a.name.localeCompare(b.name,"tr"));renderPeople()}));
