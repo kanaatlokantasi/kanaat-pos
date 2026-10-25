@@ -1,0 +1,27 @@
+name: Odemeler bildirimi
+on:
+  schedule:
+    # Her gün 10:00 (TR saati, UTC+3) — son günü yarın olan ödemeler bildirilir.
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Kayıtlı bütün telefonlara test bildirimi gönder'
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency: odemeler-bildirim
+jobs:
+  bildirim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+      - run: pip install -q google-auth requests
+      - run: python3 .github/scripts/odemeler_bildirim.py
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.test && '1' || '' }}

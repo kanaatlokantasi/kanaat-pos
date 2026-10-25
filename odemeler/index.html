@@ -124,6 +124,9 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 @media (max-width:900px),(pointer:coarse){input,select,textarea{font-size:16px!important}}
 .calask{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:12px 14px}
 .calask .tt{font-weight:600}.calask .dd{font-size:13px;color:var(--muted);max-width:60ch}
+.sh{font:600 12px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+.nfbox{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px}
+.nfbox p{margin:0;max-width:60ch}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -186,13 +189,16 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1>Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 21</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 22</span> <span class="chip" id="conn" hidden></span></div>
     </div>
-    <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Şifre</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
+    <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
 
   <section class="panel" id="pwPanel" hidden>
-    <h2>Şifremi değiştir</h2>
+    <div class="lh"><h2 style="margin:0">Ayarlar</h2><button class="link" type="button" id="pwClose">Kapat</button></div>
+    <h3 class="sh">Bildirimler</h3>
+    <div id="nfBox" class="nfbox"></div>
+    <h3 class="sh">Şifremi değiştir</h3>
     <form class="pw" id="pwf">
       <label class="f">Şu anki şifre<input type="password" id="pw0" autocomplete="current-password" required></label>
       <label class="f">Yeni şifre (en az 8)<input type="password" id="pw1" autocomplete="new-password" minlength="8" required></label>
@@ -202,6 +208,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <p class="err" id="pwe"></p>
   </section>
 
+  <section class="calask" id="nfAsk" hidden></section>
   <section class="calask" id="calAsk" hidden></section>
   <section class="alerts" id="alerts" hidden></section>
   <section class="kpis" id="kpis" aria-label="Özet"></section>
@@ -256,6 +263,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
 /* ---------- settings ---------- */
 const FB_CFG={apiKey:"AIzaSyAbMToI6usmYMqtLu1bAP95FtYldHQNe-U",authDomain:"kanaat-odemeler.firebaseapp.com",projectId:"kanaat-odemeler",storageBucket:"kanaat-odemeler.firebasestorage.app",messagingSenderId:"346687076916",appId:"1:346687076916:web:f34033452fd5502adda861"};
 const FB_VER="10.14.1";
+const VAPID=null; /* Firebase Cloud Messaging web push anahtarı buraya gelecek */
 const DOMAIN="kanaat-odemeler.app";
 const SEED={"salt":"X009KRzBH9aPubi7kNW0gA==","iter":150000,"box":{"iv":"/vDUMO0cEcWngNWe","ct":"oaUxEKaambRZSyBj5QH8K4ImoRFw1DcwABDAUBmVqdVGoE4IcP+Bep7vztygaJpygPRnf2d8Eq8R2ovYAermFCgWEOlyJBzGHtlFybnIaxsHpqXJqSGjV4wQ/EKiBtjoHySuARQ8+NWIvfV+OEH82s1LeDXAMwV2jWihaALxTikHletKfh7Iu97Irwt8U2qQ5COs10HZTQgp9p/QRkaOybH8ZdZMuQIklR/mSEbEliJ3iR9WqcwbGpYv9hpJLVfy7ttYGhMbnBQS/22QYF4dtomgSdmgKC7dOptYpDk6yzvqRQrUrSHG4WRqeCoV9mBr1onLKjrilto+to+yfwYsEXLtYdhibSTIWA2DuagSF4It5QKCnysxEFVywtWWgO4btlD0UUEuxN6wfZPVPplhGpce0zhg8Wpe1emkrGwlbxcUPEcfZ1O8sIPw39G/zlXb6DGmeg8m2B3lx+duGkCGnPL8LDhgfnzpxuWIpsdQeYbMecKwKMvER3gkfP7wK+xdaFbDL1ESjZ18Cf6L0Rzld5dDSLvy22BXx/hd3tCdRPAu7N6Oa8b95r8mDJVstDJXePjzWfSfPD0QKvVflTX4vhT+6eHm9K+Us/s4YYO8GidJ812DA876mQ/O1Yc2l6D3nCWFwt5nfejTs1ch7EIieshdmVWcQdpsu+S9uUlJu4Ii1CMUUsK+7nHIui0y1zT4f23yL/Fl80mRLZKJfth+mVj+lRGn4raMqV6GREoMxxusUoirx3CjtwZjOoCb4QiB4s0SBY0ae+751XchavNT0xDeRJg9KhHx1dlVRG8c46XR2shNC4I3iHjWlMW7Ou6P4sDU04cOyAysAUWNmT2NAD7qgrPE+rfIlqLYSWPu6mjJSqMYYbZS4Q+vwCDlA1GJVkmZ9uAcK+tHkHUUt3qLuWQa7KitY1qHLIQ1qzGaA76xz5HyERjgIx14gjT0tFp49PvsHzjQweJNFSLluOMNU1bSO/UUW9C1jkJBq/OgCg=="}};
 const APP_URL=location.origin+location.pathname;
@@ -369,11 +377,13 @@ async function enter(u){
   }
   render();window.scrollTo({top:0});
   showCalPending();
+  nfAfterLogin();
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
-$("pwBtn").onclick=()=>{$("pwPanel").hidden=!$("pwPanel").hidden;$("pwe").textContent=""};
+$("logout").onclick=async()=>{$("nfAsk").hidden=true;$("pwPanel").hidden=true;calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
+$("pwBtn").onclick=()=>{$("pwPanel").hidden=!$("pwPanel").hidden;$("pwe").textContent="";if(!$("pwPanel").hidden)nfRender()};
+$("pwClose").onclick=()=>{$("pwPanel").hidden=true};
 $("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
   const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
   if(p1.length<8){er.textContent="Yeni şifre en az 8 karakter olmalı.";return}if(p1!==p2){er.textContent="İki yeni şifre aynı değil.";return}
@@ -605,7 +615,7 @@ $("cal").onclick=()=>{
 };
 
 /* ---------- people (admin) ---------- */
-const waText=(name,pw)=>`Kanaat Ödemeler giriş bilgileriniz\n\nBağlantı: ${APP_URL}\nAd soyad: ${name}\nŞifre: ${pw}\n\nİlk girişten sonra sağ üstteki "Şifre" düğmesinden kendi şifrenizi belirleyin. Bilgileri kimseyle paylaşmayın.`;
+const waText=(name,pw)=>`Kanaat Ödemeler giriş bilgileriniz\n\nBağlantı: ${APP_URL}\nAd soyad: ${name}\nŞifre: ${pw}\n\nİlk girişten sonra üstteki "Ayarlar" düğmesinden kendi şifrenizi belirleyin. Bilgileri kimseyle paylaşmayın.`;
 async function copy(text){try{await navigator.clipboard.writeText(text);toast("Kopyalandı")}catch(e){toast("Kopyalanamadı; metni basılı tutup seçin")}}
 function renderPeople(){
   if(!me||me.role!=="admin")return;
@@ -664,8 +674,9 @@ function guideSteps(){
   {t:"Aradığınızı hemen bulun",p:`Listenin üstündeki arama kutusuna <b>ilk harfleri</b> yazın. Yazdıkça o harflerle başlayan ödemeler kalır, eşleşen kısım sarıyla işaretlenir. Kutunun altındaki önerilere dokunarak bir kalemin bütün ödemelerini görebilirsiniz.`,
    l:[`Kalem ya da açıklama: <b>kay</b> → Kaymak`,`Ay: <b>kas</b> → Kasım ödemeleri`,`Tarih: <b>05.11</b>, tutar: <b>516</b>`,`Arama hem bekleyen hem ödenen ödemelere bakar. Temizlemek için ×'e basın.`],
    d:`<div class="srch" style="margin:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span style="padding:10px 0;flex:1">ka</span></div><div class="sugg" style="margin:0"><button type="button" tabindex="-1" class="tap"><mark>Ka</mark>ymak<span>4</span></button><button type="button" tabindex="-1">Kredi <mark>ka</mark>rtları<span>2</span></button></div>`},
+  {t:"Bildirimleri açın",p:`Son günü yarın olan ödemeler için her sabah <b>10:00'da</b> telefonunuza bildirim gelir; yeni eklenen ödemeler de kendiliğinden kapsanır. Açmak için üstteki <b>Ayarlar</b> → <b>Bildirimleri aç</b>'a basın ve iPhone'un sorusuna <b>İzin Ver</b> deyin. iPhone'da bu yalnızca ana ekrana eklenen uygulamada çalışır.`},
   {t:"Telefon takvimine ekleyin",p:`Üstteki <b>Takvime ekle</b> düğmesi bekleyen ödemeleri telefonunuzun takvimine aktarır. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın; bu telefondan daha önce gönderilenler atlanır, yalnızca yeniler eklenir. Takvime ekledikten sonra uygulamada çıkan <b>Evet, ekledim</b>'e basın. Tutarı ya da tarihi sonradan değişen bir ödemeyi takvimde elle düzeltin.`},
-  {t:"Uygulama gibi kullanın",p:`iPhone'da Safari'nin paylaş düğmesine basıp <b>Ana Ekrana Ekle</b>'yi seçin; uygulama telefonunuzda simge olarak durur. İlk girişten sonra üstteki <b>Şifre</b> düğmesiyle kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`,
+  {t:"Uygulama gibi kullanın",p:`iPhone'da Safari'nin paylaş düğmesine basıp <b>Ana Ekrana Ekle</b>'yi seçin; uygulama telefonunuzda simge olarak durur. İlk girişten sonra üstteki <b>Ayarlar</b> düğmesinden kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`,
    l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
   ];
   if(admin)S.push({t:"Yöneticiye özel",p:`Bunları yalnızca siz görürsünüz:`,
@@ -686,6 +697,58 @@ function drawGuide(){const x=gS[gi],last=gi===gS.length-1;
 $("helpBtn").onclick=openGuide;
 document.addEventListener("keydown",e=>{if($("guide").hidden)return;if(e.key==="Escape")closeGuide();else if(e.key==="ArrowRight"&&gi<gS.length-1){gi++;drawGuide()}else if(e.key==="ArrowLeft"&&gi>0){gi--;drawGuide()}});
 $("guide").addEventListener("click",e=>{if(e.target.id==="guide")closeGuide()});
+
+/* ---------- bildirimler (web push, FCM). Her sabah 10:00'da GitHub'daki görev, son günü yarın olan ödemeleri bu telefonlara gönderir ---------- */
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const standalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
+const nfKey=()=>"odNf:"+(me?me.uid:"");
+const nfGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const nfSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+function nfState(){
+  if(isIOS&&!standalone)return"home";
+  if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return"unsupported";
+  if(!VAPID)return"setup";
+  if(Notification.permission==="denied")return"denied";
+  if(Notification.permission==="granted"&&nfGet(nfKey()))return"on";
+  return"off"}
+async function nfMessaging(){
+  if(!firebase.messaging)await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-messaging-compat.js`);
+  const reg=await navigator.serviceWorker.register("sw.js",{scope:"./"});await navigator.serviceWorker.ready;
+  return{m:firebase.messaging(),reg}}
+async function nfSaveToken(tok){const old=nfGet(nfKey());
+  await db.collection("tokens").doc(tok).set({uid:me.uid,name:me.name,at:firebase.firestore.FieldValue.serverTimestamp(),cihaz:isIOS?"iPhone":"diğer"});
+  if(old&&old!==tok)db.collection("tokens").doc(old).delete().catch(()=>{});nfSet(nfKey(),tok)}
+async function nfEnable(btn){
+  if(btn)btn.disabled=true;
+  try{const perm=await Notification.requestPermission();
+    if(perm!=="granted"){toast("Bildirim izni verilmedi");nfRender();return}
+    const{m,reg}=await nfMessaging();const tok=await m.getToken({vapidKey:VAPID,serviceWorkerRegistration:reg});
+    if(!tok)throw new Error("anahtar alınamadı");await nfSaveToken(tok);nfSet("odNfAsk:"+me.uid,"1");$("nfAsk").hidden=true;
+    toast("Bildirimler açıldı")}
+  catch(e){toast("Bildirimler açılamadı ("+(e.code||e.message||e)+")")}
+  finally{if(btn)btn.disabled=false;nfRender()}}
+async function nfDisable(btn){if(btn)btn.disabled=true;const tok=nfGet(nfKey());
+  try{if(tok)await db.collection("tokens").doc(tok).delete();try{const{m}=await nfMessaging();await m.deleteToken()}catch(_){ }
+    nfSet(nfKey(),null);toast("Bu telefonda bildirimler kapandı")}
+  catch(e){toast("Kapatılamadı ("+(e.code||e)+")")}finally{if(btn)btn.disabled=false;nfRender()}}
+function nfRender(){const box=$("nfBox");if(!box||!me)return;const st=nfState();
+  const msg={home:`Bildirimler iPhone'da yalnızca ana ekrana eklenen uygulamada çalışır. Safari'de paylaş → <b>Ana Ekrana Ekle</b> deyin ve uygulamayı oradan açın.`,
+    unsupported:`Bu cihaz bildirimleri desteklemiyor. iPhone'da iOS 16.4 veya daha yenisi gerekir.`,
+    setup:`Bildirim kurulumu henüz tamamlanmadı.`,
+    denied:`Bu telefonda bildirimlere izin verilmemiş. iPhone <b>Ayarlar → Bildirimler → Ödemeler</b>'den izni açıp buraya dönün.`,
+    on:`Bu telefonda bildirimler <b>açık</b>. Her sabah 10:00'da, son günü yarın olan ödemeler bildirilir.`,
+    off:`Son günü yarın olan ödemeler için her sabah 10:00'da bu telefona bildirim gelsin.`}[st];
+  box.innerHTML=`<p>${msg}</p>${st==="on"?`<button class="btn ghost" type="button" id="nfOff">Kapat</button>`:st==="off"?`<button class="btn" type="button" id="nfOn">Bildirimleri aç</button>`:""}`;
+  const on=$("nfOn");if(on)on.onclick=()=>nfEnable(on);const off=$("nfOff");if(off)off.onclick=()=>nfDisable(off)}
+function nfAfterLogin(){const st=nfState();
+  /* keep this phone's address fresh (iPhone can change it) */
+  if(st==="on")setTimeout(async()=>{try{const{m,reg}=await nfMessaging();const tok=await m.getToken({vapidKey:VAPID,serviceWorkerRegistration:reg});if(tok)await nfSaveToken(tok)}catch(e){}},4000);
+  const ask=$("nfAsk");
+  if(st==="off"&&Notification.permission==="default"&&!nfGet("odNfAsk:"+me.uid)){
+    ask.innerHTML=`<div><div class="tt">Ödeme günlerini kaçırmayın</div><div class="dd">Son günü yarın olan ödemeler için her sabah 10:00'da telefonunuza bildirim gelsin mi?</div></div><div class="row"><button class="btn" type="button" id="nfAskOn">Bildirimleri aç</button><button class="btn ghost" type="button" id="nfAskNo">Şimdi değil</button></div>`;
+    ask.hidden=false;$("nfAskOn").onclick=()=>nfEnable($("nfAskOn"));
+    $("nfAskNo").onclick=()=>{nfSet("odNfAsk:"+me.uid,"1");ask.hidden=true;toast("İstediğiniz zaman Ayarlar'dan açabilirsiniz")}}
+  else ask.hidden=true}
 
 /* ---------- update check (like Kanaat POS): compare the version on the server with this one ---------- */
 const MY_VER=parseInt(($("ver").textContent.match(/Sürüm (\d+)/)||[])[1]||"0");
