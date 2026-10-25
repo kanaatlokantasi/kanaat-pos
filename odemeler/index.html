@@ -131,6 +131,9 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .wrap.set>*:not(header):not(#pwPanel):not(#peoplePanel){display:none!important}
 .wrap:not(.set)>#peoplePanel{display:none!important}
 .hact .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.btn.back{display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:15px}
+.btn.back2{width:100%;margin-top:16px;padding:12px;font-size:15px}
+.wrap.set #homeT{cursor:pointer}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -191,15 +194,16 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
 <div class="wrap" id="app" hidden>
   <header>
     <div>
-      <h1>Kanaat Ödemeler</h1>
+      <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 24</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 25</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
 
   <section class="panel" id="pwPanel" hidden>
-    <div class="lh"><h2 style="margin:0">Ayarlar</h2><button class="link" type="button" id="pwClose">← Ödemelere dön</button></div>
+    <button class="btn back" type="button" id="pwClose">← Ödemelere dön</button>
+    <h2 style="margin:14px 0 0">Ayarlar</h2>
     <h3 class="sh">Bildirimler</h3>
     <div id="nfBox" class="nfbox"></div>
     <h3 class="sh">Şifremi değiştir</h3>
@@ -210,6 +214,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
       <button class="btn" type="submit">Değiştir</button>
     </form>
     <p class="err" id="pwe"></p>
+    <button class="btn ghost back2" type="button" id="pwClose2">← Ödemelere dön</button>
   </section>
 
   <section class="calask" id="nfAsk" hidden></section>
@@ -389,7 +394,8 @@ $("logout").onclick=async()=>{$("nfAsk").hidden=true;closeSet();calAsk("");$("q"
 function openSet(){$("pwPanel").hidden=false;$("app").classList.add("set");$("pwBtn").setAttribute("aria-pressed","true");$("pwe").textContent="";nfRender();window.scrollTo({top:0})}
 function closeSet(){$("pwPanel").hidden=true;$("app").classList.remove("set");$("pwBtn").setAttribute("aria-pressed","false");window.scrollTo({top:0})}
 $("pwBtn").onclick=()=>{$("app").classList.contains("set")?closeSet():openSet()};
-$("pwClose").onclick=closeSet;
+$("pwClose").onclick=closeSet;$("pwClose2").onclick=closeSet;
+$("homeT").onclick=()=>{if($("app").classList.contains("set"))closeSet()};
 $("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
   const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
   if(p1.length<8){er.textContent="Yeni şifre en az 8 karakter olmalı.";return}if(p1!==p2){er.textContent="İki yeni şifre aynı değil.";return}
