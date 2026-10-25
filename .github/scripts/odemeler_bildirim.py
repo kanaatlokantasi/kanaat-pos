@@ -77,6 +77,14 @@ def main():
     if test:
         title, body, tag = "Test bildirimi", "Kanaat Ödemeler bildirimleri bu telefonda çalışıyor.", "test"
         url = APP_URL
+        # testte de dokununca açılan ekranı denemek için en yakın bekleyen ödemenin gününü bağla
+        today = datetime.datetime.now(ZoneInfo("Europe/Istanbul")).date().isoformat()
+        days = sorted({p.get("vade") for i, p in docs("payments")
+                       if i not in SKIP_DOCS and not p.get("paid") and (p.get("vade") or "") >= today})
+        if days:
+            y, m, g = days[0].split("-")
+            url = APP_URL + "?gun=" + days[0]
+            body = f"Bildirimler çalışıyor. Dokunun: {g}.{m}.{y} tarihli ödemeler açılacak."
     else:
         tomorrow = (datetime.datetime.now(ZoneInfo("Europe/Istanbul")).date() + datetime.timedelta(days=1)).isoformat()
         pays = dict(docs("payments"))
