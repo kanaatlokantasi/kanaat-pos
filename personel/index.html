@@ -218,7 +218,7 @@ legend{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--
     <div class="brand">
       <small>Kanaat Lokantası · İnsan kaynakları</small>
       <h1>Personel Başvuruları</h1>
-      <span class="ver" id="appVer">Personel · Sürüm 24 · 27.10.2026</span>
+      <span class="ver" id="appVer">Personel · Sürüm 25 · 27.10.2026</span>
       <div class="acct"><span class="who" id="who"></span><button class="link-btn" id="usersBtn" type="button" hidden>Kullanıcılar</button><button class="link-btn" id="pwBtn" type="button">Şifre</button><button class="link-btn" id="logoutBtn" type="button">Çıkış</button></div>
     </div>
     <div class="top-actions">
@@ -305,6 +305,8 @@ legend{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--
         <div class="f"><span class="lbl">Toplu taşımayla tahmini</span><div id="mesafeTxt" class="hint" style="padding:9px 0">—</div></div>
         <div class="f"><label for="uyruk">Uyruk</label><input id="uyruk" placeholder="örn. T.C."></div>
         <div class="f"><label for="memleket">Memleketi</label><input id="memleket" placeholder="örn. Trabzon"></div>
+        <div class="f"><label for="askerlik">Askerlik durumu</label><select id="askerlik"><option value="">— sorulmadı</option><option>Yaptı</option><option>Muaf</option><option>Yükümlü değil</option><option>Tecilli</option><option>Yapmadı</option></select></div>
+        <div class="f" id="tecilWrap" hidden><label for="tecilTarihi">Tecil bitişi / sevk tarihi</label><input id="tecilTarihi" type="date"></div>
       </div>
     </fieldset>
 
@@ -401,7 +403,7 @@ legend{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--
     <fieldset>
       <legend>Aday puanı</legend>
       <div id="breakdown"></div>
-      <p class="hint" style="margin:8px 0 0">Girdiğiniz bilgilerden otomatik hesaplanır ve siz yazdıkça güncellenir. Ağırlıklar: izlenim 25, referans 22 (iki olumlu referans tam puan, tek olumlu 16, olumsuz referans sıfır), yüz yüze görüşme 15, belgeler 10 (hijyen belgesi en çok), tecrübe 8 (5 yıla kadar), istikrar 12 (önceki işlerde ortalama kalma süresi: 2 yıl ve üstü tam puan, önceki iş yoksa 6), işe ulaşım 20 (girilen ulaşım süresi; yoksa oturduğu ilçeden lokantaya, Selmanipak Cad. No:9 Sultantepe, toplu taşımayla tahmini süre: 20 dk'ya kadar tam puan, 70 dk üstü sıfır), uygunluk 5. Olumsuz sonuçlananlar ve kara listedekiler sıralamada en alta iner.</p>
+      <p class="hint" style="margin:8px 0 0">Girdiğiniz bilgilerden otomatik hesaplanır ve siz yazdıkça güncellenir. Ağırlıklar: izlenim 25, referans 22 (iki olumlu referans tam puan, tek olumlu 16, olumsuz referans sıfır), yüz yüze görüşme 15, belgeler 10 (hijyen belgesi en çok), tecrübe 8 (5 yıla kadar), istikrar 12 (önceki işlerde ortalama kalma süresi: 2 yıl ve üstü tam puan, önceki iş yoksa 6), işe ulaşım 20 (girilen ulaşım süresi; yoksa oturduğu ilçeden lokantaya, Selmanipak Cad. No:9 Sultantepe, toplu taşımayla tahmini süre: 20 dk'ya kadar tam puan, 70 dk üstü sıfır), uygunluk 5, askerlik 6 (yaptı, muaf ya da yükümlü değil tam puan; tecilli olanda tecil süresine göre; yapmadı 0). Olumsuz sonuçlananlar ve kara listedekiler sıralamada en alta iner.</p>
     </fieldset>
 
     <fieldset>
@@ -529,6 +531,11 @@ const DURUM = [["yeni","Yeni"],["gorusme","Görüşme planlandı"],["deneme","De
 const DURUM_MAP = Object.fromEntries(DURUM);
 // Aday puanı (0–100): girilen verilerden hesaplanır
 const TURIST_DIL = ["Arapça","Rusça","İspanyolca","İngilizce"];
+// askerlik: işe girdikten sonra askere gitme ihtimaline göre (yükümlü olmayanlar tam puan)
+function askerPuan(d){ const a=d.askerlik||"";
+  if(a==="Yaptı"||a==="Muaf"||a==="Yükümlü değil") return 6;
+  if(a==="Tecilli"){ if(!d.tecilTarihi) return 2; const ay=(new Date(d.tecilTarihi)-new Date(today()))/(864e5*30.4); return ay>=12?4:ay>=6?2:1; }
+  if(a==="Yapmadı") return 0; return 3; }
 function skor(d){
   const p = [];
   const izl = (d.puan||0)*5; p.push(["İzlenim", izl, 25]);
@@ -542,8 +549,9 @@ function skor(d){
   const tec = Math.round(Math.min(+d.tecrubeYil||0, 5)*1.6); p.push(["Tecrübe", tec, 8]);
   let uy = 0; if(d.calismaSekli==="Tam zamanlı") uy+=3; else if(d.calismaSekli) uy+=1;
   if(d.baslamaTarihi){ const gun=(new Date(d.baslamaTarihi)-new Date(today()))/864e5; if(gun<=14) uy+=2; } p.push(["Uygunluk", uy, 5]);
+  p.push(["Askerlik", askerPuan(d), 6]);
   const top = p.reduce((s,x)=>s+x[1],0);
-  return {toplam: Math.round(top/117*100), parcalar: p};
+  return {toplam: Math.round(top/123*100), parcalar: p};
 }
 // İstanbul ilçe merkezleri (yaklaşık); lokanta: Selmanipak Cad. No:9, Sultantepe, Üsküdar
 const LOKANTA = [41.0255, 29.0155];
@@ -656,7 +664,7 @@ $("photoRemove").onclick = () => { pendingPhoto=null; removePhoto=true; showPhot
 $("copyTel").onclick = async () => { const v=$("telefon").value.trim(); if(!v) return; try{ await navigator.clipboard.writeText(v); toast("Numara kopyalandı"); }catch{ $("telefon").select(); toast("Numarayı seçtim, kopyalayabilirsiniz"); } };
 
 // Fields
-const TEXT = ["adSoyad","telefon","eposta","dogumYili","ilce","semt","ulasimDk","uyruk","memleket","basvuruTarihi","kanal","kanalDetay","tecrubeYil","sonIsyeri","calismaSekli","vardiya","baslamaTarihi","maasBeklentisi","izinBeklenti","izinDonus","gorusmeTarihi","gorusen","durum","denemeTarihi","notlar"];
+const TEXT = ["adSoyad","telefon","eposta","dogumYili","ilce","semt","ulasimDk","uyruk","memleket","askerlik","tecilTarihi","basvuruTarihi","kanal","kanalDetay","tecrubeYil","sonIsyeri","calismaSekli","vardiya","baslamaTarihi","maasBeklentisi","izinBeklenti","izinDonus","gorusmeTarihi","gorusen","durum","denemeTarihi","notlar"];
 
 const openSheet = (row) => {
   editing = row || null;
@@ -666,7 +674,7 @@ const openSheet = (row) => {
   setChecks("pozBox", d.pozisyonlar); setChecks("dilBox", d.diller); setChecks("belgeBox", d.belgeler);
   $("kvkk").checked = !!d.kvkkOnay;
   const gc = d.genc || {}; $("gVeli").checked=!!gc.veliIzni; $("gRapor").checked=!!gc.saglikRaporu; $("gGunduz").checked=!!gc.gunduz; $("gEgitim").value=gc.egitim||""; $("gRaporTarihi").value=gc.raporTarihi||"";
-  updateGenc(); updateSabika();
+  updateGenc(); updateSabika(); tecilShow();
   const g = d.gorusme || "yok"; document.querySelectorAll('input[name="gorusme"]').forEach(r=>r.checked = r.value===g);
   puan = d.puan || 0; drawRating();
   $("expList").innerHTML=""; (d.tecrubeler && d.tecrubeler.length ? d.tecrubeler : [{}]).forEach(expRow);
@@ -809,7 +817,7 @@ $("form").addEventListener("change", updateGenc);
 // Live score breakdown in the sheet
 function drawBreakdown(){
   const d = { puan, tecrubeYil:$("tecrubeYil").value, diller:getChecks("dilBox"), belgeler:getChecks("belgeBox"),
-    gorusme:(document.querySelector('input[name="gorusme"]:checked')||{}).value||"yok", calismaSekli:$("calismaSekli").value, baslamaTarihi:$("baslamaTarihi").value,
+    gorusme:(document.querySelector('input[name="gorusme"]:checked')||{}).value||"yok", calismaSekli:$("calismaSekli").value, baslamaTarihi:$("baslamaTarihi").value, askerlik:$("askerlik").value, tecilTarihi:$("tecilTarihi").value,
     tecrubeler:getExp(), referanslar:getRefs(), izinBeklenti:$("izinBeklenti").value, izinDonus:$("izinDonus").value, ilce:$("ilce").value, ulasimDk:$("ulasimDk").value };
   const tt = TT[d.ilce]; $("mesafeTxt").textContent = tt==null ? "—" : "≈ " + tt + " dk";
   $("ulasimDk").placeholder = tt==null ? "dakika" : "boşsa ≈ " + tt + " dk sayılır";
@@ -817,6 +825,8 @@ function drawBreakdown(){
   $("breakdown").innerHTML = `<div class="bd-total"><b>${s.toplam}</b><span class="hint">/ 100</span></div><div class="breakdown">` +
     s.parcalar.map(([t,v,m])=>`<div class="bd"><span>${t}</span><span class="bar"><i style="width:${Math.round(v/m*100)}%"></i></span><span>${v} / ${m}</span></div>`).join("") + `</div>`;
 }
+const tecilShow = () => { $("tecilWrap").hidden = $("askerlik").value!=="Tecilli"; };
+$("askerlik").addEventListener("change", tecilShow);
 $("form").addEventListener("input", drawBreakdown);
 $("form").addEventListener("change", drawBreakdown);
 $("rating").addEventListener("click", () => setTimeout(drawBreakdown));
@@ -899,6 +909,7 @@ function adayMesaj(){
   if(o.has("iletisim")){ sec("İletişim"); add("Telefon", v("telefon")); add("E-posta", v("eposta")); }
   add("Oturduğu yer", [v("ilce"), v("semt")].filter(Boolean).join(" / "));
   if(o.has("kisisel")){ add("Doğum yılı", v("dogumYili")); add("Uyruk", v("uyruk")); add("Memleketi", v("memleket")); }
+  add("Askerlik", v("askerlik") + (v("askerlik")==="Tecilli" && v("tecilTarihi") ? " (" + fmtDate(v("tecilTarihi")) + "'e kadar)" : ""));
   const dk = v("ulasimDk") || (TT[v("ilce")]!=null ? "≈ "+TT[v("ilce")] : ""); add("Lokantaya ulaşım", dk ? dk+" dk" : "");
   if(o.has("tecrube")){ const ex=getExp(); sec("İş tecrübesi"); add("Toplam", v("tecrubeYil")? v("tecrubeYil").replace(".",",")+" yıl" : "");
     add("Şu an", v("sonIsyeri")); ex.forEach(x=>L.push("• "+[x.yer,x.gorev,x.ay!=null?x.ay+" ay":""].filter(Boolean).join(" – "))); }
@@ -913,7 +924,7 @@ function adayMesaj(){
     add("Görüşme", GOR_TXT[g]+(v("gorusmeTarihi")?" · "+fmtDate(v("gorusmeTarihi")):"")); add("Görüşen", v("gorusen"));
     add("Deneme günü", v("denemeTarihi")?fmtDate(v("denemeTarihi")):""); if(puan) add("İzlenim", "★".repeat(puan)+" ("+puan+"/5)"); }
   if(o.has("puan")){ const sk = skor({puan, tecrubeYil:v("tecrubeYil"), belgeler:getChecks("belgeBox"), gorusme:(document.querySelector('input[name="gorusme"]:checked')||{}).value||"yok",
-      calismaSekli:v("calismaSekli"), baslamaTarihi:v("baslamaTarihi"), tecrubeler:getExp(), referanslar:getRefs(), ilce:v("ilce"), ulasimDk:v("ulasimDk")});
+      calismaSekli:v("calismaSekli"), baslamaTarihi:v("baslamaTarihi"), tecrubeler:getExp(), referanslar:getRefs(), ilce:v("ilce"), ulasimDk:v("ulasimDk"), askerlik:v("askerlik"), tecilTarihi:v("tecilTarihi")});
     add("Aday puanı", sk.toplam+" / 100"); }
   if(o.has("notlar") && v("notlar")){ sec("Notlar"); L.push(v("notlar")); }
   // boş kalan başlıkları at
@@ -1001,7 +1012,7 @@ $("sharePdf").onclick = kartPdf;
 // CSV
 $("csvBtn").onclick = async () => {
   if(!downloads) return;
-  const cols=[["adSoyad","Ad soyad"],["telefon","Telefon"],["eposta","E-posta"],["dogumYili","Doğum yılı"],["ilce","İlçe"],["semt","Semt"],["ulasimDk","Ulaşım (dk)"],["uyruk","Uyruk"],["memleket","Memleketi"],["basvuruTarihi","Başvuru tarihi"],["kanal","Kanal"],["kanalDetay","Kanal detayı"],["pozisyonlar","Pozisyonlar"],["tecrubeYil","Tecrübe (yıl)"],["tecrubeler","Önceki iş yerleri"],["diller","Diller"],["belgeler","Belgeler"],["calismaSekli","Çalışma şekli"],["vardiya","Vardiya"],["baslamaTarihi","Başlama"],["maasBeklentisi","Maaş beklentisi"],["izinBeklenti","Uzun izin isteği"],["izinDonus","İzin dönüşü"],["gorusme","Görüşme"],["gorusmeTarihi","Görüşme tarihi"],["gorusen","Görüşen"],["durum","Durum"],["puan","Puan"],["referanslar","Referanslar"],["notlar","Notlar"]];
+  const cols=[["adSoyad","Ad soyad"],["telefon","Telefon"],["eposta","E-posta"],["dogumYili","Doğum yılı"],["ilce","İlçe"],["semt","Semt"],["ulasimDk","Ulaşım (dk)"],["uyruk","Uyruk"],["memleket","Memleketi"],["askerlik","Askerlik"],["tecilTarihi","Tecil/sevk tarihi"],["basvuruTarihi","Başvuru tarihi"],["kanal","Kanal"],["kanalDetay","Kanal detayı"],["pozisyonlar","Pozisyonlar"],["tecrubeYil","Tecrübe (yıl)"],["tecrubeler","Önceki iş yerleri"],["diller","Diller"],["belgeler","Belgeler"],["calismaSekli","Çalışma şekli"],["vardiya","Vardiya"],["baslamaTarihi","Başlama"],["maasBeklentisi","Maaş beklentisi"],["izinBeklenti","Uzun izin isteği"],["izinDonus","İzin dönüşü"],["gorusme","Görüşme"],["gorusmeTarihi","Görüşme tarihi"],["gorusen","Görüşen"],["durum","Durum"],["puan","Puan"],["referanslar","Referanslar"],["notlar","Notlar"]];
   const cell = v => `"${String(v??"").replace(/"/g,'""')}"`;
   const val = (d,k) => { const v=d[k]; if(k==="referanslar") return (v||[]).map(x=>[x.ad,x.isyeri,x.iliski,x.telefon,x.sonuc,x.not].filter(Boolean).join(" / ")).join("; "); if(k==="tecrubeler") return (v||[]).map(x=>[x.yer,x.gorev,x.ay!=null?x.ay+" ay":x.sure].filter(Boolean).join(" / ")).join("; "); if(k==="belgeler") return (v||[]).map(b=>(BELGE.find(x=>x[0]===b)||[b,b])[1]).join(", "); if(Array.isArray(v)) return v.join(", "); if(k==="durum") return DURUM_MAP[v]||v; if(k==="gorusme") return GOR_TXT[v||"yok"]; return v; };
   const csv = "﻿" + [cols.map(c=>cell(c[1])).join(";"), ...rows.map(r=>cols.map(c=>cell(val(r.data,c[0]))).join(";"))].join("\r\n");
