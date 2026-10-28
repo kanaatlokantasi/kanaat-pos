@@ -6,6 +6,7 @@ loglara ödeme, tutar ya da kişi bilgisi YAZMAZ; yalnızca sayılar yazılır.
 """
 import json
 import os
+import re
 import sys
 import datetime
 from zoneinfo import ZoneInfo
@@ -33,6 +34,22 @@ def val(v):
     if "mapValue" in v: return {k: val(x) for k, x in v["mapValue"].get("fields", {}).items()}
     if "arrayValue" in v: return [val(x) for x in v["arrayValue"].get("values", [])]
     return None
+
+
+def parse_ts(x):
+    """Firestore zaman damgası ("2026-10-28T11:20:00.123456Z") → UTC datetime"""
+    m = re.match(r"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.(\d+))?Z$", x or "") if isinstance(x, str) else None
+    if not m:
+        return None
+    return datetime.datetime.fromisoformat(m.group(1) + "." + (m.group(2) or "")[:6].ljust(6, "0") + "+00:00")
+
+
+def ddmm(d):
+    try:
+        y, m, g = d.split("-")
+        return f"{g}.{m}"
+    except Exception:
+        return ""
 
 
 def tl(n):
@@ -71,10 +88,74 @@ def main():
                 return out
 
     test = os.environ.get("TEST") == "1"
+    mode = os.environ.get("MODE", "")
     users = {uid for uid, _ in docs("users")}
     tokens = [(t, d) for t, d in docs("tokens")]
 
-    if test:
+    make = None  # telefona özel bildirim (olay modunda: kişinin kendi yaptığı değişiklik ona gönderilmez)
+    if mode == "olay" and not test:
+        # ---- ödendi işaretlenen ve yeni eklenen ödemeler (her 5 dakikada bir) ----
+        now = datetime.datetime.now(datetime.timezone.utc)
+        st_url = f"{base}/meta/bildirim"
+        r = s.get(st_url, timeout=30)
+        last = None
+        if r.ok:
+            last = parse_ts(val(r.json().get("fields", {}).get("last", {"nullValue": None})))
+        elif r.status_code != 404:
+            r.raise_for_status()
+
+        def save_last():
+            s.patch(st_url, params={"updateMask.fieldPaths": "last"}, timeout=30,
+                    json={"fields": {"last": {"timestampValue": now.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}}}).raise_for_status()
+
+        if last is None:  # ilk çalıştırma: geçmiş değişiklikler için bildirim gönderme
+            save_last()
+            print("İlk çalıştırma: başlangıç zamanı kaydedildi.")
+            return 0
+        last = max(last, now - datetime.timedelta(hours=6))
+        pays = dict(docs("payments"))
+        custom = (pays.get("_kalemler") or {}).get("items") or {}
+        lab = lambda t: TUR.get(t) or custom.get(t) or t
+        events = []
+        for i, p in pays.items():
+            if i in SKIP_DOCS:
+                continue
+            a = parse_ts(p.get("addedAt"))
+            if a and last < a <= now and p.get("addedBy") and p.get("addedBy") != "Otomatik":
+                events.append(("ekle", p, p.get("addedBy"), p.get("addedByUid"), a))
+            pd = parse_ts(p.get("paidAt"))
+            if p.get("paid") and pd and last < pd <= now and p.get("paidBy"):
+                events.append(("ode", p, p.get("paidBy"), p.get("paidByUid"), pd))
+        events.sort(key=lambda e: e[4])
+        save_last()  # önce kaydet: bir hata olursa aynı bildirim ikinci kez gitmesin
+        print(f"Yeni olay: {len(events)}")
+        if not events:
+            return 0
+        stamp = now.strftime("%Y%m%d%H%M")
+
+        def make(d):
+            evs = [e for e in events if not ((e[3] and e[3] == d.get("uid")) or (not e[3] and e[2] == d.get("name")))]
+            if not evs:
+                return None
+            if len(evs) == 1:
+                kind, p, by, _, _ = evs[0]
+                if kind == "ode":
+                    t = f"Ödendi: {lab(p.get('tur'))}"
+                    b = " · ".join(x for x in [p.get("acik"), tl(p.get("tutar")), f"{by} işaretledi"] if x)
+                else:
+                    t = f"Yeni ödeme: {lab(p.get('tur'))}"
+                    b = " · ".join(x for x in [p.get("acik"), tl(p.get("tutar")),
+                                               f"son ödeme {ddmm(p.get('vade'))}" if p.get("vade") else "", f"{by} ekledi"] if x)
+                u = APP_URL + ("?gun=" + p["vade"] if p.get("vade") else "")
+            else:
+                t = f"{len(evs)} ödeme güncellemesi"
+                b = "; ".join((f"✓ {lab(p.get('tur'))} ödendi" if k == "ode" else f"+ {lab(p.get('tur'))} eklendi") + f" ({by})"
+                              for k, p, by, _, _ in evs)
+                u = APP_URL
+            if len(b) > 230:
+                b = b[:227] + "…"
+            return t, b, u, "olay-" + stamp
+    elif test:
         title, body, tag = "Test bildirimi", "Kanaat Ödemeler bildirimleri bu telefonda çalışıyor.", "test"
         url = APP_URL
         # testte de dokununca açılan ekranı denemek için en yakın bekleyen ödemenin gününü bağla
@@ -112,6 +193,11 @@ def main():
             s.delete(f"{base}/tokens/{tok}", timeout=30)
             removed += 1
             continue
+        if make:
+            m = make(d)
+            if not m:
+                continue
+            title, body, url, tag = m
         msg = {"message": {"token": tok,
                            "data": {"title": title, "body": body, "url": url, "tag": tag},
                            "webpush": {"headers": {"Urgency": "high", "TTL": "43200"}}}}

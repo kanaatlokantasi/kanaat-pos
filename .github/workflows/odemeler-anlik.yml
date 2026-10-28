@@ -1,0 +1,23 @@
+name: Odemeler anlik bildirim
+on:
+  schedule:
+    # Her 5 dakikada bir: ödendi işaretlenen ve yeni eklenen ödemeleri telefonlara bildirir.
+    # GitHub zamanlanmış görevleri bazen birkaç dakika gecikmeli çalıştırır.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency: odemeler-anlik
+jobs:
+  olay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+      - run: pip install -q google-auth requests
+      - run: python3 .github/scripts/odemeler_bildirim.py
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
+          MODE: olay

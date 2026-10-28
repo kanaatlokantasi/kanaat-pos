@@ -208,7 +208,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 28</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 29</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -313,7 +313,7 @@ const authMsg=e=>{const c=e&&e.code||"";if(/invalid-credential|wrong-password|us
 /* ---------- state ---------- */
 let auth=null,db=null,me=null; // me: {uid,name,role}
 let payments=[],people=[],secrets={};
-let focusDay=null,unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null,amtEdit=null,amtDraft=null,vEdit=null,vDraft=null;
+let liveSeen=false,focusDay=null,unsub=[],filter="open",delAsk=null,pDel=null,lastNew=null,amtEdit=null,amtDraft=null,vEdit=null,vDraft=null;
 function vCell(x,chip){
   if(vEdit===x.id)return`<form class="amtf" id="vForm" data-id="${esc(x.id)}" style="justify-content:flex-start"><input type="date" id="vIn" value="${esc(vDraft!=null?vDraft:(x.vade||""))}" aria-label="Son ödeme tarihi" style="width:160px!important;text-align:left"><button class="btn" type="submit">Kaydet</button><button class="link" type="button" data-vno>Vazgeç</button></form>`;
   if(x.paid)return`${x.vade?`<span class="mono">${dfmt(x.vade)}</span> `:""}${chip}`;
@@ -379,11 +379,21 @@ async function decryptSeed(code){
 
 /* ---------- session ---------- */
 let setupBusy=false;
-function stopAll(){unsub.forEach(f=>{try{f()}catch(e){}});unsub=[];seriesDone=false;payments=[];people=[];secrets={};me=null;lastNew=null}
+function stopAll(){liveSeen=false;unsub.forEach(f=>{try{f()}catch(e){}});unsub=[];seriesDone=false;payments=[];people=[];secrets={};me=null;lastNew=null}
+/* only a definite "no access" signs the user out; a slow or missing connection never does */
+const profKey=id=>"odProf:"+id;
 async function enter(u){
-  let snap;try{snap=await db.collection("users").doc(u.uid).get()}catch(e){snap=null}
-  if(!snap||!snap.exists){stopAll();try{await auth.signOut()}catch(_){}showLogin("Bu hesabın erişimi yok ya da kaldırıldı. Yöneticiyle görüşün.");return}
-  const d=snap.data();me={uid:u.uid,name:d.name,role:d.role};
+  let snap=null,denied=false;
+  for(let i=0;i<4&&!snap&&!denied;i++){
+    try{snap=await db.collection("users").doc(u.uid).get()}
+    catch(e){if(e&&e.code==="permission-denied")denied=true;else{if(i===0&&!me)gate(`<p class="note" style="margin:0">Bağlanıyor…</p>`);await new Promise(r=>setTimeout(r,1200*(i+1)))}}
+  }
+  if(denied||(snap&&!snap.exists)){try{localStorage.removeItem(profKey(u.uid))}catch(_){}stopAll();try{await auth.signOut()}catch(_){}showLogin("Bu hesabın erişimi yok ya da kaldırıldı. Yöneticiyle görüşün.");return}
+  let d=null;
+  if(snap){d=snap.data();try{localStorage.setItem(profKey(u.uid),JSON.stringify({name:d.name,role:d.role}))}catch(_){}}
+  else{try{d=JSON.parse(localStorage.getItem(profKey(u.uid))||"null")}catch(_){d=null}}
+  if(!d){gate(`<h1>Kanaat Ödemeler</h1><p class="err">İnternete bağlanılamadı. Bağlantınızı kontrol edin.</p><button class="btn" type="button" id="retry">Tekrar dene</button>`);$("retry").onclick=()=>enter(u);return}
+  me={uid:u.uid,name:d.name,role:d.role};
   $("gate").hidden=true;$("app").hidden=false;
   const admin=me.role==="admin";
   $("peoplePanel").hidden=!admin;document.body.classList.toggle("viewer",!admin);
@@ -391,7 +401,15 @@ async function enter(u){
   if(admin)$("wm").hidden=true;else watermark();
   unsub.push(db.collection("payments").onSnapshot({includeMetadataChanges:true},s=>{
     const kd=s.docs.find(x=>x.id===KALEM_DOC);const nc=kd?(kd.data().items||{}):{};if(JSON.stringify(nc)!==JSON.stringify(CUSTOM)){CUSTOM=nc;fillKalem()}
+    const prevPaid=liveSeen?Object.fromEntries(payments.map(x=>[x.id,!!x.paid])):null;
     payments=s.docs.filter(x=>x.id!==SERIES_DOC&&x.id!==KALEM_DOC).map(x=>({id:x.id,...x.data()}));
+    /* uygulama açıkken başka birinin eklediği ya da ödendi işaretlediği ödemeyi hemen göster */
+    if(prevPaid&&!s.metadata.fromCache){const news=[];
+      for(const x of payments){const mine=x=>x===me.uid;
+        if(!(x.id in prevPaid)){if(x.addedBy&&x.addedBy!=="Otomatik"&&!mine(x.addedByUid)&&x.addedBy!==me.name)news.push(`${x.addedBy} yeni ödeme ekledi: ${lab(x.tur)}${x.tutar!=null?" · "+tl(x.tutar):""}`)}
+        else if(!prevPaid[x.id]&&x.paid&&x.paidBy&&!mine(x.paidByUid)&&x.paidBy!==me.name)news.push(`${x.paidBy} ödendi işaretledi: ${lab(x.tur)}${x.tutar!=null?" · "+tl(x.tutar):""}`)}
+      if(news.length)toast(news.length===1?news[0]:`${news.length} ödeme güncellendi: `+news.join(" · "))}
+    if(!s.metadata.fromCache)liveSeen=true;
     if(!s.metadata.fromCache)ensureSeries();
     const c=$("conn");if(s.metadata.hasPendingWrites){c.className="chip busy";c.textContent="Kaydediliyor…";c.hidden=false}else if(s.metadata.fromCache){c.className="chip err";c.textContent="Bağlantı yok";c.hidden=false}else c.hidden=true
     render()},e=>{if(e.code==="permission-denied"){stopAll();auth.signOut().catch(()=>{});showLogin("Erişiminiz kaldırıldı.")}else toast("Veriler alınamadı ("+e.code+")")}));
@@ -476,7 +494,7 @@ function render(){
       <td class="n d">${!admin?"":delAsk===x.id?`<span class="confirm">Silinsin mi? <button type="button" data-yes="${esc(x.id)}">Sil</button><button type="button" class="no" data-no>Vazgeç</button></span>`:`<button class="x" type="button" data-del="${esc(x.id)}" aria-label="Sil">×</button>`}</td></tr>`).join("")}
     <tr class="sum"><td class="k">Toplam</td><td class="hide-s"></td><td class="e"></td><td class="n mono t">${tl(sum(L))}</td><td class="e"></td><td class="e"></td></tr></tbody></table></div>`:`<div class="empty">${msg}</div>`;
   document.querySelectorAll("[data-paid]").forEach(c=>c.onchange=()=>{const del=firebase.firestore.FieldValue.delete();
-    db.collection("payments").doc(c.dataset.paid).update(c.checked?{paid:true,paidBy:me.name,paidAt:firebase.firestore.FieldValue.serverTimestamp()}:{paid:false,paidBy:del,paidAt:del})
+    db.collection("payments").doc(c.dataset.paid).update(c.checked?{paid:true,paidBy:me.name,paidByUid:me.uid,paidAt:firebase.firestore.FieldValue.serverTimestamp()}:{paid:false,paidBy:del,paidByUid:del,paidAt:del})
       .then(()=>toast(c.checked?"Ödendi olarak işaretlendi":"Bekleyene alındı"),e=>{toast("Kaydedilemedi ("+e.code+")");render()})});
   if(amtFocus&&$("amtIn"))$("amtIn").focus();
   if(vFocus&&$("vIn"))$("vIn").focus();
@@ -538,7 +556,7 @@ $("pf").addEventListener("submit",e=>{e.preventDefault();
   const tur=$("pt").value,ay=$("pm").value,vade=$("pv").value,acik=$("pa").value.trim(),raw=String($("pn").value).trim(),tutar=raw?parseFloat(raw.replace(",",".")):null;
   if(!/^\d{4}-\d{2}$/.test(ay)){toast("Dönemi kontrol edin");return}
   if(raw&&!(tutar>0)){toast("Tutarı kontrol edin ya da boş bırakın");return}
-  db.collection("payments").doc(uid()).set({ay,tur,acik,tutar,paid:false,...(vade?{vade}:{}),addedBy:me.name,addedAt:firebase.firestore.FieldValue.serverTimestamp()})
+  db.collection("payments").doc(uid()).set({ay,tur,acik,tutar,paid:false,...(vade?{vade}:{}),addedBy:me.name,addedByUid:me.uid,addedAt:firebase.firestore.FieldValue.serverTimestamp()})
     .then(()=>toast(`${lab(tur)} eklendi`),er=>toast("Eklenemedi ("+er.code+")"));
   $("pa").value="";$("pn").value="";$("pv").value="";pvAuto=false;pvDefault();filter="open";closeAdd();render()});
 function openAdd(){$("addPanel").hidden=false;$("addOpen").hidden=true;$("addOpen").setAttribute("aria-expanded","true");$("pt").focus()}
@@ -710,7 +728,7 @@ function guideSteps(){
   {t:"Aradığınızı hemen bulun",p:`Listenin üstündeki arama kutusuna <b>ilk harfleri</b> yazın. Yazdıkça o harflerle başlayan ödemeler kalır, eşleşen kısım sarıyla işaretlenir. Kutunun altındaki önerilere dokunarak bir kalemin bütün ödemelerini görebilirsiniz.`,
    l:[`Kalem ya da açıklama: <b>kay</b> → Kaymak`,`Ay: <b>kas</b> → Kasım ödemeleri`,`Tarih: <b>05.11</b>, tutar: <b>516</b>`,`Arama hem bekleyen hem ödenen ödemelere bakar. Temizlemek için ×'e basın.`],
    d:`<div class="srch" style="margin:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span style="padding:10px 0;flex:1">ka</span></div><div class="sugg" style="margin:0"><button type="button" tabindex="-1" class="tap"><mark>Ka</mark>ymak<span>4</span></button><button type="button" tabindex="-1">Kredi <mark>ka</mark>rtları<span>2</span></button></div>`},
-  {t:"Bildirimleri açın",p:`Son günü yarın olan ödemeler için her sabah <b>10:00'da</b> telefonunuza bildirim gelir; yeni eklenen ödemeler de kendiliğinden kapsanır. Açmak için <b>Ayarlar</b> → <b>Hatırlatmalar</b>'da <b>Telefon bildirimi</b> kutusunu işaretleyin ve iPhone'un sorusuna <b>İzin Ver</b> deyin. iPhone'da bu yalnızca ana ekrana eklenen uygulamada çalışır.`},
+  {t:"Bildirimleri açın",p:`Son günü yarın olan ödemeler için her sabah <b>10:00'da</b> telefonunuza bildirim gelir. Başka biri bir ödemeyi <b>ödendi</b> işaretlediğinde ya da <b>yeni ödeme eklediğinde</b> de birkaç dakika içinde haber verilir; uygulama açıksa aynı anda ekranda görünür. Açmak için <b>Ayarlar</b> → <b>Hatırlatmalar</b>'da <b>Telefon bildirimi</b> kutusunu işaretleyin ve iPhone'un sorusuna <b>İzin Ver</b> deyin. iPhone'da bu yalnızca ana ekrana eklenen uygulamada çalışır.`},
   {t:"Telefon takvimine ekleyin",p:`İsterseniz ödemeleri iPhone takviminize de ekleyebilirsiniz: <b>Ayarlar</b> → <b>Hatırlatmalar</b>'da <b>Telefon takvimi</b> kutusunu işaretleyin. Üstte çıkan <b>Takvime ekle</b> düğmesi bekleyen ödemeleri takviminize aktarır; yeni ödemeler olunca uygulama ana ekranda haber verir. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın; bu telefondan daha önce gönderilenler atlanır, yalnızca yeniler eklenir. Takvime ekledikten sonra uygulamada çıkan <b>Evet, ekledim</b>'e basın. Tutarı ya da tarihi sonradan değişen bir ödemeyi takvimde elle düzeltin.`},
   {t:"Uygulama gibi kullanın",p:`Telefonda ve bilgisayarda uygulama olarak yükleyebilirsiniz; kendi simgesi olur, ayrı pencerede açılır. Nasıl yapılacağı cihazınıza göre <b>Ayarlar → Uygulamayı yükle</b>'de yazar (iPhone'da Safari → Paylaş → <b>Ana Ekrana Ekle</b>; bilgisayarda Chrome/Edge'de <b>yükle</b> simgesi). İlk girişten sonra <b>Ayarlar</b>'dan kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`,
    l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
@@ -773,7 +791,7 @@ function nfRender(){const box=$("nfBox");if(!box||!me)return;const st=nfState(),
     setup:`Kurulum henüz tamamlanmadı.`,
     denied:`İzin verilmemiş. iPhone <b>Ayarlar → Bildirimler → Ödemeler</b>'den izni açıp buraya dönün.`}[st];
   box.innerHTML=`
-  <label class="opt${why?" off":""}"><input type="checkbox" id="optNf" ${st==="on"?"checked":""} ${why?"disabled":""}><span><b>Telefon bildirimi</b><small>${why||`Her sabah 10:00'da, son günü yarın olan ödemeler telefonunuza bildirim olarak gelir. Yeni eklenen ödemeler ve tutar/tarih değişiklikleri kendiliğinden kapsanır.`}</small></span></label>
+  <label class="opt${why?" off":""}"><input type="checkbox" id="optNf" ${st==="on"?"checked":""} ${why?"disabled":""}><span><b>Telefon bildirimi</b><small>${why||`Her sabah 10:00'da son günü yarın olan ödemeler bildirilir. Ayrıca başka biri bir ödemeyi <b>ödendi</b> işaretlediğinde ya da <b>yeni ödeme eklediğinde</b> birkaç dakika içinde haber gelir; kendi yaptıklarınız size bildirilmez.`}</small></span></label>
   <label class="opt"><input type="checkbox" id="optCal" ${cal?"checked":""}><span><b>Telefon takvimi</b><small>Ödemeler iPhone takviminize eklenir; her birinden bir gün önce 10:00'da takvim hatırlatır. Yeni ödemeler olunca uygulama size haber verir, tek dokunuşla eklersiniz.</small></span></label>
   ${cal?`<button class="btn ghost" type="button" id="calNow" style="align-self:flex-start">Takvime şimdi ekle</button>`:""}`;
   const nf=$("optNf");nf.onchange=()=>{nf.checked?nfEnable(nf):nfDisable(nf)};
@@ -864,6 +882,8 @@ async function boot(){
   try{for(const m of["app","auth","firestore"])await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-${m}-compat.js`)}
   catch(e){gate(`<h1>Kanaat Ödemeler</h1><p class="err">Bağlantı kurulamadı. İnternetinizi kontrol edip sayfayı yenileyin.</p>`);return}
   firebase.initializeApp(FB_CFG);auth=firebase.auth();db=firebase.firestore();
+  try{await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   auth.onAuthStateChanged(u=>{if(setupBusy)return;if(u){if(!me||me.uid!==u.uid)enter(u)}else{stopAll();showLogin()}});
 }
 /* bildirime dokunulunca: ?gun=YYYY-MM-DD ile açılır ya da açık uygulamaya servis çalışanı haber verir */
