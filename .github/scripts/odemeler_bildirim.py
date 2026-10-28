@@ -121,7 +121,7 @@ def main():
             if i in SKIP_DOCS:
                 continue
             a = parse_ts(p.get("addedAt"))
-            if a and last < a <= now and p.get("addedBy") and p.get("addedBy") != "Otomatik":
+            if a and last < a <= now and p.get("addedBy"):  # düzenli ödemeler ("Otomatik") dahil
                 events.append(("ekle", p, p.get("addedBy"), p.get("addedByUid"), a))
             pd = parse_ts(p.get("paidAt"))
             if p.get("paid") and pd and last < pd <= now and p.get("paidBy"):
@@ -143,13 +143,17 @@ def main():
                     t = f"Ödendi: {lab(p.get('tur'))}"
                     b = " · ".join(x for x in [p.get("acik"), tl(p.get("tutar")), f"{by} işaretledi"] if x)
                 else:
-                    t = f"Yeni ödeme: {lab(p.get('tur'))}"
+                    auto = by == "Otomatik"
+                    t = f"{'Yeni düzenli ödeme' if auto else 'Yeni ödeme'}: {lab(p.get('tur'))}"
                     b = " · ".join(x for x in [p.get("acik"), tl(p.get("tutar")),
-                                               f"son ödeme {ddmm(p.get('vade'))}" if p.get("vade") else "", f"{by} ekledi"] if x)
+                                               f"son ödeme {ddmm(p.get('vade'))}" if p.get("vade") else "",
+                                               "" if auto else f"{by} ekledi"] if x)
                 u = APP_URL + ("?gun=" + p["vade"] if p.get("vade") else "")
             else:
                 t = f"{len(evs)} ödeme güncellemesi"
-                b = "; ".join((f"✓ {lab(p.get('tur'))} ödendi" if k == "ode" else f"+ {lab(p.get('tur'))} eklendi") + f" ({by})"
+                b = "; ".join(f"✓ {lab(p.get('tur'))} ödendi ({by})" if k == "ode"
+                              else f"+ {lab(p.get('tur'))} {ddmm(p.get('vade'))} (düzenli)" if by == "Otomatik"
+                              else f"+ {lab(p.get('tur'))} eklendi ({by})"
                               for k, p, by, _, _ in evs)
                 u = APP_URL
             if len(b) > 230:
