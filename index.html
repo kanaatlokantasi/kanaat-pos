@@ -312,7 +312,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 174</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 175</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -2153,12 +2153,19 @@ A.cloudIn=()=>requireAdmin(()=>{
     <label class="f">E-posta<input id="clEmail" type="email" autocomplete="username" autocapitalize="off" value="info@kanaatlokantasi.com.tr"></label>
     <label class="f">Şifre<input id="clPass" type="password" autocomplete="current-password"></label>
     <p id="clErr" class="muted" style="margin:0;color:var(--danger);min-height:1.2em"></p>
-    <button class="btn pri block" id="clOk" style="min-height:52px">Giriş yap</button>`);
+    <button class="btn pri block" id="clOk" style="min-height:52px">Giriş yap</button>
+    <button class="linkbtn" id="clForgot" style="align-self:center;padding:8px">Şifremi unuttum</button>`);
   const go=async()=>{const e=document.getElementById('clEmail').value.trim(),p=document.getElementById('clPass').value,er=document.getElementById('clErr'),btn=document.getElementById('clOk');
     if(!e||!p){er.textContent='E-posta ve şifreyi yazın.';return}btn.disabled=true;er.textContent='Bağlanılıyor…';
     if(!(await cloudInit())){er.textContent='Firebase yüklenemedi. İnternet bağlantısını kontrol edin.';btn.disabled=false;return}
     try{await firebase.auth().signInWithEmailAndPassword(e,p);closeLayer();toast('Ortak veriye bağlandı');render()}
     catch(x){btn.disabled=false;const c=x.code||'';er.textContent=/invalid|wrong|not-found|credential/.test(c)?'E-posta veya şifre hatalı.':/network/.test(c)?'İnternet bağlantısı yok.':/too-many/.test(c)?'Çok fazla deneme. Biraz bekleyin.':('Giriş olmadı: '+(x.message||c))}};
+  document.getElementById('clForgot').onclick=async()=>{const e=document.getElementById('clEmail').value.trim(),er=document.getElementById('clErr');
+    if(!e){er.textContent='Önce e-posta adresini yazın.';return}er.style.color='';er.textContent='Sıfırlama e-postası gönderiliyor…';
+    if(!(await cloudInit())){er.textContent='Firebase yüklenemedi. İnternet bağlantısını kontrol edin.';return}
+    try{firebase.auth().languageCode='tr'}catch(x){}
+    try{await firebase.auth().sendPasswordResetEmail(e);er.style.color='var(--ok)';er.textContent='Şifre sıfırlama bağlantısı '+e+' adresine gönderildi. Gelen kutusuna (ve gereksiz/spam klasörüne) bakın. Yeni şifreyle buradan giriş yapın; diğer cihazlarda da yeniden giriş gerekir.'}
+    catch(x){er.style.color='';const c=x.code||'';er.textContent=/not-found|invalid-email/.test(c)?'Bu e-posta adresiyle hesap bulunamadı.':/network/.test(c)?'İnternet bağlantısı yok.':/too-many/.test(c)?'Çok fazla deneme. Biraz bekleyin.':('Gönderilemedi: '+(x.message||c))}};
   document.getElementById('clOk').onclick=go;document.getElementById('clPass').addEventListener('keydown',ev=>{if(ev.key==='Enter')go()})});
 A.cloudOut=()=>requireAdmin(()=>ask('Bu cihaz ortak veriden çıkarılsın mı? Masalar bu cihazda görünmez olur.','Çık',async()=>{
   try{await firebase.auth().signOut()}catch(e){}S.settings.cloudOn=false;S.settings.cloudMigrated=false;S.tables={};localSave();cloudStop();render();toast('Ortak veriden çıkıldı')},false));
