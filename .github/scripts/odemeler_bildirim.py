@@ -16,7 +16,7 @@ from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 
 APP_URL = "https://kanaatlokantasi.github.io/kanaat-pos/odemeler/"
-REMIND_DAYS = 3  # tutarı girilmemiş ödeme için son günden kaç gün öncesinden itibaren hatırlatılsın
+REMIND_DAYS = 2  # tutarı girilmemiş ödeme için son günden kaç gün öncesinden itibaren hatırlatılsın
 TUR = {"maas": "Banka maaşları", "et": "Et", "kdv": "KDV", "kredikarti": "Kredi kartları", "sgk": "SGK primi",
        "stopaj": "Muhtasar / stopaj", "gecici": "Geçici vergi", "kurumlar": "Kurumlar vergisi",
        "oda": "Ticaret odası aidatı", "resmi": "Diğer resmi gider", "kira": "Kira", "kaymak": "Kaymak",
@@ -195,7 +195,7 @@ def main():
         lab = lambda t: TUR.get(t) or custom.get(t) or t
         open_p = [p for i, p in pays.items() if i not in SKIP_DOCS and not p.get("paid")]
         due = [p for p in open_p if p.get("vade") == tomorrow]
-        # tutarı girilmemiş, son günü 1-3 gün sonra olan ödemeler (tutar hatırlatması açık kişilere)
+        # tutarı girilmemiş, son günü 1-2 gün sonra olan ödemeler (tutar hatırlatması açık kişilere)
         missing = sorted([p for p in open_p if p.get("tutar") is None and tomorrow <= (p.get("vade") or "") <= last_rem],
                          key=lambda p: p.get("vade"))
         remind_uids = {uid for uid, u in users_d.items() if u.get("tutarHatirlat")}
