@@ -201,6 +201,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);cursor:po
 .alert .tt{font-weight:600}
 .alert .dd{font-size:13px;color:var(--muted)}
 .alert .am{margin-left:auto;font:600 15px var(--f-mono);white-space:nowrap}
+.alert .amt.need{font-size:14px}
+.alert .amtf input{width:140px!important}
 .gate{display:flex;justify-content:center;padding-block:10vh 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:14px}
 .card h1{font-size:26px}
@@ -247,7 +249,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 38</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 39</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal" aria-label="Takvime ekle"><span class="lg">Takvime ekle</span><span class="sm">Takvim</span></button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="msgBtn" aria-pressed="false">Mesajlar<span class="badge" id="msgBadge" hidden></span></button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -375,8 +377,10 @@ function vCell(x,chip){
   if(x.paid)return`${x.vade?`<span class="mono">${dfmt(x.vade)}</span> `:""}${chip}`;
   return`<button class="amt" type="button" data-v="${esc(x.id)}" title="Tarihi değiştir">${x.vade?dfmt(x.vade):"Tarih ekle"}</button> ${chip}`;
 }
+let amtWhere="list";
+function amtForm(x){return`<form class="amtf" id="amtForm" data-id="${esc(x.id)}"><input type="number" id="amtIn" min="0" step="0.01" inputmode="decimal" value="${esc(amtDraft!=null?amtDraft:(x.tutar??""))}" aria-label="Tutar (₺)" placeholder="Tutar ₺"><button class="btn" type="submit">Kaydet</button><button class="link" type="button" data-amtno>Vazgeç</button></form>`}
 function amtCell(x){
-  if(amtEdit===x.id)return`<form class="amtf" id="amtForm" data-id="${esc(x.id)}"><input type="number" id="amtIn" min="0" step="0.01" inputmode="decimal" value="${esc(amtDraft!=null?amtDraft:(x.tutar??""))}" aria-label="Tutar (₺)"><button class="btn" type="submit">Kaydet</button><button class="link" type="button" data-amtno>Vazgeç</button></form>`;
+  if(amtEdit===x.id&&amtWhere!=="alert")return amtForm(x);
   if(x.tutar==null)return x.paid?"–":`<button class="amt need" type="button" data-amt="${esc(x.id)}">Tutar gir</button>`;
   return x.paid?tl(x.tutar):`<button class="amt" type="button" data-amt="${esc(x.id)}" title="Tutarı değiştir">${tl(x.tutar)}</button>`;
 }
@@ -524,7 +528,7 @@ function render(){
   const noAmt=open.filter(x=>x.tutar==null).length;
   const al=$("alerts");al.hidden=!soon.length;
   al.innerHTML=soon.map(x=>{const d=days(x.vade);const when=d<0?`${-d} gün gecikti`:d===0?"Son ödeme günü bugün":"Son ödeme günü yarın";
-    return`<div class="alert${d<=0?" late":""}" role="alert"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div><div class="tt">${esc(when)}: ${esc(lab(x.tur))}</div><div class="dd">${esc(x.acik||mfmt(x.ay))} · son ödeme ${dfmt(x.vade)}</div></div><div class="am">${x.tutar==null?"Tutar girilmedi":tl(x.tutar)}</div></div>`}).join("");
+    return`<div class="alert${d<=0?" late":""}" role="alert"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><div><div class="tt">${esc(when)}: ${esc(lab(x.tur))}</div><div class="dd">${esc(x.acik||mfmt(x.ay))} · son ödeme ${dfmt(x.vade)}</div></div><div class="am">${amtEdit===x.id&&amtWhere==="alert"?amtForm(x):x.tutar==null?`<button class="amt need" type="button" data-amt="${esc(x.id)}" data-where="alert" title="Tutarı girmek için dokunun">Tutar girilmedi ✎</button>`:`<button class="amt" type="button" data-amt="${esc(x.id)}" data-where="alert" title="Tutarı değiştir">${tl(x.tutar)}</button>`}</div></div>`}).join("");
   $("kpis").innerHTML=`
     <div class="kpi"><div class="l">Önümüzdeki 30 gün</div><div class="v">${tl(sum(n30))}</div><div class="h">${n30.length} ödeme</div></div>
     <div class="kpi${late.length?" alert":""}"><div class="l">Tarihi geçen</div><div class="v">${tl(sum(late))}</div><div class="h">${late.length?late.length+" ödeme":"yok"}</div></div>
@@ -566,7 +570,7 @@ function render(){
   const vf=$("vForm");if(vf)vf.onsubmit=ev=>{ev.preventDefault();const id=vf.dataset.id,v=$("vIn").value;
     if(!/^\d{4}-\d{2}-\d{2}$/.test(v)){toast("Tarihi seçin");return}vEdit=null;
     db.collection("payments").doc(id).update({vade:v,vadeBy:me.name,vadeAt:firebase.firestore.FieldValue.serverTimestamp()}).then(()=>toast("Tarih değişti: "+dfmt(v)),e=>toast("Kaydedilemedi ("+e.code+")"));render()};
-  document.querySelectorAll("[data-amt]").forEach(b=>b.onclick=()=>{amtEdit=b.dataset.amt;amtDraft=null;const o=$("amtIn");if(o)o.remove();render();const i=$("amtIn");if(i){i.focus();i.select()}});
+  document.querySelectorAll("[data-amt]").forEach(b=>b.onclick=()=>{amtWhere=b.dataset.where||"list";amtEdit=b.dataset.amt;amtDraft=null;const o=$("amtIn");if(o)o.remove();render();const i=$("amtIn");if(i){i.focus();i.select()}});
   document.querySelectorAll("[data-amtno]").forEach(b=>b.onclick=()=>{amtEdit=null;render()});
   const af=$("amtForm");if(af)af.onsubmit=ev=>{ev.preventDefault();const id=af.dataset.id,v=parseFloat(String($("amtIn").value).replace(",","."));
     if(!(v>0)){toast("Tutarı kontrol edin");return}amtEdit=null;
