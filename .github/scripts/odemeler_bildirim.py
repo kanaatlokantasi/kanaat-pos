@@ -92,6 +92,7 @@ def main():
     users = {uid for uid, _ in docs("users")}
     tokens = [(t, d) for t, d in docs("tokens")]
 
+    msgs = []
     make = None  # telefona özel bildirim (olay modunda: kişinin kendi yaptığı değişiklik ona gönderilmez)
     if mode == "olay" and not test:
         # ---- ödendi işaretlenen ve yeni eklenen ödemeler (her 5 dakikada bir) ----
@@ -126,6 +127,13 @@ def main():
             pd = parse_ts(p.get("paidAt"))
             if p.get("paid") and pd and last < pd <= now and p.get("paidBy"):
                 events.append(("ode", p, p.get("paidBy"), p.get("paidByUid"), pd))
+        msgs = []
+        for i, m in docs("msgs"):
+            a = parse_ts(m.get("at"))
+            if a and last < a <= now and m.get("text"):
+                m["_id"] = i
+                msgs.append(m)
+                events.append(("msj", m, m.get("fromName") or "Yönetici", m.get("from"), a))
         events.sort(key=lambda e: e[4])
         save_last()  # önce kaydet: bir hata olursa aynı bildirim ikinci kez gitmesin
         print(f"Yeni olay: {len(events)}")
@@ -134,12 +142,16 @@ def main():
         stamp = now.strftime("%Y%m%d%H%M")
 
         def make(d):
-            evs = [e for e in events if not ((e[3] and e[3] == d.get("uid")) or (not e[3] and e[2] == d.get("name")))]
+            evs = [e for e in events if not ((e[3] and e[3] == d.get("uid")) or (not e[3] and e[2] == d.get("name")))
+                   and (e[0] != "msj" or e[1].get("to") in ("*", d.get("uid")))]
             if not evs:
                 return None
             if len(evs) == 1:
                 kind, p, by, _, _ = evs[0]
-                if kind == "ode":
+                if kind == "msj":
+                    t = f"Mesaj: {by}"
+                    b = p.get("text", "")
+                elif kind == "ode":
                     t = f"Ödendi: {lab(p.get('tur'))}"
                     b = " · ".join(x for x in [p.get("acik"), tl(p.get("tutar")), f"{by} işaretledi"] if x)
                 else:
@@ -148,10 +160,11 @@ def main():
                     b = " · ".join(x for x in [p.get("acik"), tl(p.get("tutar")),
                                                f"son ödeme {ddmm(p.get('vade'))}" if p.get("vade") else "",
                                                "" if auto else f"{by} ekledi"] if x)
-                u = APP_URL + ("?gun=" + p["vade"] if p.get("vade") else "")
+                u = APP_URL + ("?gun=" + p["vade"] if kind != "msj" and p.get("vade") else "")
             else:
-                t = f"{len(evs)} ödeme güncellemesi"
-                b = "; ".join(f"✓ {lab(p.get('tur'))} ödendi ({by})" if k == "ode"
+                t = f"{len(evs)} yeni bildirim" if any(e[0] == "msj" for e in evs) else f"{len(evs)} ödeme güncellemesi"
+                b = "; ".join(f"✉ {by}: {p.get('text', '')[:60]}" if k == "msj"
+                              else f"✓ {lab(p.get('tur'))} ödendi ({by})" if k == "ode"
                               else f"+ {lab(p.get('tur'))} {ddmm(p.get('vade'))} (düzenli)" if by == "Otomatik"
                               else f"+ {lab(p.get('tur'))} eklendi ({by})"
                               for k, p, by, _, _ in evs)
@@ -192,6 +205,7 @@ def main():
         url = APP_URL + "?gun=" + tomorrow
 
     sent = removed = failed = 0
+    pushed_msgs = set()
     for tok, d in tokens:
         if d.get("uid") not in users:  # erişimi kaldırılmış kişi
             s.delete(f"{base}/tokens/{tok}", timeout=30)
@@ -208,6 +222,10 @@ def main():
         r = s.post(f"https://fcm.googleapis.com/v1/projects/{pid}/messages:send", json=msg, timeout=30)
         if r.ok:
             sent += 1
+            if make:
+                for e in events:
+                    if e[0] == "msj" and e[1].get("to") in ("*", d.get("uid")) and e[3] != d.get("uid"):
+                        pushed_msgs.add(e[1]["_id"])
             continue
         err = ""
         try:
@@ -220,6 +238,13 @@ def main():
         else:
             failed += 1
             print(f"Gönderilemedi: HTTP {r.status_code}")
+    if mode == "olay" and not test and sent:
+        # mesajlar için "telefona bildirim gitti" bilgisini kaydet
+        stamp_ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        for m in msgs:
+            if m["_id"] in pushed_msgs:
+                s.patch(f"{base}/msgs/{m['_id']}", params={"updateMask.fieldPaths": "pushedAt"}, timeout=30,
+                        json={"fields": {"pushedAt": {"timestampValue": stamp_ts}}})
     print(f"Gönderilen: {sent} · geçersiz olduğu için silinen: {removed} · hata: {failed} · kayıtlı telefon: {len(tokens)}")
     return 1 if failed and not sent else 0
 
