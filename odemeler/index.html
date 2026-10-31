@@ -160,6 +160,22 @@ textarea{font:16px var(--f-body);color:var(--ink);background:var(--panel);border
 .inst{border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;display:flex;flex-direction:column;gap:8px}
 .inst ol{margin:0;padding-left:20px;line-height:1.6}
 .inst .ok{color:var(--down);font-weight:600}
+.pinlock{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;padding:max(10vh,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.pinlock .card{max-width:340px;align-items:center;text-align:center}
+.pdots{display:flex;gap:14px;justify-content:center;margin:6px 0}
+.pdots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--accent)}
+.pdots i.on{background:var(--accent)}
+.pdots.bad{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@media (prefers-reduced-motion:reduce){.pdots.bad{animation:none}}
+.pkeys{display:grid;grid-template-columns:repeat(3,72px);gap:10px;justify-content:center}
+.pkeys button{height:58px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 22px var(--f-body);cursor:pointer}
+.pkeys button:active{background:var(--accent-soft)}
+.pkeys button:focus-visible{outline:2px solid var(--accent)}
+.pkeys .k0{grid-column:2}
+.pinrow{display:grid;grid-template-columns:repeat(2,minmax(0,160px)) auto;gap:10px;align-items:end}
+@media (max-width:560px){.pinrow{grid-template-columns:1fr 1fr}}
+.pinrow input{letter-spacing:.4em;text-align:center}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -222,7 +238,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 33</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 34</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -232,6 +248,8 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <h2 style="margin:14px 0 0">Ayarlar</h2>
     <h3 class="sh">Hatırlatmalar</h3>
     <div id="nfBox" class="opts"></div>
+    <h3 class="sh">Açılış şifresi (bu cihaz)</h3>
+    <div id="pinBox"></div>
     <h3 class="sh">Uygulamayı yükle</h3>
     <div id="instBox" class="opts"></div>
     <h3 class="sh">Şifremi değiştir</h3>
@@ -305,6 +323,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
   </section>
 </div>
 <div class="wm" id="wm" hidden></div>
+<div class="pinlock" id="lock" hidden role="dialog" aria-modal="true" aria-label="Açılış şifresi"></div>
 <div class="guide" id="guide" hidden role="dialog" aria-modal="true" aria-labelledby="gTitle"><div class="gcard" id="gCard"></div></div>
 <div class="toast" id="toast" hidden></div>
 
@@ -421,6 +440,7 @@ async function enter(u){
   else{try{d=JSON.parse(localStorage.getItem(profKey(u.uid))||"null")}catch(_){d=null}}
   if(!d){gate(`<h1>Kanaat Ödemeler</h1><p class="err">İnternete bağlanılamadı. Bağlantınızı kontrol edin.</p><button class="btn" type="button" id="retry">Tekrar dene</button>`);$("retry").onclick=()=>enter(u);return}
   me={uid:u.uid,name:d.name,role:d.role};
+  if(pinGet()&&!pinOk)pinLock();
   $("gate").hidden=true;$("app").hidden=false;
   const admin=me.role==="admin";
   $("peoplePanel").hidden=!admin;$("msgPanel").hidden=false;document.body.classList.toggle("viewer",!admin);
@@ -450,12 +470,13 @@ async function enter(u){
   if(focusDay)focusScroll();
   nfAfterLogin();
   instAfterLogin();
+  pinAfterLogin();
   msgListen();
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{$("instAsk").hidden=true;focusDay=null;$("nfAsk").hidden=true;closeSet();calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
-function openSet(){$("pwPanel").hidden=false;$("app").classList.add("set");$("pwBtn").setAttribute("aria-pressed","true");$("pwe").textContent="";nfRender();instRender();window.scrollTo({top:0})}
+$("logout").onclick=async()=>{$("lock").hidden=true;pinOk=false;$("instAsk").hidden=true;focusDay=null;$("nfAsk").hidden=true;closeSet();calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
+function openSet(){$("pwPanel").hidden=false;$("app").classList.add("set");$("pwBtn").setAttribute("aria-pressed","true");$("pwe").textContent="";pinRender();nfRender();instRender();window.scrollTo({top:0})}
 function closeSet(){$("pwPanel").hidden=true;$("app").classList.remove("set");$("pwBtn").setAttribute("aria-pressed","false");window.scrollTo({top:0})}
 $("pwBtn").onclick=()=>{$("app").classList.contains("set")?closeSet():openSet()};
 $("pwClose").onclick=closeSet;$("pwClose2").onclick=closeSet;
@@ -826,7 +847,7 @@ function guideSteps(){
    d:`<div class="srch" style="margin:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span style="padding:10px 0;flex:1">ka</span></div><div class="sugg" style="margin:0"><button type="button" tabindex="-1" class="tap"><mark>Ka</mark>ymak<span>4</span></button><button type="button" tabindex="-1">Kredi <mark>ka</mark>rtları<span>2</span></button></div>`},
   {t:"Bildirimleri açın",p:`Son günü yarın olan ödemeler için her sabah <b>10:00'da</b> telefonunuza bildirim gelir. Başka biri bir ödemeyi <b>ödendi</b> işaretlediğinde ya da <b>yeni ödeme eklediğinde</b>, düzenli ödemeler (kira, et, kaymak…) listeye geldiğinde de birkaç dakika içinde haber verilir; uygulama açıksa aynı anda ekranda görünür. Açmak için <b>Ayarlar</b> → <b>Hatırlatmalar</b>'da <b>Telefon bildirimi</b> kutusunu işaretleyin ve iPhone'un sorusuna <b>İzin Ver</b> deyin. iPhone'da bu yalnızca ana ekrana eklenen uygulamada çalışır.`},
   {t:"Telefon takvimine ekleyin",p:`İsterseniz ödemeleri iPhone takviminize de ekleyebilirsiniz: <b>Ayarlar</b> → <b>Hatırlatmalar</b>'da <b>Telefon takvimi</b> kutusunu işaretleyin. Üstte çıkan <b>Takvime ekle</b> düğmesi bekleyen ödemeleri takviminize aktarır; yeni ödemeler olunca uygulama ana ekranda haber verir. Her ödemeden <b>bir gün önce saat 10:00'da</b> telefonunuza hatırlatma gelir. Yeni ödemeler eklendikçe düğmeye tekrar basın; bu telefondan daha önce gönderilenler atlanır, yalnızca yeniler eklenir. Takvime ekledikten sonra uygulamada çıkan <b>Evet, ekledim</b>'e basın. Tutarı ya da tarihi sonradan değişen bir ödemeyi takvimde elle düzeltin.`},
-  {t:"Uygulama gibi kullanın",p:`Telefonda ve bilgisayarda uygulama olarak yükleyebilirsiniz; kendi simgesi olur, ayrı pencerede açılır. Nasıl yapılacağı cihazınıza göre <b>Ayarlar → Uygulamayı yükle</b>'de yazar (iPhone'da Safari → Paylaş → <b>Ana Ekrana Ekle</b>; bilgisayarda Chrome/Edge'de <b>yükle</b> simgesi). İlk girişten sonra <b>Ayarlar</b>'dan kendi şifrenizi belirleyin. Giriş bilgilerinizi kimseyle paylaşmayın.`,
+  {t:"Uygulama gibi kullanın",p:`Telefonda ve bilgisayarda uygulama olarak yükleyebilirsiniz; kendi simgesi olur, ayrı pencerede açılır. Nasıl yapılacağı cihazınıza göre <b>Ayarlar → Uygulamayı yükle</b>'de yazar (iPhone'da Safari → Paylaş → <b>Ana Ekrana Ekle</b>; bilgisayarda Chrome/Edge'de <b>yükle</b> simgesi). İlk girişten sonra <b>Ayarlar</b>'dan kendi şifrenizi belirleyin. Bilgisayarda ya da telefonda isterseniz <b>Ayarlar → Açılış şifresi</b>'nden 4 haneli bir şifre belirleyin; uygulama her açılışta bunu sorar. Giriş bilgilerinizi kimseyle paylaşmayın.`,
    l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
   ];
   if(admin)S.push({t:"Yöneticiye özel",p:`Bunları yalnızca siz görürsünüz:`,
@@ -935,6 +956,46 @@ function instRender(){const box=$("instBox");if(!box)return;
     other:[`Bu adresi bilgisayarda <b>Chrome</b> ya da <b>Edge</b>'de, iPhone'da <b>Safari</b>'de açın; oradan uygulama olarak yükleyebilirsiniz.`]}[platformOf()];
   box.innerHTML=`<div class="inst"><span>Bu cihaza uygulama olarak yüklemek için:</span><ol>${steps.map(x=>`<li>${x}</li>`).join("")}</ol></div>`}
 async function instPrompt(){if(!instEvt)return;instEvt.prompt();try{const r=await instEvt.userChoice;if(r&&r.outcome==="accepted"){$("instAsk").hidden=true}}catch(e){}instEvt=null;instRender()}
+/* ---------- açılış şifresi: bu cihazda her açılışta (ve 10 dakikadan uzun arka planda kalınca) 4 haneli PIN sorulur ---------- */
+let pinOk=false,pinBuf="",pinTries=0,hiddenAt=0;
+const pinKey=()=>"odPin:"+(me?me.uid:"");
+const pinGet=()=>{try{return JSON.parse(localStorage.getItem(pinKey())||"null")}catch(e){return null}};
+async function pinHash(pin,salt){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+":"+pin+":kanaat-odemeler"));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+async function pinSave(pin){const salt=Math.random().toString(36).slice(2)+Date.now().toString(36);try{localStorage.setItem(pinKey(),JSON.stringify({salt,h:await pinHash(pin,salt)}))}catch(e){toast("Bu cihazda kaydedilemedi");return false}return true}
+function pinLock(){if(!me||!pinGet())return;pinOk=false;pinBuf="";const L=$("lock");L.hidden=false;
+  L.innerHTML=`<div class="card">${lockIcon}<div><h1 style="font-size:22px">Kanaat Ödemeler</h1><div class="sub">${esc(me.name)} · açılış şifresi</div></div>
+    <div class="pdots" id="pdots">${"<i></i>".repeat(4)}</div><p class="err" id="perr" style="min-height:1.2em"></p>
+    <div class="pkeys">${[1,2,3,4,5,6,7,8,9].map(n=>`<button type="button" data-pk="${n}">${n}</button>`).join("")}<button type="button" class="k0" data-pk="0">0</button><button type="button" data-pk="del" aria-label="Sil">⌫</button></div>
+    <button class="link" type="button" id="pinForgot">Şifremi unuttum</button></div>`;
+  L.querySelectorAll("[data-pk]").forEach(b=>b.onclick=()=>pinKeyPress(b.dataset.pk));
+  $("pinForgot").onclick=async()=>{try{localStorage.removeItem(pinKey())}catch(e){}L.hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin("Açılış şifresi kaldırıldı. Ad soyad ve şifrenizle giriş yapıp Ayarlar'dan yenisini belirleyin.")};
+  pinDots()}
+function pinDots(){const d=$("pdots");if(d)[...d.children].forEach((x,i)=>x.classList.toggle("on",i<pinBuf.length))}
+async function pinKeyPress(k){if($("lock").hidden)return;
+  if(k==="del"){pinBuf=pinBuf.slice(0,-1);pinDots();return}
+  if(!/^\d$/.test(k)||pinBuf.length>=4)return;pinBuf+=k;pinDots();if(pinBuf.length<4)return;
+  const st=pinGet();const ok=st&&(await pinHash(pinBuf,st.salt))===st.h;
+  if(ok){pinOk=true;pinTries=0;$("lock").hidden=true;$("lock").innerHTML="";return}
+  pinTries++;pinBuf="";const d=$("pdots");d.classList.remove("bad");void d.offsetWidth;d.classList.add("bad");pinDots();
+  if(pinTries>=5){try{localStorage.removeItem(pinKey())}catch(e){}$("lock").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin("5 kez yanlış açılış şifresi girildi. Ad soyad ve şifrenizle yeniden giriş yapın.");pinTries=0;return}
+  $("perr").textContent=`Yanlış şifre. ${5-pinTries} hakkınız kaldı.`}
+document.addEventListener("keydown",e=>{if($("lock").hidden)return;if(/^\d$/.test(e.key)){e.preventDefault();pinKeyPress(e.key)}else if(e.key==="Backspace"){e.preventDefault();pinKeyPress("del")}});
+document.addEventListener("visibilitychange",()=>{if(document.hidden)hiddenAt=Date.now();else if(me&&pinGet()&&pinOk&&hiddenAt&&Date.now()-hiddenAt>10*60000)pinLock()});
+function pinAfterLogin(){if(pinGet()&&!pinOk)pinLock();
+  /* bilgisayarda bir kez önerelim */
+  const desk=!isIOS&&!/Android/.test(navigator.userAgent);
+  if(desk&&!pinGet()&&!nfGet("odPinAsk:"+me.uid)){const a=$("instAsk");if(!a.hidden)return;
+    a.innerHTML=`<div><div class="tt">Bu bilgisayar için açılış şifresi belirleyin</div><div class="dd">Uygulama her açılışta 4 haneli bir şifre sorar; bilgisayarın başına başkası geçerse ödemeleri göremez.</div></div><div class="row"><button class="btn" type="button" id="pinAskGo">Şifre belirle</button><button class="btn ghost" type="button" id="pinAskNo">Şimdi değil</button></div>`;
+    a.hidden=false;$("pinAskGo").onclick=()=>{a.hidden=true;nfSet("odPinAsk:"+me.uid,"1");openSet();setTimeout(()=>{const i=$("pin1");if(i){i.scrollIntoView({block:"center"});i.focus()}},100)};
+    $("pinAskNo").onclick=()=>{nfSet("odPinAsk:"+me.uid,"1");a.hidden=true;toast("İstediğiniz zaman Ayarlar'dan belirleyebilirsiniz")}}}
+function pinRender(){const box=$("pinBox");if(!box||!me)return;const on=!!pinGet();
+  box.innerHTML=`<div class="inst"><span>${on?`<span class="ok">✓ Açık.</span> Bu cihazda uygulama her açılışta (ve 10 dakikadan uzun kullanılmayınca) 4 haneli şifre sorar.`:`Bu cihazda uygulama her açılışta 4 haneli bir şifre sorsun. Şifre yalnızca bu cihaz için geçerlidir; 5 kez yanlış girilirse uygulama oturumu kapatır.`}</span>
+    <form class="pinrow" id="pinForm"><label class="f">${on?"Yeni 4 haneli şifre":"4 haneli şifre"}<input type="password" id="pin1" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required></label><label class="f">Tekrar<input type="password" id="pin2" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required></label><button class="btn" type="submit">${on?"Değiştir":"Şifreyi aç"}</button></form>
+    ${on?`<button class="btn ghost" type="button" id="pinOff" style="align-self:flex-start">Açılış şifresini kaldır</button>`:""}</div>`;
+  $("pinForm").onsubmit=async e=>{e.preventDefault();const a=$("pin1").value,b=$("pin2").value;
+    if(!/^\d{4}$/.test(a)){toast("Şifre 4 rakam olmalı");return}if(a!==b){toast("İki şifre aynı değil");return}
+    if(await pinSave(a)){pinOk=true;toast(on?"Açılış şifresi değişti":"Açılış şifresi açıldı");pinRender()}};
+  const off=$("pinOff");if(off)off.onclick=()=>{try{localStorage.removeItem(pinKey())}catch(e){}toast("Açılış şifresi kaldırıldı");pinRender()}}
 function instAfterLogin(){const a=$("instAsk");
   if(!instEvt||standalone||nfGet("odInstAsk:"+(me?me.uid:""))){a.hidden=true;return}
   a.innerHTML=`<div><div class="tt">Bu bilgisayara uygulama olarak yükleyin</div><div class="dd">Masaüstünde kendi simgesi olur, ayrı pencerede açılır; tarayıcı sekmesi aramanıza gerek kalmaz.</div></div><div class="row"><button class="btn" type="button" id="instAskGo">Yükle</button><button class="btn ghost" type="button" id="instAskNo">Şimdi değil</button></div>`;
