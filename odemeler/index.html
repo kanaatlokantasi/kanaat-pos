@@ -139,6 +139,10 @@ textarea{font:16px var(--f-body);color:var(--ink);background:var(--panel);border
 .mrow{display:flex;gap:8px 14px;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--soft)}
 .mrow:last-child{border-bottom:0}
 .mrow .mt{white-space:pre-wrap;margin-top:2px}
+.mrow.in{background:var(--accent-soft);border-radius:8px;padding:10px;margin:4px 0;border-bottom:0}
+.mrow .dir{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.rep{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-top:8px;width:100%}
+.rep textarea{flex:1 1 220px}
 .hact .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .btn.back{display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:15px}
 .btn.back2{width:100%;margin-top:16px;padding:12px;font-size:15px}
@@ -217,7 +221,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 31</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 32</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -288,15 +292,15 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
   </section>
 
   <section class="panel" id="msgPanel" hidden>
-    <h2>Mesaj gönder</h2>
-    <p class="note">Mesaj, seçtiğiniz kişinin uygulamasında en üstte görünür; telefon bildirimi açıksa birkaç dakika içinde telefonuna da bildirim gider. Altta her mesajın durumu görünür: <b>Gönderildi</b> → <b>telefona bildirim gitti</b> → <b>Ulaştı</b> (kişinin uygulamasına düştü) → <b>Okudu</b>.</p>
+    <h2>Mesajlar</h2>
+    <p class="note" id="msgNote"></p>
     <form class="mform" id="msgForm">
       <label class="f">Kime<select id="msgTo"></select></label>
-      <label class="f">Mesaj<textarea id="msgText" rows="2" maxlength="800" placeholder="ör. KDV ödemesini bugün yapabilir misin?"></textarea></label>
+      <label class="f">Mesaj<textarea id="msgText" rows="2" maxlength="800" placeholder="Mesajınızı yazın"></textarea></label>
       <button class="btn" type="submit" id="msgSend">Gönder</button>
     </form>
-    <h3 class="sh">Gönderilenler</h3>
-    <div id="msgSent"><div class="empty">Henüz mesaj gönderilmedi.</div></div>
+    <h3 class="sh">Yazışmalar</h3>
+    <div id="msgSent"><div class="empty">Henüz mesaj yok.</div></div>
   </section>
 </div>
 <div class="wm" id="wm" hidden></div>
@@ -401,7 +405,7 @@ async function decryptSeed(code){
 
 /* ---------- session ---------- */
 let setupBusy=false;
-function stopAll(){liveSeen=false;msgAll=[];msgIn={};msgKnown=null;msgMarked=new Set();$("msgBar").hidden=true;unsub.forEach(f=>{try{f()}catch(e){}});unsub=[];seriesDone=false;payments=[];people=[];secrets={};me=null;lastNew=null}
+function stopAll(){liveSeen=false;msgAll=[];msgIn={};msgKnown=null;msgMarked=new Set();admins=[];repOpen=null;$("msgBar").hidden=true;unsub.forEach(f=>{try{f()}catch(e){}});unsub=[];seriesDone=false;payments=[];people=[];secrets={};me=null;lastNew=null}
 /* only a definite "no access" signs the user out; a slow or missing connection never does */
 const profKey=id=>"odProf:"+id;
 async function enter(u){
@@ -418,7 +422,7 @@ async function enter(u){
   me={uid:u.uid,name:d.name,role:d.role};
   $("gate").hidden=true;$("app").hidden=false;
   const admin=me.role==="admin";
-  $("peoplePanel").hidden=!admin;$("msgPanel").hidden=!admin;document.body.classList.toggle("viewer",!admin);
+  $("peoplePanel").hidden=!admin;$("msgPanel").hidden=false;document.body.classList.toggle("viewer",!admin);
   $("who").textContent=me.name+(admin?" · yönetici":"");
   if(admin)$("wm").hidden=true;else watermark();
   unsub.push(db.collection("payments").onSnapshot({includeMetadataChanges:true},s=>{
@@ -437,7 +441,6 @@ async function enter(u){
     render()},e=>{if(e.code==="permission-denied"){stopAll();auth.signOut().catch(()=>{});showLogin("Erişiminiz kaldırıldı.")}else toast("Veriler alınamadı ("+e.code+")")}));
   if(admin){
     unsub.push(db.collection("users").onSnapshot(s=>{people=s.docs.map(x=>({uid:x.id,...x.data()})).sort((a,b)=>(a.role==="admin"?0:1)-(b.role==="admin"?0:1)||a.name.localeCompare(b.name,"tr"));renderPeople();msgRender()}));
-    unsub.push(db.collection("msgs").orderBy("at","desc").limit(60).onSnapshot({includeMetadataChanges:true},s=>{msgAll=s.docs.map(x=>({id:x.id,...x.data()}));msgRender()},()=>{}));
     unsub.push(db.collection("secrets").onSnapshot(s=>{secrets={};s.docs.forEach(x=>secrets[x.id]=x.data().pw);renderPeople()}));
   }
   render();window.scrollTo({top:0});
@@ -446,7 +449,7 @@ async function enter(u){
   if(focusDay)focusScroll();
   nfAfterLogin();
   instAfterLogin();
-  if(!admin)msgListen();
+  msgListen();
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
@@ -695,47 +698,72 @@ $("cal").onclick=()=>{
 /* ---------- people (admin) ---------- */
 const waText=(name,pw)=>`Kanaat Ödemeler giriş bilgileriniz\n\nBağlantı: ${APP_URL}\nAd soyad: ${name}\nŞifre: ${pw}\n\nİlk girişten sonra üstteki "Ayarlar" düğmesinden kendi şifrenizi belirleyin. Bilgileri kimseyle paylaşmayın.`;
 async function copy(text){try{await navigator.clipboard.writeText(text);toast("Kopyalandı")}catch(e){toast("Kopyalanamadı; metni basılı tutup seçin")}}
-/* ---------- mesajlar: yönetici seçtiği kişiye (ya da herkese) yazar ---------- */
-let msgAll=[],msgIn={},msgKnown=null,msgMarked=new Set();
+/* ---------- mesajlar: yönetici herkese ya da seçtiği kişiye yazar; kişiler yöneticiye yazar ve cevap verir ---------- */
+let msgAll=[],msgIn={},msgKnown=null,msgMarked=new Set(),admins=[],repOpen=null,repDraft="";
 const fmtAt=t=>t&&t.toDate?t.toDate().toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"şimdi";
+const isAdm=()=>me&&me.role==="admin";
+const toMe=m=>m.from!==me.uid&&(m.to===me.uid||m.to==="*");
 function msgListen(){
-  const take=key=>s=>{for(const id of Object.keys(msgIn))if(msgIn[id]._k===key)delete msgIn[id];s.docs.forEach(x=>{msgIn[x.id]={id:x.id,_k:key,...x.data()}});msgInbox()};
+  if(isAdm()){unsub.push(db.collection("msgs").orderBy("at","desc").limit(80).onSnapshot({includeMetadataChanges:true},s=>{msgIn={};s.docs.forEach(x=>{msgIn[x.id]={id:x.id,...x.data()}});msgInbox();msgRender()},()=>{}));return}
+  const take=key=>s=>{for(const id of Object.keys(msgIn))if(msgIn[id]._k===key)delete msgIn[id];s.docs.forEach(x=>{msgIn[x.id]={id:x.id,_k:key,...x.data()}});msgInbox();msgRender()};
   unsub.push(db.collection("msgs").where("to","==",me.uid).onSnapshot(take("me"),()=>{}));
-  unsub.push(db.collection("msgs").where("to","==","*").onSnapshot(take("all"),()=>{}))}
+  unsub.push(db.collection("msgs").where("to","==","*").onSnapshot(take("all"),()=>{}));
+  unsub.push(db.collection("msgs").where("from","==",me.uid).onSnapshot({includeMetadataChanges:true},take("out"),()=>{}));
+  db.collection("users").where("role","==","admin").get().then(s=>{admins=s.docs.map(x=>({uid:x.id,...x.data()}));msgRender()}).catch(()=>{})}
+async function msgSend(to,text,replyTo){
+  const doc={from:me.uid,fromName:me.name,to,text,at:firebase.firestore.FieldValue.serverTimestamp(),readBy:{},deliveredTo:{}};
+  if(replyTo)doc.replyTo=replyTo;
+  await db.collection("msgs").add(doc)}
+function markRead(id){return db.collection("msgs").doc(id).update({["readBy."+me.uid]:firebase.firestore.FieldValue.serverTimestamp()})}
 function msgInbox(){if(!me)return;
-  const un=Object.values(msgIn).filter(m=>m.from!==me.uid&&!(m.readBy&&m.readBy[me.uid])).sort((a,b)=>((a.at&&a.at.seconds)||9e9)-((b.at&&b.at.seconds)||9e9));
-  if(msgKnown){const fresh=un.filter(m=>!msgKnown.has(m.id));if(fresh.length)toast(`${fresh[0].fromName||"Yönetici"} size mesaj gönderdi`)}
+  const all=Object.values(msgIn);
+  const un=all.filter(m=>toMe(m)&&!(m.readBy&&m.readBy[me.uid])).sort((a,b)=>((a.at&&a.at.seconds)||9e9)-((b.at&&b.at.seconds)||9e9));
+  if(msgKnown){const fresh=un.filter(m=>!msgKnown.has(m.id));if(fresh.length)toast(`${fresh[0].fromName||"Bir kişi"} size mesaj gönderdi`)}
   msgKnown=new Set(Object.keys(msgIn));
   /* ulaştı: bu kişinin uygulamasına düşen her mesajı bir kez işaretle */
-  for(const m of Object.values(msgIn)){if(m.from===me.uid||(m.deliveredTo&&m.deliveredTo[me.uid])||msgMarked.has(m.id))continue;msgMarked.add(m.id);
+  for(const m of all){if(!toMe(m)||(m.deliveredTo&&m.deliveredTo[me.uid])||msgMarked.has(m.id))continue;msgMarked.add(m.id);
     db.collection("msgs").doc(m.id).update({["deliveredTo."+me.uid]:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>msgMarked.delete(m.id))}
-  const bar=$("msgBar");bar.hidden=!un.length;
-  bar.innerHTML=un.map(m=>`<div class="calask msgbar"><div><div class="tt">${esc(m.fromName||"Yönetici")} · mesaj <span class="psup">${esc(fmtAt(m.at))}</span></div><div class="mt">${esc(m.text)}</div></div><div class="row"><button class="btn" type="button" data-mread="${esc(m.id)}">Okudum</button></div></div>`).join("");
-  bar.style.display=un.length?"flex":"";bar.style.flexDirection="column";bar.style.gap="8px";
-  bar.querySelectorAll("[data-mread]").forEach(b=>b.onclick=()=>{b.disabled=true;
-    db.collection("msgs").doc(b.dataset.mread).update({["readBy."+me.uid]:firebase.firestore.FieldValue.serverTimestamp()}).catch(e=>{b.disabled=false;toast("Kaydedilemedi ("+e.code+")")})})}
-function msgRender(){if(!me||me.role!=="admin")return;
-  const sel=$("msgTo"),cur=sel.value,others=people.filter(p=>p.uid!==me.uid);
-  sel.innerHTML=others.map(p=>`<option value="${esc(p.uid)}">${esc(p.name)}</option>`).join("")+(others.length>1?`<option value="*">Herkes</option>`:"");
+  const bar=$("msgBar"),ta=$("repText");if(ta)repDraft=ta.value;
+  bar.hidden=!un.length;bar.style.display=un.length?"flex":"";bar.style.flexDirection="column";bar.style.gap="8px";
+  if(repOpen&&!un.some(m=>m.id===repOpen))repOpen=null;
+  bar.innerHTML=un.map(m=>`<div class="calask msgbar"><div style="min-width:0;flex:1 1 260px"><div class="tt">${esc(m.fromName||"")} · mesaj <span class="psup">${esc(fmtAt(m.at))}</span></div><div class="mt">${esc(m.text)}</div>
+    ${repOpen===m.id?`<form class="rep" data-repf="${esc(m.id)}"><textarea id="repText" rows="2" maxlength="800" placeholder="Cevabınız">${esc(repDraft)}</textarea><button class="btn" type="submit">Gönder</button><button class="link" type="button" data-repno>Vazgeç</button></form>`:""}</div>
+    ${repOpen===m.id?"":`<div class="row"><button class="btn" type="button" data-mrep="${esc(m.id)}">Cevap yaz</button><button class="btn ghost" type="button" data-mread="${esc(m.id)}">Okudum</button></div>`}</div>`).join("");
+  bar.querySelectorAll("[data-mread]").forEach(b=>b.onclick=()=>{b.disabled=true;markRead(b.dataset.mread).catch(e=>{b.disabled=false;toast("Kaydedilemedi ("+e.code+")")})});
+  bar.querySelectorAll("[data-mrep]").forEach(b=>b.onclick=()=>{repOpen=b.dataset.mrep;repDraft="";msgInbox();const t=$("repText");if(t)t.focus()});
+  bar.querySelectorAll("[data-repno]").forEach(b=>b.onclick=()=>{repOpen=null;repDraft="";msgInbox()});
+  bar.querySelectorAll("[data-repf]").forEach(f=>f.onsubmit=async ev=>{ev.preventDefault();const id=f.dataset.repf,m=msgIn[id],text=$("repText").value.trim();
+    if(!text){toast("Cevabı yazın");return}const btn=f.querySelector("button[type=submit]");btn.disabled=true;
+    try{await msgSend(m.from,text,id);await markRead(id);repOpen=null;repDraft="";toast(`Cevap ${m.fromName||""} kişisine gönderildi`);msgInbox()}
+    catch(x){btn.disabled=false;toast(x.code==="permission-denied"?"Gönderilemedi: Firebase kuralları güncellenmemiş":"Gönderilemedi ("+(x.code||x)+")")}})}
+function statusOf(m,others){const rb=m.readBy||{},dv=m.deliveredTo||{},push=m.pushedAt?" · telefona bildirim gitti":"";
+  const ok=t=>`<span style="color:var(--down);font-weight:600">${t}</span>`;
+  if(!m.at)return`<span style="color:var(--warn)">Gönderiliyor…</span>`;
+  if(m.to==="*")return`${ok(`${Object.keys(dv).length}/${others} kişiye ulaştı`)} · ${Object.keys(rb).length} kişi okudu${push}`;
+  if(rb[m.to])return`${ok("✓✓ Okudu")} ${esc(fmtAt(rb[m.to]))}`;
+  if(dv[m.to])return`${ok("✓✓ Ulaştı")} ${esc(fmtAt(dv[m.to]))} · henüz okunmadı`;
+  return`✓ Gönderildi${push||" · telefona bildirim birkaç dakika içinde gider"} · henüz ulaşmadı`}
+function msgRender(){if(!me)return;
+  const adm=isAdm(),sel=$("msgTo"),cur=sel.value;
+  const targets=adm?people.filter(p=>p.uid!==me.uid):admins.filter(p=>p.uid!==me.uid);
+  sel.innerHTML=targets.map(p=>`<option value="${esc(p.uid)}">${esc(p.name)}${adm?"":" (yönetici)"}</option>`).join("")+(adm&&targets.length>1?`<option value="*">Herkes</option>`:"");
   if(cur&&[...sel.options].some(o=>o.value===cur))sel.value=cur;
-  $("msgSend").disabled=!others.length;
-  if(!others.length){$("msgSent").innerHTML=`<div class="empty">Mesaj göndermek için önce "Erişimi olan kişiler"den birini ekleyin.</div>`;return}
-  const nm=id=>(people.find(p=>p.uid===id)||{}).name||"(kaldırılmış kişi)";
-  $("msgSent").innerHTML=msgAll.length?msgAll.map(m=>{const rb=m.readBy||{};
-    const dv=m.deliveredTo||{},push=m.pushedAt?" · telefona bildirim gitti":"";
-    const ok=t=>`<span style="color:var(--down);font-weight:600">${t}</span>`;
-    const st=!m.at?`<span style="color:var(--warn)">Gönderiliyor…</span>`
-      :m.to==="*"?`${ok(`${Object.keys(dv).length}/${others.length} kişiye ulaştı`)} · ${Object.keys(rb).length} kişi okudu${push}`
-      :rb[m.to]?`${ok("✓✓ Okudu")} ${esc(fmtAt(rb[m.to]))}`
-      :dv[m.to]?`${ok("✓✓ Ulaştı")} ${esc(fmtAt(dv[m.to]))} · henüz okunmadı`
-      :`✓ Gönderildi${push||" · telefona bildirim birkaç dakika içinde gider"} · henüz ulaşmadı`;
-    return`<div class="mrow"><div style="min-width:0"><div><b>${m.to==="*"?"Herkes":esc(nm(m.to))}</b> <span class="psup">· ${esc(fmtAt(m.at))} · ${st}</span></div><div class="mt">${esc(m.text)}</div></div><button class="x" type="button" data-mdel="${esc(m.id)}" aria-label="Mesajı sil">×</button></div>`}).join(""):`<div class="empty">Henüz mesaj gönderilmedi.</div>`;
+  $("msgSend").disabled=!targets.length;
+  $("msgNote").innerHTML=adm?`Seçtiğiniz kişiye ya da herkese yazın. Mesaj, kişinin uygulamasında en üstte görünür; telefon bildirimi açıksa birkaç dakika içinde telefonuna da bildirim gider. Kişi <b>Cevap yaz</b> ile size dönebilir. Durumlar: <b>Gönderildi</b> → <b>telefona bildirim gitti</b> → <b>Ulaştı</b> → <b>Okudu</b>.`
+    :`Yöneticiye mesaj yazın ya da gelen mesajlara cevap verin. Gönderdiğiniz mesajın ulaşıp ulaşmadığı ve okunup okunmadığı aşağıda görünür.`;
+  const nm=id=>id==="*"?"Herkes":id===me.uid?"Siz":((people.find(p=>p.uid===id)||admins.find(p=>p.uid===id)||{}).name||(Object.values(msgIn).find(m=>m.from===id)||{}).fromName||"(kaldırılmış kişi)");
+  const list=Object.values(msgIn).sort((a,b)=>((b.at&&b.at.seconds)||9e9)-((a.at&&a.at.seconds)||9e9));
+  if(!targets.length&&!list.length){$("msgSent").innerHTML=`<div class="empty">${adm?'Mesaj göndermek için önce "Erişimi olan kişiler"den birini ekleyin.':"Henüz mesaj yok."}</div>`;return}
+  const others=people.filter(p=>p.uid!==me.uid).length;
+  $("msgSent").innerHTML=list.length?list.map(m=>{const out=m.from===me.uid,reply=m.replyTo&&msgIn[m.replyTo];
+    const head=out?`<span class="dir">Giden</span> <b>${esc(nm(m.to))}</b>`:`<span class="dir">Gelen</span> <b>${esc(m.fromName||nm(m.from))}</b>`;
+    const st=out?statusOf(m,others):(m.readBy&&m.readBy[me.uid]?"okudunuz":`<b style="color:var(--warn)">okunmadı</b>`);
+    return`<div class="mrow${out?"":" in"}"><div style="min-width:0">${head} <span class="psup">· ${esc(fmtAt(m.at))} · ${st}</span>${reply?`<div class="psup">↳ cevap: “${esc(reply.text.slice(0,60))}${reply.text.length>60?"…":""}”</div>`:""}<div class="mt">${esc(m.text)}</div></div>${adm?`<button class="x" type="button" data-mdel="${esc(m.id)}" aria-label="Mesajı sil">×</button>`:""}</div>`}).join(""):`<div class="empty">Henüz mesaj yok.</div>`;
   $("msgSent").querySelectorAll("[data-mdel]").forEach(b=>b.onclick=()=>db.collection("msgs").doc(b.dataset.mdel).delete().then(()=>toast("Mesaj silindi"),e=>toast("Silinemedi ("+e.code+")")))}
 $("msgForm").addEventListener("submit",async e=>{e.preventDefault();const to=$("msgTo").value,text=$("msgText").value.trim();
   if(!to||!text){toast("Kişiyi seçip mesajı yazın");return}
   const b=$("msgSend");b.disabled=true;
-  try{await db.collection("msgs").add({from:me.uid,fromName:me.name,to,text,at:firebase.firestore.FieldValue.serverTimestamp(),readBy:{},deliveredTo:{}});
-    $("msgText").value="";toast(to==="*"?"Mesaj herkese gönderildi":`Mesaj ${(people.find(p=>p.uid===to)||{}).name||""} kişisine gönderildi`)}
+  try{await msgSend(to,text);$("msgText").value="";toast(to==="*"?"Mesaj herkese gönderildi":`Mesaj ${$("msgTo").selectedOptions[0].textContent} kişisine gönderildi`)}
   catch(x){toast(x.code==="permission-denied"?"Gönderilemedi: Firebase kuralları güncellenmemiş":"Gönderilemedi ("+(x.code||x)+")")}
   finally{b.disabled=false}});
 function renderPeople(){
@@ -776,7 +804,7 @@ function guideSteps(){
   const S=[
   {t:"Hoş geldiniz",p:`Kanaat Ödemeler; vergi, SGK, maaş, kira ve tedarikçi ödemelerini tek listede tutar. Herkes aynı listeyi görür. Birinin yaptığı değişiklik birkaç saniyede herkesin ekranına düşer.`,
    d:`<div class="drow"><div><div class="pname">Muhtasar / stopaj</div><div class="psup">Eylül 2026 muhtasar</div></div><div class="r"><span class="chip busy">2 gün kaldı</span><b class="mono">516.000 ₺</b></div></div>`},
-  {t:"Üstteki uyarılara bakın",p:`Son günü <b>yarın</b> olan ödemeler en üstte turuncu bantla çıkar. Son günü <b>bugün</b> olan ya da <b>geciken</b> ödemeler kırmızıdır. Yöneticiden gelen <b>mesajlar</b> da en üstte sarı kutuda görünür; okuyunca <b>Okudum</b>'a basın. Uygulamayı açınca önce buraya bakın.`,
+  {t:"Üstteki uyarılara bakın",p:`Son günü <b>yarın</b> olan ödemeler en üstte turuncu bantla çıkar. Son günü <b>bugün</b> olan ya da <b>geciken</b> ödemeler kırmızıdır. Gelen <b>mesajlar</b> da en üstte sarı kutuda görünür; <b>Cevap yaz</b> ile cevaplayın ya da <b>Okudum</b>'a basın. Yöneticiye kendiniz yazmak için <b>Ayarlar → Mesajlar</b>. Uygulamayı açınca önce buraya bakın.`,
    d:`<div class="alert">${bell}<div><div class="tt">Son ödeme günü yarın: KDV</div><div class="dd">Eylül 2026 KDV · son ödeme 28.10.2026</div></div><div class="am">1.265.000 ₺</div></div>`},
   {t:"Özet kartlar",p:`Önümüzdeki 30 günde ne kadar ödeme olduğunu, tarihi geçenleri ve bekleyen toplamı gösterir. Tutarı henüz girilmemiş ödemeler toplama katılmaz.`,
    d:`<div class="dkpi"><div><span>30 gün</span><b>2,6 mn ₺</b></div><div><span>Geçen</span><b>0 ₺</b></div><div><span>Bekleyen</span><b>7,9 mn ₺</b></div></div>`},
@@ -801,7 +829,7 @@ function guideSteps(){
    l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
   ];
   if(admin)S.push({t:"Yöneticiye özel",p:`Bunları yalnızca siz görürsünüz:`,
-   l:[`<b>Kişi ekleme:</b> <b>Ayarlar</b> → "Erişimi olan kişiler"e ad soyad yazıp <b>Kişi ekle</b>'ye basın. Çıkan mesajı <b>WhatsApp'ta gönder</b> ile iletin.`,`<b>Mesaj gönderme:</b> <b>Ayarlar</b> → "Mesaj gönder"de kişiyi (ya da Herkes) seçip yazın; okuyup okumadığı altta görünür.`,`<b>Erişimi kaldırma:</b> kişinin yanındaki ×; erişimi hemen kapanır.`,`<b>Ödeme silme:</b> satırın sonundaki ×. Silinen düzenli ödeme geri gelmez.`,`Yeni sürüm çıktığında üstte <b>Yenile</b> bandı belirir.`]});
+   l:[`<b>Kişi ekleme:</b> <b>Ayarlar</b> → "Erişimi olan kişiler"e ad soyad yazıp <b>Kişi ekle</b>'ye basın. Çıkan mesajı <b>WhatsApp'ta gönder</b> ile iletin.`,`<b>Mesajlar:</b> <b>Ayarlar</b> → "Mesajlar"da kişiyi (ya da Herkes) seçip yazın; ulaşıp ulaşmadığı, okunup okunmadığı ve gelen cevaplar altta görünür.`,`<b>Erişimi kaldırma:</b> kişinin yanındaki ×; erişimi hemen kapanır.`,`<b>Ödeme silme:</b> satırın sonundaki ×. Silinen düzenli ödeme geri gelmez.`,`Yeni sürüm çıktığında üstte <b>Yenile</b> bandı belirir.`]});
   S.push({t:"Hazırsınız",p:`Bu kılavuzu istediğiniz zaman üstteki <b>Kılavuz</b> düğmesiyle yeniden açabilirsiniz.`});
   return S;
 }
