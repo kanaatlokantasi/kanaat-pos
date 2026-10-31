@@ -119,7 +119,11 @@ tr.sum td{font-weight:600;border-top:1px solid var(--line)}
 mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .hact{flex-wrap:nowrap}
 .hact .btn{white-space:nowrap}
-@media (max-width:440px){.hact{gap:6px}.hact .btn{padding:7px 10px;font-size:13px}}
+@media (max-width:440px){.hact{gap:4px}.hact .btn{padding:7px 7px;font-size:13px}.hact .badge{margin-left:3px;min-width:16px;height:16px;padding:0 4px}}
+@media (max-width:380px){.hact .btn{padding:6px 7px;font-size:12px}}
+.hact .sm{display:none}
+@media (max-width:480px){.hact .lg{display:none}.hact .sm{display:inline}}
+.hact{max-width:100%;flex-wrap:wrap}
 .ver .chip{margin-left:4px;vertical-align:1px}
 /* iPhone zooms into any field under 16px when tapped: keep every field at 16px on phones and touch screens */
 @media (max-width:900px),(pointer:coarse){input,select,textarea{font-size:16px!important}}
@@ -129,8 +133,11 @@ mark{background:var(--warn-soft);color:inherit;border-radius:3px;padding:0 1px}
 .nfbox{display:flex;gap:10px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px}
 .nfbox p{margin:0;max-width:60ch}
 /* Ayarlar is its own screen: while it is open only the header, settings and (for the admin) people are shown */
-.wrap.set>*:not(header):not(#pwPanel):not(#peoplePanel):not(#msgPanel){display:none!important}
-.wrap:not(.set)>#peoplePanel,.wrap:not(.set)>#msgPanel{display:none!important}
+.wrap.set>*:not(header):not(#pwPanel):not(#peoplePanel){display:none!important}
+.wrap:not(.set)>#peoplePanel{display:none!important}
+.wrap.msgv>*:not(header):not(#msgPanel){display:none!important}
+.wrap:not(.msgv)>#msgPanel{display:none!important}
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:999px;background:var(--up);color:#fff;font:700 11px var(--f-body);vertical-align:1px}
 .msgbar{background:var(--warn-soft);border-color:var(--warn)}
 .msgbar .tt{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .msgbar .mt{white-space:pre-wrap;font-size:15px;color:var(--ink);margin-top:4px;max-width:70ch}
@@ -238,9 +245,9 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 35</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 36</span> <span class="chip" id="conn" hidden></span></div>
     </div>
-    <div class="hact"><button class="btn ghost" type="button" id="cal">Takvime ekle</button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
+    <div class="hact"><button class="btn ghost" type="button" id="cal" aria-label="Takvime ekle"><span class="lg">Takvime ekle</span><span class="sm">Takvim</span></button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="msgBtn" aria-pressed="false">Mesajlar<span class="badge" id="msgBadge" hidden></span></button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
 
   <section class="panel" id="pwPanel" hidden>
@@ -311,7 +318,8 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
   </section>
 
   <section class="panel" id="msgPanel" hidden>
-    <h2>Mesajlar</h2>
+    <button class="btn back" type="button" id="msgClose">← Ödemelere dön</button>
+    <h2 style="margin:14px 0 0">Mesajlar</h2>
     <p class="note" id="msgNote"></p>
     <form class="mform" id="msgForm">
       <label class="f">Kime<select id="msgTo"></select></label>
@@ -475,12 +483,16 @@ async function enter(u){
   let seen=null;try{seen=localStorage.getItem("odKilavuz:"+u.uid)}catch(e){}
   if(seen!==GUIDE_VER)openGuide();
 }
-$("logout").onclick=async()=>{$("lock").hidden=true;pinOk=false;$("instAsk").hidden=true;focusDay=null;$("nfAsk").hidden=true;closeSet();calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
-function openSet(){$("pwPanel").hidden=false;$("app").classList.add("set");$("pwBtn").setAttribute("aria-pressed","true");$("pwe").textContent="";pinRender();nfRender();instRender();window.scrollTo({top:0})}
+$("logout").onclick=async()=>{closeMsg(true);$("lock").hidden=true;pinOk=false;$("instAsk").hidden=true;focusDay=null;$("nfAsk").hidden=true;closeSet();calAsk("");$("q").value="";$("qx").hidden=true;closeAdd();$("guide").hidden=true;stopAll();await auth.signOut().catch(()=>{});showLogin()};
+function openSet(){closeMsg(true);$("pwPanel").hidden=false;$("app").classList.add("set");$("pwBtn").setAttribute("aria-pressed","true");$("pwe").textContent="";pinRender();nfRender();instRender();window.scrollTo({top:0})}
 function closeSet(){$("pwPanel").hidden=true;$("app").classList.remove("set");$("pwBtn").setAttribute("aria-pressed","false");window.scrollTo({top:0})}
 $("pwBtn").onclick=()=>{$("app").classList.contains("set")?closeSet():openSet()};
 $("pwClose").onclick=closeSet;$("pwClose2").onclick=closeSet;
-$("homeT").onclick=()=>{if($("app").classList.contains("set"))closeSet()};
+$("homeT").onclick=()=>{if($("app").classList.contains("set"))closeSet();if($("app").classList.contains("msgv"))closeMsg()};
+function openMsg(){if($("app").classList.contains("set"))closeSet();$("app").classList.add("msgv");$("msgBtn").setAttribute("aria-pressed","true");msgRender();window.scrollTo({top:0})}
+function closeMsg(quiet){$("app").classList.remove("msgv");$("msgBtn").setAttribute("aria-pressed","false");if(!quiet)window.scrollTo({top:0})}
+$("msgBtn").onclick=()=>{$("app").classList.contains("msgv")?closeMsg():openMsg()};
+$("msgClose").onclick=()=>closeMsg();
 $("pwf").onsubmit=async e=>{e.preventDefault();const er=$("pwe");er.textContent="";
   const p0=$("pw0").value,p1=$("pw1").value,p2=$("pw2").value;
   if(p1.length<8){er.textContent="Yeni şifre en az 8 karakter olmalı.";return}if(p1!==p2){er.textContent="İki yeni şifre aynı değil.";return}
@@ -745,6 +757,7 @@ function msgInbox(){if(!me)return;
   /* ulaştı: bu kişinin uygulamasına düşen her mesajı bir kez işaretle */
   for(const m of all){if(!toMe(m)||(m.deliveredTo&&m.deliveredTo[me.uid])||msgMarked.has(m.id))continue;msgMarked.add(m.id);
     db.collection("msgs").doc(m.id).update({["deliveredTo."+me.uid]:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>msgMarked.delete(m.id))}
+  const bg=$("msgBadge");bg.textContent=un.length>9?"9+":String(un.length);bg.hidden=!un.length;
   const bar=$("msgBar"),ta=$("repText");if(ta)repDraft=ta.value;
   bar.hidden=!un.length;bar.style.display=un.length?"flex":"";bar.style.flexDirection="column";bar.style.gap="8px";
   if(repOpen&&!un.some(m=>m.id===repOpen))repOpen=null;
@@ -826,7 +839,7 @@ function guideSteps(){
   const S=[
   {t:"Hoş geldiniz",p:`Kanaat Ödemeler; vergi, SGK, maaş, kira ve tedarikçi ödemelerini tek listede tutar. Herkes aynı listeyi görür. Birinin yaptığı değişiklik birkaç saniyede herkesin ekranına düşer.`,
    d:`<div class="drow"><div><div class="pname">Muhtasar / stopaj</div><div class="psup">Eylül 2026 muhtasar</div></div><div class="r"><span class="chip busy">2 gün kaldı</span><b class="mono">516.000 ₺</b></div></div>`},
-  {t:"Üstteki uyarılara bakın",p:`Son günü <b>yarın</b> olan ödemeler en üstte turuncu bantla çıkar. Son günü <b>bugün</b> olan ya da <b>geciken</b> ödemeler kırmızıdır. Gelen <b>mesajlar</b> da en üstte sarı kutuda görünür; <b>Cevap yaz</b> ile cevaplayın ya da <b>Okudum</b>'a basın. Yöneticiye kendiniz yazmak için <b>Ayarlar → Mesajlar</b>. Uygulamayı açınca önce buraya bakın.`,
+  {t:"Üstteki uyarılara bakın",p:`Son günü <b>yarın</b> olan ödemeler en üstte turuncu bantla çıkar. Son günü <b>bugün</b> olan ya da <b>geciken</b> ödemeler kırmızıdır. Gelen <b>mesajlar</b> da en üstte sarı kutuda görünür; <b>Cevap yaz</b> ile cevaplayın ya da <b>Okudum</b>'a basın. Yöneticiye kendiniz yazmak ve eski yazışmaları görmek için üstteki <b>Mesajlar</b> düğmesine basın. Uygulamayı açınca önce buraya bakın.`,
    d:`<div class="alert">${bell}<div><div class="tt">Son ödeme günü yarın: KDV</div><div class="dd">Eylül 2026 KDV · son ödeme 28.10.2026</div></div><div class="am">1.265.000 ₺</div></div>`},
   {t:"Özet kartlar",p:`Önümüzdeki 30 günde ne kadar ödeme olduğunu, tarihi geçenleri ve bekleyen toplamı gösterir. Tutarı henüz girilmemiş ödemeler toplama katılmaz.`,
    d:`<div class="dkpi"><div><span>30 gün</span><b>2,6 mn ₺</b></div><div><span>Geçen</span><b>0 ₺</b></div><div><span>Bekleyen</span><b>7,9 mn ₺</b></div></div>`},
@@ -851,7 +864,7 @@ function guideSteps(){
    l:[`Ana ekrandaki simge Safari'den ayrı çalışır; ilk açılışta bir kez ad soyad ve şifrenizi girmeniz gerekir, sonra sizi hatırlar.`,`İnternet koparsa sürüm yazısının yanında kırmızı <b>Bağlantı yok</b> çıkar. Bu sırada yaptığınız değişiklik bağlantı gelince kaydedilir; uygulamayı kapatmadan bekleyin.`]},
   ];
   if(admin)S.push({t:"Yöneticiye özel",p:`Bunları yalnızca siz görürsünüz:`,
-   l:[`<b>Kişi ekleme:</b> <b>Ayarlar</b> → "Erişimi olan kişiler"e ad soyad yazıp <b>Kişi ekle</b>'ye basın. Çıkan mesajı <b>WhatsApp'ta gönder</b> ile iletin.`,`<b>Mesajlar:</b> <b>Ayarlar</b> → "Mesajlar"da kişiyi (ya da Herkes) seçip yazın; ulaşıp ulaşmadığı, okunup okunmadığı ve gelen cevaplar altta görünür.`,`<b>Erişimi kaldırma:</b> kişinin yanındaki ×; erişimi hemen kapanır.`,`<b>Ödeme silme:</b> satırın sonundaki ×. Silinen düzenli ödeme geri gelmez.`,`Yeni sürüm çıktığında üstte <b>Yenile</b> bandı belirir.`]});
+   l:[`<b>Kişi ekleme:</b> <b>Ayarlar</b> → "Erişimi olan kişiler"e ad soyad yazıp <b>Kişi ekle</b>'ye basın. Çıkan mesajı <b>WhatsApp'ta gönder</b> ile iletin.`,`<b>Mesajlar:</b> üstteki <b>Mesajlar</b> düğmesinde kişiyi (ya da Herkes) seçip yazın; ulaşıp ulaşmadığı, okunup okunmadığı ve gelen cevaplar altta görünür.`,`<b>Erişimi kaldırma:</b> kişinin yanındaki ×; erişimi hemen kapanır.`,`<b>Ödeme silme:</b> satırın sonundaki ×. Silinen düzenli ödeme geri gelmez.`,`Yeni sürüm çıktığında üstte <b>Yenile</b> bandı belirir.`]});
   S.push({t:"Hazırsınız",p:`Bu kılavuzu istediğiniz zaman üstteki <b>Kılavuz</b> düğmesiyle yeniden açabilirsiniz.`});
   return S;
 }
