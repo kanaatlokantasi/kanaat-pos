@@ -16,6 +16,7 @@ from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 
 APP_URL = "https://kanaatlokantasi.github.io/kanaat-pos/odemeler/"
+REMIND_DAYS = 3  # tutarı girilmemiş ödeme için son günden kaç gün öncesinden itibaren hatırlatılsın
 TUR = {"maas": "Banka maaşları", "et": "Et", "kdv": "KDV", "kredikarti": "Kredi kartları", "sgk": "SGK primi",
        "stopaj": "Muhtasar / stopaj", "gecici": "Geçici vergi", "kurumlar": "Kurumlar vergisi",
        "oda": "Ticaret odası aidatı", "resmi": "Diğer resmi gider", "kira": "Kira", "kaymak": "Kaymak",
@@ -89,7 +90,8 @@ def main():
 
     test = os.environ.get("TEST") == "1"
     mode = os.environ.get("MODE", "")
-    users = {uid for uid, _ in docs("users")}
+    users_d = dict(docs("users"))
+    users = set(users_d)
     tokens = [(t, d) for t, d in docs("tokens")]
 
     msgs = []
@@ -184,25 +186,48 @@ def main():
             url = APP_URL + "?gun=" + days[0]
             body = f"Bildirimler çalışıyor. Dokunun: {g}.{m}.{y} tarihli ödemeler açılacak."
     else:
-        tomorrow = (datetime.datetime.now(ZoneInfo("Europe/Istanbul")).date() + datetime.timedelta(days=1)).isoformat()
+        # ---- her sabah 10:00 ----
+        today_d = datetime.datetime.now(ZoneInfo("Europe/Istanbul")).date()
+        tomorrow = (today_d + datetime.timedelta(days=1)).isoformat()
+        last_rem = (today_d + datetime.timedelta(days=REMIND_DAYS)).isoformat()
         pays = dict(docs("payments"))
         custom = (pays.get("_kalemler") or {}).get("items") or {}
-        due = [p for i, p in pays.items() if i not in SKIP_DOCS and not p.get("paid") and p.get("vade") == tomorrow]
-        print(f"Yarın son günü olan bekleyen ödeme: {len(due)}")
-        if not due:
-            return 0
         lab = lambda t: TUR.get(t) or custom.get(t) or t
-        if len(due) == 1:
-            p = due[0]
-            title = f"Yarın son gün: {lab(p.get('tur'))}"
-            body = " · ".join(x for x in [p.get("acik"), tl(p.get("tutar"))] if x)
-        else:
-            title = f"Yarın {len(due)} ödemenin son günü"
-            body = ", ".join(f"{lab(p.get('tur'))} {tl(p.get('tutar'))}" for p in due)
-            if len(body) > 230:
-                body = body[:227] + "…"
-        tag = "odeme-" + tomorrow
-        url = APP_URL + "?gun=" + tomorrow
+        open_p = [p for i, p in pays.items() if i not in SKIP_DOCS and not p.get("paid")]
+        due = [p for p in open_p if p.get("vade") == tomorrow]
+        # tutarı girilmemiş, son günü 1-3 gün sonra olan ödemeler (tutar hatırlatması açık kişilere)
+        missing = sorted([p for p in open_p if p.get("tutar") is None and tomorrow <= (p.get("vade") or "") <= last_rem],
+                         key=lambda p: p.get("vade"))
+        remind_uids = {uid for uid, u in users_d.items() if u.get("tutarHatirlat")}
+        print(f"Yarın son günü olan bekleyen ödeme: {len(due)} · tutarı eksik ödeme: {len(missing)} · hatırlatılacak kişi: {len(remind_uids)}")
+        general = None
+        if due:
+            if len(due) == 1:
+                p = due[0]
+                t = f"Yarın son gün: {lab(p.get('tur'))}"
+                b = " · ".join(x for x in [p.get("acik"), tl(p.get("tutar"))] if x)
+            else:
+                t = f"Yarın {len(due)} ödemenin son günü"
+                b = ", ".join(f"{lab(p.get('tur'))} {tl(p.get('tutar'))}" for p in due)
+            general = (t, b[:227] + "…" if len(b) > 230 else b, APP_URL + "?gun=" + tomorrow, "odeme-" + tomorrow)
+        reminder = None
+        if missing and remind_uids:
+            if len(missing) == 1:
+                p = missing[0]
+                t = f"Tutar girilmedi: {lab(p.get('tur'))}"
+                b = " · ".join(x for x in [p.get("acik"), f"son ödeme {ddmm(p.get('vade'))}", "Tutarı girmeyi unutmayın."] if x)
+            else:
+                t = f"{len(missing)} ödemenin tutarı girilmedi"
+                b = "; ".join(f"{lab(p.get('tur'))} · son ödeme {ddmm(p.get('vade'))}" for p in missing) + ". Tutarları girmeyi unutmayın."
+            reminder = (t, b[:227] + "…" if len(b) > 230 else b, APP_URL + "?gun=" + missing[0]["vade"], "tutar-" + today_d.isoformat())
+        if not general and not reminder:
+            return 0
+
+        def make(d):
+            out = [general] if general else []
+            if reminder and d.get("uid") in remind_uids:
+                out.append(reminder)
+            return out
 
     sent = removed = failed = 0
     pushed_msgs = set()
@@ -211,33 +236,35 @@ def main():
             s.delete(f"{base}/tokens/{tok}", timeout=30)
             removed += 1
             continue
-        if make:
-            m = make(d)
-            if not m:
-                continue
-            title, body, url, tag = m
-        msg = {"message": {"token": tok,
-                           "data": {"title": title, "body": body, "url": url, "tag": tag},
-                           "webpush": {"headers": {"Urgency": "high", "TTL": "43200"}}}}
-        r = s.post(f"https://fcm.googleapis.com/v1/projects/{pid}/messages:send", json=msg, timeout=30)
-        if r.ok:
-            sent += 1
-            if make:
-                for e in events:
-                    if e[0] == "msj" and e[1].get("to") in ("*", d.get("uid")) and e[3] != d.get("uid"):
-                        pushed_msgs.add(e[1]["_id"])
+        out = make(d) if make else [(title, body, url, tag)]
+        if not out:
             continue
-        err = ""
-        try:
-            err = json.dumps(r.json().get("error", {}))
-        except Exception:
-            pass
-        if r.status_code == 404 or "UNREGISTERED" in err or ("INVALID_ARGUMENT" in err and "token" in err.lower()):
-            s.delete(f"{base}/tokens/{tok}", timeout=30)  # telefon artık bildirim almıyor
-            removed += 1
-        else:
-            failed += 1
-            print(f"Gönderilemedi: HTTP {r.status_code}")
+        if isinstance(out, tuple):
+            out = [out]
+        for title, body, url, tag in out:
+          msg = {"message": {"token": tok,
+                             "data": {"title": title, "body": body, "url": url, "tag": tag},
+                             "webpush": {"headers": {"Urgency": "high", "TTL": "43200"}}}}
+          r = s.post(f"https://fcm.googleapis.com/v1/projects/{pid}/messages:send", json=msg, timeout=30)
+          if r.ok:
+              sent += 1
+              if mode == "olay":
+                  for e in events:
+                      if e[0] == "msj" and e[1].get("to") in ("*", d.get("uid")) and e[3] != d.get("uid"):
+                          pushed_msgs.add(e[1]["_id"])
+              continue
+          err = ""
+          try:
+              err = json.dumps(r.json().get("error", {}))
+          except Exception:
+              pass
+          if r.status_code == 404 or "UNREGISTERED" in err or ("INVALID_ARGUMENT" in err and "token" in err.lower()):
+              s.delete(f"{base}/tokens/{tok}", timeout=30)  # telefon artık bildirim almıyor
+              removed += 1
+              break
+          else:
+              failed += 1
+              print(f"Gönderilemedi: HTTP {r.status_code}")
     if mode == "olay" and not test and sent:
         # mesajlar için "telefona bildirim gitti" bilgisini kaydet
         stamp_ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
