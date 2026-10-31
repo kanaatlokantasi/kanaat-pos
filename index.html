@@ -312,7 +312,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 176</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 177</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -1759,6 +1759,7 @@ function askWaiter(change){
     ${roster().length&&!isTrusted()?`<div><b style="font-size:14px">ya da adınıza dokunun</b><div class="vtabs" style="margin-top:6px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${roster().map(r=>`<button data-act="wPick" data-n="${esc(r.n)}" style="font-size:15px">${esc(r.n)}</button>`).join('')}</div></div>`:''}
     <p id="wErr" class="muted" style="margin:0;color:var(--danger);min-height:1.2em"></p>
     <button class="btn pri block" id="wOk">Kaydet</button>
+    ${isTrusted()?'':'<button class="btn block" data-act="iAmAdmin" style="min-height:48px">🔑 Yöneticiyim (şifre ile gir)</button>'}
     ${change?'<button class="btn" data-act="close">Vazgeç</button>':''}`);
   const i=document.getElementById('wname');setTimeout(()=>i.focus(),80);
   const go=()=>{let v=i.value.replace(/\s+/g,' ').trim();
@@ -2232,6 +2233,10 @@ A.partPay=()=>{const t=S.tables[ui.table];if(!t)return;if(!mineT(t)){toast('Bu m
   else{render();openCart();toast(`Ödendi: ${fmt(total+tip)} · masada kalan ${fmt(tTotal(S.tables[k]))}`)}};
 A.trainOn=()=>ask('Bu telefonda eğitim modu açılsın mı?','Eğitimi aç',trainStart,false);
 A.trainOff=()=>{try{localStorage.removeItem('kTrain')}catch(e){}location.reload()};
+/* yönetici kendi telefonunda: şifreyle girince bu cihaz yönetici cihazı olur, bir daha isim sorulmaz */
+A.iAmAdmin=()=>{const typed=(document.getElementById('wname')?.value||'').replace(/\s+/g,' ').trim();
+  requireAdmin(()=>{S.settings.trustedAdmin=true;if(!roster().some(r=>r.n===S.settings.waiter))S.settings.waiter=typed.length>=2&&!roster().some(r=>fold(r.n)===fold(typed))?typed.split(' ').map(x=>x.charAt(0).toLocaleUpperCase('tr')+x.slice(1)).join(' '):'Yönetici';
+    save();closeLayer();renderAdmChip();render();toast('Bu cihaz yönetici cihazı oldu · isim sorulmayacak')})};
 A.wPick=d=>{const i=document.getElementById('wname');if(i){i.value=d.n;document.getElementById('wOk').click()}};
 A.msgPick=d=>{ui.msgTo=d.n;msgToRender()};
 A.msgQ=d=>{const ta=document.getElementById('msgText');if(ta)ta.value=d.t};
@@ -2277,7 +2282,9 @@ if(TRAIN&&!VIEW){document.querySelector('header.top').insertAdjacentHTML('aftere
 if(!VIEW&&handOf(S.settings.handFont))setTimeout(()=>handReady(),1500);
 if(VIEW)custView();
 else{render();
-if(!(S.settings.waiter||'').trim()||(!isTrusted()&&roster().length&&!myBlock()))askWaiter(false)}
+/* yönetici cihazında isim sorulmaz */
+if(isTrusted()){if(!(S.settings.waiter||'').trim()){S.settings.waiter='Yönetici';save();renderWaiterTag()}}
+else if(!(S.settings.waiter||'').trim()||(roster().length&&!myBlock()))askWaiter(false)}
 </script>
 </body>
 </html>
