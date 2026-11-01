@@ -230,6 +230,15 @@ footer{padding-block:30px 90px;color:var(--muted);font-size:13px}
 .updbar button{background:var(--accent-ink);color:var(--accent);border:0;border-radius:6px;padding:4px 10px;font-weight:700}
 .thumb.loading{opacity:.6}
 
+.lb-bar{gap:10px}
+.lb-title{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-bar [data-lb="back"]{font-size:15px;padding:7px 12px}
+.lb-view.pdf{display:block;place-items:initial;text-align:center;padding:8px 8px 40px;-webkit-overflow-scrolling:touch}
+.lb-view.pdf .pdfpage{display:block;margin:0 auto;width:100%;max-width:1100px;height:auto;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.lb-view.pdf.zoom .pdfpage{width:200%;max-width:none}
+.pgno{color:#aab3ae;font-size:12px;margin:6px 0 16px}
+.lb-msg{color:#dfe6e2;text-align:center;display:grid;gap:12px;justify-items:center;padding:40px 16px}
+
 </style>
 </head>
 <body>
@@ -405,7 +414,7 @@ function render(){
   document.body.classList.toggle("placing",!!placing);
   spy();
 }
-function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 1</div></footer>`}
+function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 2</div></footer>`}
 function countByType(){const st=META.stations||[];return Object.keys(TYPES).map(t=>[t,st.filter(s=>s.type===t).length]).filter(x=>x[1]).map(([t,n])=>`${n} ${TYPES[t].kisa}`).join(" · ")}
 function stationsSorted(){const o=Object.keys(TYPES);return (META.stations||[]).slice().sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)||(parseInt(a.no)||0)-(parseInt(b.no)||0))}
 function popHtml(){
@@ -508,28 +517,57 @@ document.addEventListener("click",async e=>{
   else if(a==="edit-prod")prodForm((META.products||[]).find(p=>p.id===el.dataset.id));
 });
 
-/* ---------- viewers ---------- */
-async function openFile(id,priv){
-  const ov=document.createElement("div");ov.className="ov";ov.innerHTML=`<div class="sheet" role="dialog" aria-label="Belge"><h2>Belge</h2><p class="muted" id="ofm" style="margin:0">Yükleniyor…</p><div class="bar"><i id="ofb" style="width:30%"></i></div><div class="sheet-acts"><span></span><div style="display:flex;gap:8px"><button class="btn" data-x>Kapat</button></div></div></div>`;
-  document.body.appendChild(ov);ov.addEventListener("click",ev=>{if(ev.target===ov||ev.target.closest("[data-x]"))ov.remove()});
-  try{const f=await getFile(id,priv);
-    if(f.mime.startsWith("image/")){ov.remove();showImage(f.url,f.name||"Belge");return}
-    $("#ofb",ov).style.width="100%";$("#ofm",ov).textContent=(f.name||"Belge")+" hazır.";
-    ov.querySelector(".sheet-acts div").insertAdjacentHTML("afterbegin",`<a class="btn primary" href="${f.url}" target="_blank" rel="noopener">Aç</a>`);
-  }catch(err){$("#ofm",ov).textContent="Belge açılamadı. İnternet bağlantınızı kontrol edin.";}
+/* ---------- viewers: full screen inside the app, with "← Geri" and the phone's back gesture ---------- */
+const viewers=[];
+function closeTopViewer(){const v=viewers.pop();if(v){v.el.remove();v.onClose&&v.onClose()}}
+window.addEventListener("popstate",()=>{if(viewers.length)closeTopViewer()});
+function viewer(title,extra){
+  const lb=document.createElement("div");lb.className="lb";lb.setAttribute("role","dialog");lb.setAttribute("aria-label",title);
+  lb.innerHTML=`<div class="lb-bar"><button class="btn sm" data-lb="back">← Geri</button><div class="lb-title"></div><div style="display:flex;gap:6px">${extra||""}</div></div><div class="lb-view"></div>`;
+  lb.querySelector(".lb-title").textContent=title;
+  document.body.appendChild(lb);const v={el:lb};viewers.push(v);
+  try{history.pushState({hkViewer:viewers.length},"")}catch(e){}
+  lb.addEventListener("click",ev=>{const b=ev.target.closest("[data-lb]");if(!b)return;
+    if(b.dataset.lb==="back"){if(history.state&&history.state.hkViewer)history.back();else closeTopViewer()}
+    else if(b.dataset.lb==="zoom"){const z=lb.querySelector(".lb-view").classList.toggle("zoom");b.textContent=z?"Küçült":"Yakınlaştır"}});
+  return v}
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&viewers.length){if(history.state&&history.state.hkViewer)history.back();else closeTopViewer()}});
+const setTitle=(v,t)=>{v.el.querySelector(".lb-title").textContent=t};
+const viewBody=v=>v.el.querySelector(".lb-view");
+function showImage(url,title,extra){const v=viewer(title,(extra||"")+`<button class="btn sm" data-lb="zoom">Yakınlaştır</button>`);
+  viewBody(v).innerHTML=`<img alt="">`;const img=viewBody(v).querySelector("img");img.src=url;img.alt=title;return v}
+let pdfjsP=null;
+function loadPdfJs(){if(!pdfjsP)pdfjsP=loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js").then(()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";return window.pdfjsLib});pdfjsP.catch(()=>{pdfjsP=null});return pdfjsP}
+async function showPdf(f,title){
+  const v=viewer(title,`<button class="btn sm" data-lb="zoom">Yakınlaştır</button>`);const body=viewBody(v);body.classList.add("pdf");
+  body.innerHTML=`<p class="lb-msg">Belge hazırlanıyor…</p>`;
+  try{const lib=await loadPdfJs();const doc=await lib.getDocument({data:new Uint8Array(await f.blob.arrayBuffer())}).promise;
+    body.innerHTML="";const W=Math.min(body.clientWidth||window.innerWidth,1100);
+    for(let i=1;i<=doc.numPages;i++){if(!v.el.isConnected)return;
+      const page=await doc.getPage(i);const vp0=page.getViewport({scale:1});const scale=(W-16)/vp0.width*Math.min(window.devicePixelRatio||1,2);const vp=page.getViewport({scale});
+      const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.className="pdfpage";c.setAttribute("aria-label",`Sayfa ${i}`);
+      const lab=document.createElement("div");lab.className="pgno";lab.textContent=`Sayfa ${i} / ${doc.numPages}`;
+      body.appendChild(c);body.appendChild(lab);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise}
+  }catch(e){body.innerHTML=`<div class="lb-msg"><p>Belge burada gösterilemedi.</p><a class="btn primary" href="${f.url}" target="_blank" rel="noopener">Belgeyi ayrı açın</a></div>`}
 }
-function showImage(url,title,nav){
-  const lb=document.createElement("div");lb.className="lb";lb.setAttribute("role","dialog");
-  lb.innerHTML=`<div class="lb-bar"><div><b>${esc(title)}</b></div><div style="display:flex;gap:6px">${nav||""}<button class="btn sm" data-lb="zoom">Yakınlaştır</button><button class="btn sm" data-lb="close">Kapat</button></div></div><div class="lb-view"><img src="${url}" alt="${esc(title)}"></div>`;
-  lb.addEventListener("click",ev=>{const b=ev.target.closest("[data-lb]");if(!b)return;if(b.dataset.lb==="close")lb.remove();else if(b.dataset.lb==="zoom")lb.querySelector(".lb-view").classList.toggle("zoom")});
-  document.body.appendChild(lb);return lb}
+async function openFile(id,priv){
+  const v=viewer("Belge");viewBody(v).innerHTML=`<p class="lb-msg">Yükleniyor…</p>`;
+  try{const f=await getFile(id,priv);if(!v.el.isConnected)return;
+    viewers.splice(viewers.indexOf(v),1);v.el.remove();
+    try{history.replaceState(null,"")}catch(e){}
+    if(f.mime.startsWith("image/")){replaceViewer(()=>showImage(f.url,f.name||"Belge"))}
+    else replaceViewer(()=>showPdf(f,f.name||"Belge"));
+  }catch(err){viewBody(v).innerHTML=`<p class="lb-msg">Belge açılamadı. İnternet bağlantınızı kontrol edin.</p>`}
+}
+/* reuse the history entry the loading screen already pushed */
+function replaceViewer(fn){const push=history.pushState;history.pushState=function(st){try{history.replaceState(st,"")}catch(e){}};try{fn()}finally{history.pushState=push}}
 async function openLightbox(vid,i){
   const v=VISITS.find(x=>x.id===vid);if(!v)return;const ph=v.photos||[];
   const title=()=>`${fmt(v.date)} · Sıra no ${v.sira||"—"}${ph.length>1?` · ${i+1}/${ph.length}`:""}`;
-  const lb=showImage(ph[i].t,title(),ph.length>1?`<button class="btn sm" data-lb="prev">‹</button><button class="btn sm" data-lb="next">›</button>`:"");
-  const load=async()=>{lb.querySelector(".lb-bar b").textContent=title();const img=lb.querySelector("img");img.src=ph[i].t;try{const f=await getFile(ph[i].f,false);img.src=f.url}catch(e){toast("Fotoğrafın büyük hali yüklenemedi")}};
-  lb.addEventListener("click",ev=>{const b=ev.target.closest("[data-lb]");if(!b)return;if(b.dataset.lb==="prev"){i=(i-1+ph.length)%ph.length;load()}else if(b.dataset.lb==="next"){i=(i+1)%ph.length;load()}});
-  const key=ev=>{if(ev.key==="Escape"){lb.remove();document.removeEventListener("keydown",key)}};document.addEventListener("keydown",key);
+  const vw=showImage(ph[i].t,title(),ph.length>1?`<button class="btn sm" data-lb="prev">‹</button><button class="btn sm" data-lb="next">›</button>`:"");
+  const img=viewBody(vw).querySelector("img");
+  const load=async()=>{setTitle(vw,title());img.src=ph[i].t;try{const f=await getFile(ph[i].f,false);img.src=f.url}catch(e){toast("Fotoğrafın büyük hali yüklenemedi")}};
+  vw.el.addEventListener("click",ev=>{const b=ev.target.closest("[data-lb]");if(!b)return;if(b.dataset.lb==="prev"){i=(i-1+ph.length)%ph.length;load()}else if(b.dataset.lb==="next"){i=(i+1)%ph.length;load()}});
   load();
 }
 
@@ -786,7 +824,7 @@ async function runSetup(){
 
 /* ---------- toast & update ---------- */
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;t.setAttribute("role","status");document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
-const MY_VER=1;
+const MY_VER=2;
 async function checkUpdate(){if(!/^https?:/.test(location.protocol))return;
   try{const r=await fetch(location.pathname+"?ver="+Date.now(),{cache:"no-store"});if(!r.ok)return;const m=(await r.text()).match(/const MY_VER=(\d+);/);const v=m?parseInt(m[1]):0;
     if(v>MY_VER&&!$(".updbar")){const d=document.createElement("div");d.className="updbar";d.innerHTML=`<span>Yeni sürüm hazır.</span><button type="button">Yenile</button>`;d.querySelector("button").onclick=()=>location.replace(location.pathname+"?v="+v);document.body.appendChild(d)}}catch(e){}}
