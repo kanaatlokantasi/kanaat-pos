@@ -312,7 +312,7 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 178</small></div>
+    <div class="brand" data-act="waiterChange" role="button" aria-label="Garson değiştir"><b>Kanaat Lokantası</b><small><span id="wtag"></span>POS · Sürüm 179</small></div>
     <button class="chip on" id="admChip" data-act="lock" hidden aria-label="Yönetici açık, kilitle" title="Kilitle"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg></button>
     <button class="chip" id="prChip" data-act="printerChip"><i></i><span>Yazıcı</span></button>
   </header>
@@ -335,6 +335,8 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}
 /* ============ veri ============ */
 /* eğitim (deneme) modu: kayıtlar gerçek tutulur, masalar/adisyonlar 'eğitim' olarak işaretlenir, fişin en altında siyah bantta EĞİTİM AMAÇLIDIR yazar */
 const TRAIN=(()=>{try{return localStorage.getItem('kTrain')==='1'}catch(e){return false}})();
+/* uygulama kapsamı index.html: kök adresle açılınca adresi index.html'e çevir (Chrome 'uygulamayı yükle' sunsun) */
+try{if(/\/kanaat-pos\/$/.test(location.pathname))history.replaceState(null,'',location.pathname+'index.html'+location.search+location.hash)}catch(e){}
 const LS='kanaat-pos-v1';
 /* eğitim videosunu sonuna kadar izleyen garson: video ?egitim=tamam ile geri döner */
 try{if(new URLSearchParams(location.search).get('egitim')==='tamam'){localStorage.setItem('kEgitim',String(Date.now()));history.replaceState(null,'',location.pathname+location.hash)}}catch(e){}try{localStorage.removeItem('kanaat-pos-train')}catch(e){}
