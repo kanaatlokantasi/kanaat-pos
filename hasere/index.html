@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Haşere Kontrol Dosyası · Kanaat Lokantası</title>
+<meta name="theme-color" content="#1D5A46">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0} img{max-width:100%} [hidden]{display:none!important}
+
+/* Layout: a dossier — summary strip, sticky section index, then visits / plan / products / documents / emergency, each as a plain section. */
+:root{
+  --bg:#F3F5F2; --surface:#FFFFFF; --sunk:#E9EDE8; --ink:#17201B; --muted:#58645D; --line:#D6DDD7;
+  --accent:#1D5A46; --accent-ink:#FFFFFF; --accent-soft:#DCEBE3;
+  --ok:#23704A; --ok-soft:#DDF0E4; --warn:#9A5B00; --warn-soft:#FBEBCF; --bad:#A82A20; --bad-soft:#F8DEDA;
+  --t-ilt:#D99A00; --t-canli:#2D69A0; --t-yem:#B8372D; --t-glue:#14857A; --t-feromon:#7A4BB0; --t-guve:#8A5A2B; --t-monitor:#5F6B66;
+  --f-ui:"Archivo",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1412; --surface:#171E1A; --sunk:#1E2722; --ink:#E4EAE6; --muted:#9AA7A0; --line:#2B3530;
+  --accent:#6CC1A0; --accent-ink:#0B1A14; --accent-soft:#1F3A30;
+  --ok:#6BCB95; --ok-soft:#183324; --warn:#F0B355; --warn-soft:#3A2A10; --bad:#F08A80; --bad-soft:#3D1C19;
+  --t-ilt:#F2C230; --t-canli:#6BA6DE; --t-yem:#EE7A6E; --t-glue:#4CC4B6; --t-feromon:#B592E6; --t-guve:#C99A68; --t-monitor:#9AA7A0;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1412; --surface:#171E1A; --sunk:#1E2722; --ink:#E4EAE6; --muted:#9AA7A0; --line:#2B3530;
+  --accent:#6CC1A0; --accent-ink:#0B1A14; --accent-soft:#1F3A30;
+  --ok:#6BCB95; --ok-soft:#183324; --warn:#F0B355; --warn-soft:#3A2A10; --bad:#F08A80; --bad-soft:#3D1C19;
+  --t-ilt:#F2C230; --t-canli:#6BA6DE; --t-yem:#EE7A6E; --t-glue:#4CC4B6; --t-feromon:#B592E6; --t-guve:#C99A68; --t-monitor:#9AA7A0;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-stretch:72%;text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(30px,6vw,46px);font-weight:750;letter-spacing:-.01em}
+h2{font-size:26px;font-weight:720}
+h3{font-size:17px;font-weight:650;font-stretch:85%}
+.mono{font-family:var(--f-mono);font-size:.86em;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent)}
+
+/* header */
+.head{background:var(--surface);border-bottom:1px solid var(--line)}
+.head .wrap{padding-block:28px 22px;display:grid;gap:14px}
+.head-meta{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--muted);font-size:14px}
+.head-meta b{color:var(--ink);font-weight:600}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:6px}
+.summary>div{background:var(--surface);padding:12px 14px;display:grid;gap:2px;min-width:0}
+.summary .v{font-size:21px;font-weight:700;font-stretch:80%;font-variant-numeric:tabular-nums}
+.summary .s{font-size:13px;color:var(--muted)}
+@media (max-width:720px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* index */
+.index{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.index .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:none}
+.index a{flex:none;text-decoration:none;color:var(--muted);font-weight:600;font-size:14px;padding:6px 12px;border-radius:999px}
+.index a.on{background:var(--ink);color:var(--bg)}
+
+section{padding-block:34px 8px;scroll-margin-top:60px}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.sec-head p{margin:4px 0 0;color:var(--muted);max-width:62ch}
+
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.p-ok{background:var(--ok-soft);color:var(--ok)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--bad-soft);color:var(--bad)}
+.p-neutral{background:var(--sunk);color:var(--muted)}
+.chip{display:inline-block;font-size:12.5px;padding:2px 8px;border-radius:6px;background:var(--sunk);color:var(--ink);white-space:nowrap}
+.chip.acil{background:var(--bad-soft);color:var(--bad);font-weight:600}
+
+/* visits */
+.visits{display:grid;gap:10px}
+.visit{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:16px;padding:14px 16px;align-items:start}
+.visit .date{display:grid;line-height:1.05}
+.visit .date .d{font-size:28px;font-weight:750;font-stretch:70%;font-variant-numeric:tabular-nums}
+.visit .date .m{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.visit .body{display:grid;gap:7px;min-width:0}
+.visit .row1{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.visit dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 14px;margin:0;font-size:14px}
+.visit dt{color:var(--muted)}
+.visit dd{margin:0;min-width:0}
+.visit .side{display:grid;gap:8px;justify-items:end}
+.thumb{width:96px;height:72px;border-radius:6px;border:1px solid var(--line);background:var(--sunk) center/cover no-repeat;padding:0;position:relative}
+.thumb span{position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;padding:1px 6px;border-radius:4px}
+@media (max-width:640px){
+  .visit{grid-template-columns:minmax(0,1fr) auto;gap:10px 14px}
+  .visit .date{grid-column:1;display:flex;gap:8px;align-items:baseline}
+  .visit .body{grid-column:1/-1;grid-row:2}
+  .visit .side{grid-column:2;grid-row:1}
+  .thumb{width:76px;height:56px}
+}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:600;font-size:14px;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:13px}
+.edit-only{display:none!important}
+body.limited .owner-only{display:none!important}
+body.editing .edit-only{display:revert!important}
+body.editing .btn.edit-only,body.editing .edit-row.edit-only{display:inline-flex!important}
+
+/* plan */
+.plan-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.legend button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px 4px 8px;font-size:13px;font-weight:600}
+.legend button[aria-pressed="false"]{opacity:.45}
+.legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.plan-scroll{overflow-x:auto;border-radius:6px}
+.plan{position:relative;min-width:640px;background:#fff;border-radius:6px;user-select:none}
+.plan img{display:block;width:100%;height:auto;max-width:none}
+:root[data-theme="dark"] .plan img{filter:brightness(.92)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .plan img{filter:brightness(.92)}}
+body.placing .plan{cursor:crosshair}
+.mk{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;border:2.5px solid var(--c);background:transparent;padding:0;box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.mk.solid{background:var(--c);color:#fff;font:700 12px/1 var(--f-ui);display:grid;place-items:center;width:24px;height:24px;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.mk[aria-pressed="true"]{outline:3px solid var(--c);outline-offset:3px}
+.mk:hover{transform:translate(-50%,-50%) scale(1.12)}
+.pop{position:absolute;z-index:5;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px 12px;min-width:200px;max-width:260px;font-size:13.5px;display:grid;gap:4px}
+.pop b{font-size:15px}
+.st-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:12px}
+.st-table th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;border-bottom:1px solid var(--line)}
+.st-table td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.st-table tr{cursor:pointer}
+.st-table tr.sel td{background:var(--accent-soft)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+.plan-note{font-size:13px;color:var(--muted);margin:10px 2px 0}
+.tablewrap{overflow-x:auto}
+
+/* products */
+.products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.products{grid-template-columns:minmax(0,1fr)}}
+.prod{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:8px;align-content:start}
+.prod-top{display:flex;justify-content:space-between;gap:10px;align-items:start;flex-wrap:wrap}
+.prod dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:3px 14px;margin:0;font-size:14px}
+.prod dt{color:var(--muted)}
+.prod dd{margin:0}
+.prod .use{font-size:13.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* docs */
+.docgroup{margin-bottom:18px}
+.docgroup h3{margin-bottom:8px}
+.docs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.doc{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;padding:12px 16px;border-top:1px solid var(--line);align-items:center}
+.doc:first-child{border-top:0}
+.doc .t{font-weight:600}
+.doc .m{font-size:13.5px;color:var(--muted)}
+.doc .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:end;align-items:center}
+@media (max-width:560px){.doc{grid-template-columns:minmax(0,1fr)}.doc .acts{justify-content:start}}
+
+/* emergency */
+.emerg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.emerg{grid-template-columns:minmax(0,1fr)}}
+.emerg>div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:4px}
+.emerg .num{font-size:26px;font-weight:750;font-stretch:75%;font-variant-numeric:tabular-nums;user-select:all}
+.emerg .first{border-color:var(--bad);background:var(--bad-soft)}
+.contract{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-top:10px;font-size:14px}
+.contract ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
+
+footer{padding-block:30px 90px;color:var(--muted);font-size:13px}
+
+/* overlay & forms */
+.ov{position:fixed;inset:0;z-index:50;background:rgba(10,14,12,.62);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.sheet{background:var(--surface);color:var(--ink);border-radius:12px;width:min(640px,100%);max-height:100%;overflow:auto;padding:18px 18px 16px;display:grid;gap:14px}
+.sheet h2{font-size:22px}
+.field{display:grid;gap:5px}
+.field>label,.field>.lab{font-size:13px;font-weight:600;color:var(--muted)}
+.field input[type=text],.field input[type=date],.field input[type=number],.field select,.field textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+.field textarea{min-height:64px;resize:vertical}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks label{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13.5px;cursor:pointer}
+.checks input{accent-color:var(--accent)}
+.rowsx{display:grid;gap:6px}
+.rowx{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:6px}
+.rowx input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 9px;min-width:0}
+.photos{display:flex;flex-wrap:wrap;gap:8px}
+.photos .ph{position:relative}
+.photos .ph img{width:84px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.photos .ph button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--bad);color:#fff;font-weight:700;line-height:1}
+.sheet-acts{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.confirm{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:10px 12px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+
+.lb{position:fixed;inset:0;z-index:60;background:#0b0e0d;display:grid;grid-template-rows:auto minmax(0,1fr);color:#fff}
+.lb-bar{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px))}
+.lb-bar .btn{background:#222a26;border-color:#3a443f;color:#fff}
+.lb-view{overflow:auto;display:grid;place-items:center;padding:8px}
+.lb-view img{max-width:100%;max-height:100%;object-fit:contain}
+.lb-view.zoom{place-items:start}
+.lb-view.zoom img{max-width:none;max-height:none;width:180%}
+
+.dock{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:40;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:end}
+.dock .btn{box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.savebar{background:var(--ink);color:var(--bg);border-radius:10px;padding:8px 8px 8px 14px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.25);font-size:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:max(18px,env(safe-area-inset-bottom,0px));z-index:70;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600}
+.edit-banner{background:var(--warn-soft);color:var(--warn);font-weight:600;font-size:14px}
+.edit-banner .wrap{padding-block:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* firebase version additions */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.who{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--muted)}
+.who b{color:var(--ink)}
+.linkbtn{background:none;border:0;padding:4px 0;color:var(--accent);font-weight:600;font-size:13.5px;text-decoration:underline;text-underline-offset:3px}
+.boot{padding-block:80px;text-align:center;color:var(--muted)}
+.notice{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:10px;max-width:520px;margin:30px auto}
+.err{color:var(--bad);font-size:13.5px;min-height:1em;margin:0}
+.bar{height:8px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.inv{width:100%;border-collapse:collapse;font-size:14px}
+.inv th{text-align:left;font-weight:600;color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--line)}
+.inv td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.inv td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.inv tfoot td{font-weight:700;border-bottom:0}
+.inv-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow-x:auto}
+.private{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted);background:var(--sunk);border-radius:999px;padding:3px 10px}
+.ver{font-family:var(--f-mono);font-size:12px}
+.updbar{position:fixed;left:0;right:0;top:0;z-index:80;background:var(--accent);color:var(--accent-ink);display:flex;gap:10px;justify-content:center;align-items:center;padding:calc(8px + env(safe-area-inset-top,0px)) 16px 8px;font-weight:600}
+.updbar button{background:var(--accent-ink);color:var(--accent);border:0;border-radius:6px;padding:4px 10px;font-weight:700}
+.thumb.loading{opacity:.6}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+"use strict";
+/* ---------- settings (same Firebase project and accounts as Kanaat Ödemeler) ---------- */
+const FB_CFG={apiKey:"AIzaSyAbMToI6usmYMqtLu1bAP95FtYldHQNe-U",authDomain:"kanaat-odemeler.firebaseapp.com",projectId:"kanaat-odemeler",storageBucket:"kanaat-odemeler.firebasestorage.app",messagingSenderId:"346687076916",appId:"1:346687076916:web:f34033452fd5502adda861"};
+const FB_VER="10.14.1";
+const DOMAIN="kanaat-odemeler.app";
+const SEED_SALT="TuGnRms9SP0/KVYNoiok3Q==", SEED_IV="QgO9CRR47OmFhPfD", SEED_ITER=150000;
+const CHUNK=700000;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const AYLAR=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const GUNLER=["Pazar","Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi"];
+const pd=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const fmt=s=>s?s.split("-").reverse().join("."):"";
+const mfmt=m=>{if(!m)return"";const [y,a]=m.split("-");return AYLAR[+a-1]+" "+y};
+const today=(()=>{const t=new Date();t.setHours(0,0,0,0);return t})();
+const daysBetween=(a,b)=>Math.round((b-a)/864e5);
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const tl=n=>(n==null||!isFinite(n))?"–":n.toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺";
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const cleanName=s=>String(s||"").replace(/\s+/g," ").trim();
+const slug=s=>cleanName(s).toLocaleLowerCase("tr-TR").replace(/[çğıöşüâîû]/g,c=>({"ç":"c","ğ":"g","ı":"i","ö":"o","ş":"s","ü":"u","â":"a","î":"i","û":"u"}[c])).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,".").replace(/^\.+|\.+$/g,"");
+const emailOf=n=>slug(n)+"@"+DOMAIN;
+const norm=s=>String(s||"").toLocaleLowerCase("tr").replace(/\s+/g," ").trim();
+
+const TYPES={
+  ilt:{ad:"Işıklı sinek tutucu (ILT)",kisa:"ILT",c:"--t-ilt"},
+  canli:{ad:"Canlı yakalama kapanı",kisa:"Canlı kapan",c:"--t-canli"},
+  yem:{ad:"Kemirgen yem istasyonu",kisa:"Yem istasyonu",c:"--t-yem"},
+  glue:{ad:"Yapışkan tuzak (glueboard)",kisa:"Glueboard",c:"--t-glue"},
+  feromon:{ad:"Feromonlu tuzak",kisa:"Feromon",c:"--t-feromon"},
+  guve:{ad:"Güve tuzağı",kisa:"Güve tuzağı",c:"--t-guve"},
+  monitor:{ad:"Böcek monitörü",kisa:"Monitör",c:"--t-monitor"}
+};
+const REASONS=["Rutin","Takip","İlk kurulum","Acil çağrı","Dezenfeksiyon","Denetleme","Eğitim","Tek seferlik"];
+const SCOPES=["Uygulama","Yalıtım","Yem istasyonları","Canlı kapanlar","Işıklı sinek tutucular","Feromonlu tuzaklar","Diğer"];
+const MATERIALS=["Glueboard (K)","Glueboard (B)","Canlı yakalama kapanı","Yem istasyonu","Tüplü glueboard","Güve tuzağı","Sıçan kapanı","Meyve sineği tuzağı","Mekanik yakalama istasyonu","Böcek monitörü","Güve feromonu"];
+const DOCGROUPS={firma:"Hizmet veren firma",plan:"Plan, liste ve formlar",urun:"Ürün belgeleri"};
+const STATUS={dosyada:["Dosyada","p-ok"],talep:["Güncel kopyası talep edildi","p-warn"],arsiv:["Arşiv","p-neutral"]};
+const ACC="image/*,application/pdf,.pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,.gif,.tif,.tiff,.bmp";
+
+/* ---------- state ---------- */
+let auth=null,db=null,me=null;           // me: {uid,name,role}
+let META=null,VISITS=[],DOCS=[],INVOICES=[],metaLoaded=false,visitsLoaded=false,docsLoaded=false;
+let selSt=null,placing=null,hiddenTypes=new Set(),krokiUrl=null,unsubPriv=null,setupOpen=false;
+const isAdm=()=>!!(me&&me.role==="admin");
+const isUser=()=>!!me;
+const canEditVisit=v=>isAdm()||(me&&v.addedByUid===me.uid);
+const canEditInv=v=>isAdm()||(me&&v.addedByUid===me.uid);
+const visitsSorted=()=>VISITS.slice().sort((a,b)=>b.date.localeCompare(a.date));
+
+/* ---------- files: stored in Firestore in parts (free plan has no file storage) ---------- */
+const fileCache=new Map();
+const fcol=priv=>priv?"hk_pfiles":"hk_files";
+async function getFile(id,priv){
+  const k=(priv?"p:":"")+id; if(fileCache.has(k)) return fileCache.get(k);
+  const p=(async()=>{
+    const head=await db.collection(fcol(priv)).doc(id).get();
+    if(!head.exists) throw new Error("missing");
+    const h=head.data(); const parts=[];
+    for(let i=0;i<h.n;i++){const s=await db.collection(fcol(priv)).doc(id).collection("parts").doc(String(i)).get(); parts.push(s.data().d);}
+    const bin=atob(parts.join("")); const u8=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+    const blob=new Blob([u8],{type:h.mime}); return {blob,url:URL.createObjectURL(blob),mime:h.mime,name:h.name||""};
+  })();
+  fileCache.set(k,p); p.catch(()=>fileCache.delete(k)); return p;
+}
+function b64OfBlob(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]);r.onerror=rej;r.readAsDataURL(blob)})}
+async function putFileB64(b64,mime,name,priv,onProg){
+  const id=uid(); const n=Math.max(1,Math.ceil(b64.length/CHUNK)); const col=db.collection(fcol(priv)).doc(id);
+  for(let i=0;i<n;i++){ await col.collection("parts").doc(String(i)).set({d:b64.slice(i*CHUNK,(i+1)*CHUNK)}); onProg&&onProg((i+1)/n); }
+  await col.set({mime,name:name||"",n,size:Math.round(b64.length*3/4),by:me?me.name:"",byUid:me?me.uid:"",at:firebase.firestore.FieldValue.serverTimestamp()});
+  return id;
+}
+async function putFile(blob,mime,name,priv,onProg){return putFileB64(await b64OfBlob(blob),mime,name,priv,onProg)}
+async function delFile(id,priv){ if(!id) return; try{const h=await db.collection(fcol(priv)).doc(id).get(); const n=h.exists?h.data().n:0; for(let i=0;i<n;i++) await db.collection(fcol(priv)).doc(id).collection("parts").doc(String(i)).delete(); await db.collection(fcol(priv)).doc(id).delete();}catch(e){} }
+
+/* ---------- images ---------- */
+const isPdf=f=>f.type==="application/pdf"||/\.pdf$/i.test(f.name||"");
+const isHeic=f=>/hei[cf]/i.test(f.type||"")||/\.hei[cf]$/i.test(f.name||"");
+function imgErr(f){return isHeic(f)?"Bu HEIC fotoğraf bu cihazda açılamadı. iPhone'da Ayarlar › Kamera › Biçimler › “En Uyumlu” seçin ya da fotoğrafı kamerayla yeniden çekin.":"Dosya okunamadı: "+(f.name||"fotoğraf")}
+function loadImg(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error("img"));im.src=src})}
+async function scaleTo(file,max){const url=URL.createObjectURL(file);try{const im=await loadImg(url);let w=im.naturalWidth,h=im.naturalHeight;const k=Math.min(1,max/Math.max(w,h));w=Math.round(w*k);h=Math.round(h*k);
+  const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);return c}finally{URL.revokeObjectURL(url)}}
+async function photoParts(file){const big=await scaleTo(file,1600);const thumb=await scaleTo(file,260);
+  return{b64:big.toDataURL("image/jpeg",0.62).split(",")[1],thumb:thumb.toDataURL("image/jpeg",0.6)}}
+
+/* ---------- render ---------- */
+function render(){
+  const app=$("#app");
+  if(!metaLoaded){app.innerHTML=`<div class="wrap boot">Yükleniyor…</div>`+footer();return}
+  if(!META){app.innerHTML=`<div class="wrap"><div class="notice"><h2>Haşere Kontrol Dosyası</h2>${isAdm()?setupHtml():`<p class="muted" style="margin:0">Dosya henüz kurulmadı.</p>${me?`<p class="muted" style="margin:0">Kurulumu yönetici yapar.</p>`:`<button class="btn primary" data-act="login" style="justify-self:start">Personel girişi</button>`}`}</div></div>`+footer();bindSetup();return}
+  const vs=visitsSorted(),last=vs[0],lastRoutine=vs.find(v=>(v.reasons||[]).includes("Rutin"));
+  let nextTxt="—",nextSub="";
+  if(lastRoutine){const due=new Date(pd(lastRoutine.date));due.setDate(due.getDate()+30);const left=daysBetween(today,due);nextTxt=fmt(iso(due));nextSub=left>=0?`${left} gün içinde · sözleşmeye göre ayda 1`:`${-left} gün gecikti`}
+  const lastAct=last?(last.activity==="yok"?"Yok":last.activity==="var"?"Var":"Belirtilmemiş"):"—";
+  const sinceLast=last?daysBetween(pd(last.date),today):null;
+  const st=META.stations||[];
+  const B=META.business||{},P=META.provider||{},C=META.contract||{items:[]};
+  app.innerHTML=`
+  <header class="head"><div class="wrap">
+    <div class="topbar"><div class="eyebrow">${esc(B.name)} · Entegre zararlı yönetimi</div>
+      <div class="who">${me?`<span><b>${esc(me.name)}</b>${isAdm()?" · yönetici":""}</span><button class="linkbtn" data-act="logout">Çıkış</button>`:`<button class="linkbtn" data-act="login">Personel girişi</button>`}</div></div>
+    <h1>Haşere Kontrol Dosyası</h1>
+    <div class="head-meta">
+      <span>${esc(B.address)}</span>
+      <span>Hizmet veren: <b>${esc(P.name)}</b></span>
+      <span>Biyosidal uygulama izni: <b class="mono">${esc(P.izin)}</b></span>
+      <span>Mesul müdür: <b>${esc(P.mesul)}</b></span>
+    </div>
+    <div class="summary">
+      <div><span class="eyebrow">Son ziyaret</span><span class="v">${last?fmt(last.date):"—"}</span><span class="s">${sinceLast!=null?(sinceLast===0?"bugün":sinceLast+" gün önce"):""}${last?" · "+esc((last.reasons||[]).join(" + ")):""}</span></div>
+      <div><span class="eyebrow">Sonraki rutin ziyaret</span><span class="v">${nextTxt}</span><span class="s">${nextSub}</span></div>
+      <div><span class="eyebrow">Son ziyarette zararlı aktivitesi</span><span class="v">${lastAct}</span><span class="s">${last&&last.target?"Hedef: "+esc(last.target):"Servis raporuna göre"}</span></div>
+      <div><span class="eyebrow">İzleme noktası</span><span class="v">${st.length}</span><span class="s">${countByType()}</span></div>
+    </div>
+  </div></header>
+  <nav class="index" aria-label="Bölümler"><div class="wrap">
+    <a href="#ziyaretler" data-sec="ziyaretler">Ziyaretler</a>
+    <a href="#plan" data-sec="plan">Yerleşim planı</a>
+    <a href="#urunler" data-sec="urunler">Biyosidal ürünler</a>
+    <a href="#belgeler" data-sec="belgeler">Belgeler</a>
+    ${me?`<a href="#faturalar" data-sec="faturalar">Faturalar</a>`:""}
+    <a href="#acil" data-sec="acil">Acil durum</a>
+  </div></nav>
+  <main class="wrap">
+    <section id="ziyaretler">
+      <div class="sec-head"><div><h2>Ziyaret geçmişi</h2><p>${VISITS.length} servis ziyareti. Her satırda Kılavuz IPM'nin imzalı servis raporu ve EK-1 Biyosidal Ürün Uygulama İşlem Formu vardır; fotoğrafa dokunarak formu açabilirsiniz.</p></div>
+      ${isUser()?`<button class="btn primary" data-act="new-visit">+ Yeni ziyaret ekle</button>`:""}</div>
+      <div class="visits">${vs.map(visitRow).join("")||`<p class="muted">Henüz ziyaret kaydı yok.</p>`}</div>
+    </section>
+    <section id="plan">
+      <div class="sec-head"><div><h2>Yerleşim planı</h2><p>Kılavuz IPM'nin hazırladığı pest kontrol yerleşim planı. Bir noktaya dokunarak türünü ve yerini görebilirsiniz.</p></div>
+      ${isAdm()?`<button class="btn" data-act="add-station">${placing&&placing.mode==="new"?"Plana dokunun…":"+ İstasyon ekle"}</button>`:""}</div>
+      <div class="plan-card">
+        <div class="legend">${Object.keys(TYPES).filter(t=>st.some(s=>s.type===t)).map(t=>`<button data-act="toggle-type" data-type="${t}" aria-pressed="${!hiddenTypes.has(t)}"><i style="background:var(${TYPES[t].c})"></i>${TYPES[t].kisa} · ${st.filter(s=>s.type===t).length}</button>`).join("")}</div>
+        <div class="plan-scroll"><div class="plan" id="planbox">
+          ${krokiUrl?`<img src="${krokiUrl}" alt="Kanaat Lokantası pest kontrol yerleşim planı: salon, mutfak, kiler, soğuk depolar ve üst kat salon">`:`<div style="aspect-ratio:1600/846" class="boot">Plan yükleniyor…</div>`}
+          ${krokiUrl?st.filter(s=>!hiddenTypes.has(s.type)&&TYPES[s.type]).map(s=>`<button class="mk ${s.onScan?"":"solid"}" style="left:${s.x}%;top:${s.y}%;--c:var(${TYPES[s.type].c})" data-act="sel-st" data-id="${esc(s.id)}" aria-pressed="${selSt===s.id}" aria-label="${esc(TYPES[s.type].ad)} ${esc(s.no)}, ${esc(s.area)}">${s.onScan?"":esc(s.no)}</button>`).join("")+popHtml():""}
+        </div></div>
+        <p class="plan-note">Plan: ${esc(META.planInfo||"")}</p>
+        <div class="tablewrap"><table class="st-table"><thead><tr><th>No</th><th>Tür</th><th>Bölüm</th><th>Not</th>${isAdm()?"<th></th>":""}</tr></thead><tbody>
+          ${stationsSorted().map(s=>`<tr data-act="sel-st" data-id="${esc(s.id)}" class="${selSt===s.id?"sel":""}"><td class="mono">${esc(s.no)}</td><td><span class="dot" style="background:var(${(TYPES[s.type]||TYPES.monitor).c})"></span>${esc((TYPES[s.type]||{}).ad||s.type)}</td><td>${esc(s.area)}</td><td class="muted">${esc(s.note||"")}</td>${isAdm()?`<td><button class="btn sm" data-act="edit-st" data-id="${esc(s.id)}">Düzenle</button></td>`:""}</tr>`).join("")}
+        </tbody></table></div>
+      </div>
+    </section>
+    <section id="urunler">
+      <div class="sec-head"><div><h2>Kullanılan biyosidal ürünler</h2><p>Ruhsat bilgileri servis formlarından ve işletmeye özel onaylı pestisit listesinden alınmıştır. Kullanım sayıları ziyaret kayıtlarından hesaplanır.</p></div>
+      ${isAdm()?`<button class="btn" data-act="new-prod">+ Ürün ekle</button>`:""}</div>
+      <div class="products">${(META.products||[]).map(prodCard).join("")}</div>
+    </section>
+    <section id="belgeler">
+      <div class="sec-head"><div><h2>Belgeler</h2><p>Haşere kontrol dosyasındaki belgeler. Kişisel kimlik bilgisi içeren sertifikaların asılları dosyada saklanır, burada yalnızca bilgileri listelenir.</p></div>
+      ${isUser()?`<button class="btn" data-act="new-doc">+ Belge ekle</button>`:""}</div>
+      ${Object.keys(DOCGROUPS).map(g=>{const ds=DOCS.filter(d=>d.group===g&&(isUser()||!d.hidden)).sort((a,b)=>(a.order||0)-(b.order||0)||String(a.title).localeCompare(b.title,"tr"));if(!ds.length)return"";return`<div class="docgroup"><h3>${DOCGROUPS[g]}</h3><div class="docs">${ds.map(docRow).join("")}</div></div>`}).join("")}
+    </section>
+    ${me?invoicesHtml():""}
+    <section id="acil">
+      <div class="sec-head"><div><h2>Acil durum</h2></div></div>
+      <div class="emerg">
+        <div class="first"><span class="eyebrow">Zehirlenme durumunda</span><span class="num">114</span><span class="muted">Ulusal Zehir Danışma Merkezi (UZEM), ücretsiz</span></div>
+        <div><span class="eyebrow">Kılavuz IPM genel müdürlük</span><span class="num">${esc(P.phone)}</span><span class="muted">Acil çağrılara en geç 24 saat içinde müdahale (acil eylem planı)</span></div>
+        <div><span class="eyebrow">Kılavuz IPM kalite</span><span style="font-weight:650;user-select:all">${esc(P.qualityEmail)}</span><span class="muted">${esc(P.quality)}</span></div>
+      </div>
+      <div class="contract"><b>Sözleşme kapsamı</b> <span class="muted">(Sözleşme No ${esc(C.no)}, ${esc(C.date)})</span><ul>${(C.items||[]).map(i=>`<li>${esc(i)}</li>`).join("")}</ul></div>
+    </section>
+  </main>`+footer();
+  document.body.classList.toggle("placing",!!placing);
+  spy();
+}
+function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 1</div></footer>`}
+function countByType(){const st=META.stations||[];return Object.keys(TYPES).map(t=>[t,st.filter(s=>s.type===t).length]).filter(x=>x[1]).map(([t,n])=>`${n} ${TYPES[t].kisa}`).join(" · ")}
+function stationsSorted(){const o=Object.keys(TYPES);return (META.stations||[]).slice().sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)||(parseInt(a.no)||0)-(parseInt(b.no)||0))}
+function popHtml(){
+  if(!selSt)return"";const s=(META.stations||[]).find(x=>x.id===selSt);if(!s||hiddenTypes.has(s.type))return"";
+  const left=s.x>60?`right:${100-s.x+2}%`:`left:${s.x+2}%`,top=s.y>65?`bottom:${100-s.y+3}%`:`top:${s.y+3}%`;const last=visitsSorted()[0];
+  return`<div class="pop" style="${left};${top}"><span class="eyebrow">${esc(TYPES[s.type].ad)}</span><b>No ${esc(s.no)} · ${esc(s.area)}</b>${s.note?`<span class="muted">${esc(s.note)}</span>`:""}<span class="muted">Son genel kontrol: ${last?fmt(last.date):"—"}</span>${isAdm()?`<div style="display:flex;gap:6px;margin-top:4px"><button class="btn sm" data-act="edit-st" data-id="${esc(s.id)}">Düzenle</button><button class="btn sm" data-act="move-st" data-id="${esc(s.id)}">Taşı</button></div>`:""}</div>`;
+}
+function visitRow(v){
+  const d=pd(v.date);
+  const act=v.activity==="yok"?`<span class="pill p-ok">Aktivite yok</span>`:v.activity==="var"?`<span class="pill p-bad">Aktivite var</span>`:`<span class="pill p-neutral">Aktivite belirtilmemiş</span>`;
+  const mats=(v.materials||[]).map(m=>m.name+(m.qty?` (${m.qty})`:"")).join(", ");
+  const bios=(v.biocides||[]).map(m=>m.name+(m.qty?` ${m.qty}`:"")).join(", ");
+  const ph=v.photos||[];
+  return`<article class="visit">
+    <div class="date"><span class="d">${String(d.getDate()).padStart(2,"0")}</span><span class="m">${AYLAR[d.getMonth()]} ${d.getFullYear()}</span><span class="m" style="text-transform:none;letter-spacing:0;font-weight:500">${GUNLER[d.getDay()]}</span></div>
+    <div class="body">
+      <div class="row1">${(v.reasons||[]).map(r=>`<span class="chip ${r==="Acil çağrı"?"acil":""}">${esc(r)}</span>`).join("")} ${act} <span class="muted mono">Sıra no ${esc(v.sira||"—")}</span></div>
+      <dl>
+        ${v.scope&&v.scope.length?`<dt>Kapsam</dt><dd>${esc(v.scope.join(", "))}</dd>`:""}
+        ${v.areas?`<dt>Kontrol edilen</dt><dd>${esc(v.areas)}${v.target?` · Hedef: ${esc(v.target)}`:""}</dd>`:""}
+        ${mats?`<dt>Malzeme</dt><dd>${esc(mats)}</dd>`:""}
+        ${bios?`<dt>Biyosidal ürün</dt><dd>${esc(bios)}</dd>`:""}
+        <dt>Uygulayıcı</dt><dd>${esc(v.applicator||"—")}${v.lead?` · Ekip sorumlusu: ${esc(v.lead)}`:""}</dd>
+        <dt>İşletme imzası</dt><dd>${esc(v.signedBy||"—")}</dd>
+        ${v.note?`<dt>Not</dt><dd>${esc(v.note)}</dd>`:""}
+        ${(v.pdfs||[]).length?`<dt>Ek</dt><dd>${v.pdfs.map(f=>`<button class="linkbtn" data-act="open-file" data-f="${esc(f.f)}">${esc(f.name||"PDF")}</button>`).join(" · ")}</dd>`:""}
+      </dl>
+    </div>
+    <div class="side">
+      ${ph.length?`<button class="thumb" data-act="open-photo" data-vid="${esc(v.id)}" style="background-image:url('${ph[0].t||""}')" aria-label="${fmt(v.date)} servis formunu aç">${ph.length>1?`<span>${ph.length} sayfa</span>`:""}</button>`:`<span class="muted" style="font-size:13px">Form fotoğrafı yok</span>`}
+      ${canEditVisit(v)?`<button class="btn sm" data-act="edit-visit" data-id="${esc(v.id)}">Düzenle</button>`:""}
+    </div>
+  </article>`;
+}
+function prodCard(p){
+  const uses=VISITS.filter(v=>(v.biocides||[]).some(b=>norm(b.name)===norm(p.name))).sort((a,b)=>b.date.localeCompare(a.date));
+  const doc=p.doc?DOCS.find(d=>d.id===p.doc):null;
+  return`<div class="prod">
+    <div class="prod-top"><h3>${esc(p.name)}</h3>${p.onList?`<span class="pill p-ok">Onaylı listede</span>`:`<span class="pill p-warn">Listeye eklenmesi talep edildi</span>`}</div>
+    <dl><dt>Uygulama şekli</dt><dd>${esc(p.form)}</dd><dt>Aktif madde</dt><dd>${esc(p.active)}</dd><dt>Antidot</dt><dd>${esc(p.antidote)}</dd><dt>Ruhsat</dt><dd class="mono">${esc(p.ruhsat)}</dd>${p.target?`<dt>Hedef</dt><dd>${esc(p.target)}</dd>`:""}</dl>
+    <div class="use"><span>${uses.length?`${uses.length} ziyarette kullanıldı · son ${fmt(uses[0].date)}`:"Bu dönemde kullanılmadı"}</span>
+      <span style="display:flex;gap:6px">${doc&&doc.file?`<button class="btn sm" data-act="open-file" data-f="${esc(doc.file.f)}">Ruhsat ve güvenlik bilgi formu</button>`:`<span class="muted">Ruhsat/GBF kopyası talep edildi</span>`}${isAdm()?`<button class="btn sm" data-act="edit-prod" data-id="${esc(p.id)}">Düzenle</button>`:""}</span></div>
+  </div>`;
+}
+function docRow(d){
+  const st=STATUS[d.status]||STATUS.dosyada;const expired=d.valid&&pd(d.valid)<today;
+  const meta=[d.ref&&`No ${d.ref}`,d.date&&`Tarih ${fmt(d.date)}`,d.valid&&`Geçerlilik ${fmt(d.valid)}${expired?" (doldu)":""}`,d.note].filter(Boolean).map(esc).join(" · ");
+  return`<div class="doc"><div><div class="t">${esc(d.title)} ${d.hidden?`<span class="chip">Denetçiye gizli</span>`:""}</div><div class="m">${meta}${d.addedBy&&isUser()?` · ekleyen ${esc(d.addedBy)}`:""}</div></div>
+    <div class="acts"><span class="pill ${st[1]}">${st[0]}${d.status==="talep"&&d.requested?` · ${fmt(d.requested)}`:""}</span>${d.file?`<button class="btn sm" data-act="open-file" data-f="${esc(d.file.f)}">${d.file.mime==="application/pdf"?"PDF":"Görüntüle"}</button>`:""}${isAdm()?`<button class="btn sm" data-act="edit-doc" data-id="${esc(d.id)}">Düzenle</button>`:""}</div></div>`;
+}
+function invoicesHtml(){
+  const rows=INVOICES.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const total=rows.reduce((s,x)=>s+(isFinite(x.amount)?x.amount:0),0);
+  return`<section id="faturalar">
+    <div class="sec-head"><div><h2>Kesilen faturalar</h2><p>Kılavuz IPM'nin hizmet faturaları. <span class="private">Yalnızca giriş yapan personel görür; denetçi sayfasında çıkmaz</span></p></div>
+    <button class="btn primary" data-act="new-inv">+ Fatura ekle</button></div>
+    ${rows.length?`<div class="inv-card"><table class="inv"><thead><tr><th>Fatura tarihi</th><th>Fatura no</th><th>Dönem</th><th style="text-align:right">Tutar (KDV dahil)</th><th>Dosya</th><th></th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><td>${fmt(x.date)}</td><td class="mono">${esc(x.no||"—")}</td><td>${esc(mfmt(x.period))}${x.note?`<div class="muted" style="font-size:12.5px">${esc(x.note)}</div>`:""}</td><td class="n">${tl(x.amount)}</td><td>${(x.files||[]).map((f,i)=>`<button class="btn sm" data-act="open-pfile" data-f="${esc(f.f)}">${f.mime==="application/pdf"?"PDF":"Fotoğraf"}${x.files.length>1?" "+(i+1):""}</button>`).join(" ")||"—"}</td><td>${canEditInv(x)?`<button class="btn sm" data-act="edit-inv" data-id="${esc(x.id)}">Düzenle</button>`:""}</td></tr>`).join("")}
+    </tbody><tfoot><tr><td colspan="3">${rows.length} fatura</td><td class="n">${tl(total)}</td><td colspan="2"></td></tr></tfoot></table></div>`:`<p class="muted">Henüz fatura eklenmedi. “+ Fatura ekle” ile faturanın fotoğrafını çekebilir ya da PDF'ini yükleyebilirsiniz.</p>`}
+  </section>`;
+}
+
+/* ---------- section spy ---------- */
+let spyObs=null;
+function spy(){if(spyObs)spyObs.disconnect();if(!("IntersectionObserver" in window))return;
+  spyObs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)document.querySelectorAll(".index a").forEach(a=>a.classList.toggle("on",a.dataset.sec===e.target.id))})},{rootMargin:"-45% 0px -50% 0px"});
+  document.querySelectorAll("main section").forEach(s=>spyObs.observe(s))}
+
+/* ---------- events ---------- */
+document.addEventListener("click",async e=>{
+  const nav=e.target.closest(".index a");
+  if(nav){e.preventDefault();const t=document.getElementById(nav.dataset.sec);if(t)t.scrollIntoView({behavior:"smooth"});return}
+  const planbox=e.target.closest("#planbox"),el=e.target.closest("[data-act]");
+  if(placing&&planbox&&(!el||el.dataset.act!=="sel-st")){
+    const r=planbox.querySelector("img").getBoundingClientRect();
+    const x=+((e.clientX-r.left)/r.width*100).toFixed(2),y=+((e.clientY-r.top)/r.height*100).toFixed(2);
+    if(placing.mode==="move"){const st=(META.stations||[]).map(s=>s.id===placing.id?{...s,x,y,onScan:false}:s);placing=null;saveMeta({stations:st},"Yeni konum kaydedildi")}
+    else{placing=null;render();stationForm({id:uid(),type:"glue",no:"",area:"",x,y,onScan:false,note:""},true)}
+    return}
+  if(!el){if(selSt&&!e.target.closest(".pop")){selSt=null;render()}return}
+  const a=el.dataset.act;
+  if(a==="login")loginForm();
+  else if(a==="logout"){await auth.signOut();toast("Çıkış yapıldı")}
+  else if(a==="sel-st"){selSt=selSt===el.dataset.id?null:el.dataset.id;render();if(el.tagName==="TR")$("#planbox").scrollIntoView({behavior:"smooth",block:"center"})}
+  else if(a==="toggle-type"){const t=el.dataset.type;hiddenTypes.has(t)?hiddenTypes.delete(t):hiddenTypes.add(t);render()}
+  else if(a==="open-photo")openLightbox(el.dataset.vid,0);
+  else if(a==="open-file")openFile(el.dataset.f,false);
+  else if(a==="open-pfile")openFile(el.dataset.f,true);
+  else if(a==="new-visit"&&isUser())visitForm(null);
+  else if(a==="edit-visit")visitForm(VISITS.find(v=>v.id===el.dataset.id));
+  else if(a==="new-doc"&&isUser())docForm(null);
+  else if(a==="edit-doc"&&isAdm())docForm(DOCS.find(d=>d.id===el.dataset.id));
+  else if(a==="new-inv"&&isUser())invForm(null);
+  else if(a==="edit-inv")invForm(INVOICES.find(x=>x.id===el.dataset.id));
+  else if(!isAdm())return;
+  else if(a==="add-station"){placing={mode:"new"};selSt=null;render();toast("Plan üzerinde istasyonun yerine dokunun")}
+  else if(a==="move-st"){placing={mode:"move",id:el.dataset.id};render();toast("Yeni konuma dokunun")}
+  else if(a==="edit-st"){e.stopPropagation();stationForm((META.stations||[]).find(s=>s.id===el.dataset.id),false)}
+  else if(a==="new-prod")prodForm(null);
+  else if(a==="edit-prod")prodForm((META.products||[]).find(p=>p.id===el.dataset.id));
+});
+
+/* ---------- viewers ---------- */
+async function openFile(id,priv){
+  const ov=document.createElement("div");ov.className="ov";ov.innerHTML=`<div class="sheet" role="dialog" aria-label="Belge"><h2>Belge</h2><p class="muted" id="ofm" style="margin:0">Yükleniyor…</p><div class="bar"><i id="ofb" style="width:30%"></i></div><div class="sheet-acts"><span></span><div style="display:flex;gap:8px"><button class="btn" data-x>Kapat</button></div></div></div>`;
+  document.body.appendChild(ov);ov.addEventListener("click",ev=>{if(ev.target===ov||ev.target.closest("[data-x]"))ov.remove()});
+  try{const f=await getFile(id,priv);
+    if(f.mime.startsWith("image/")){ov.remove();showImage(f.url,f.name||"Belge");return}
+    $("#ofb",ov).style.width="100%";$("#ofm",ov).textContent=(f.name||"Belge")+" hazır.";
+    ov.querySelector(".sheet-acts div").insertAdjacentHTML("afterbegin",`<a class="btn primary" href="${f.url}" target="_blank" rel="noopener">Aç</a>`);
+  }catch(err){$("#ofm",ov).textContent="Belge açılamadı. İnternet bağlantınızı kontrol edin.";}
+}
+function showImage(url,title,nav){
+  const lb=document.createElement("div");lb.className="lb";lb.setAttribute("role","dialog");
+  lb.innerHTML=`<div class="lb-bar"><div><b>${esc(title)}</b></div><div style="display:flex;gap:6px">${nav||""}<button class="btn sm" data-lb="zoom">Yakınlaştır</button><button class="btn sm" data-lb="close">Kapat</button></div></div><div class="lb-view"><img src="${url}" alt="${esc(title)}"></div>`;
+  lb.addEventListener("click",ev=>{const b=ev.target.closest("[data-lb]");if(!b)return;if(b.dataset.lb==="close")lb.remove();else if(b.dataset.lb==="zoom")lb.querySelector(".lb-view").classList.toggle("zoom")});
+  document.body.appendChild(lb);return lb}
+async function openLightbox(vid,i){
+  const v=VISITS.find(x=>x.id===vid);if(!v)return;const ph=v.photos||[];
+  const title=()=>`${fmt(v.date)} · Sıra no ${v.sira||"—"}${ph.length>1?` · ${i+1}/${ph.length}`:""}`;
+  const lb=showImage(ph[i].t,title(),ph.length>1?`<button class="btn sm" data-lb="prev">‹</button><button class="btn sm" data-lb="next">›</button>`:"");
+  const load=async()=>{lb.querySelector(".lb-bar b").textContent=title();const img=lb.querySelector("img");img.src=ph[i].t;try{const f=await getFile(ph[i].f,false);img.src=f.url}catch(e){toast("Fotoğrafın büyük hali yüklenemedi")}};
+  lb.addEventListener("click",ev=>{const b=ev.target.closest("[data-lb]");if(!b)return;if(b.dataset.lb==="prev"){i=(i-1+ph.length)%ph.length;load()}else if(b.dataset.lb==="next"){i=(i+1)%ph.length;load()}});
+  const key=ev=>{if(ev.key==="Escape"){lb.remove();document.removeEventListener("keydown",key)}};document.addEventListener("keydown",key);
+  load();
+}
+
+/* ---------- forms ---------- */
+function sheet(html){
+  const ov=document.createElement("div");ov.className="ov";ov.innerHTML=`<form class="sheet" novalidate>${html}</form>`;
+  document.body.appendChild(ov);const f=ov.querySelector("form");f.addEventListener("submit",e=>e.preventDefault());
+  ov.addEventListener("click",e=>{if(e.target===ov&&!f.dataset.busy)ov.remove()});
+  return{f,ov}}
+function datalist(id,arr){return`<datalist id="${id}">${[...new Set(arr.filter(Boolean))].map(x=>`<option value="${esc(x)}"></option>`).join("")}</datalist>`}
+function rowsHtml(name,rows,listId){return(rows.length?rows:[{name:"",qty:""}]).map(r=>`<div class="rowx"><input type="text" name="${name}-n" value="${esc(r.name)}" list="${listId}" placeholder="Ad" aria-label="Ad"><input type="text" name="${name}-q" value="${esc(r.qty)}" placeholder="Miktar" aria-label="Miktar"><button type="button" class="btn sm" data-rm aria-label="Satırı sil">×</button></div>`).join("")}
+function readRows(f,name){const ns=[...f.querySelectorAll(`[name="${name}-n"]`)],qs=[...f.querySelectorAll(`[name="${name}-q"]`)];return ns.map((n,i)=>({name:n.value.trim(),qty:qs[i].value.trim()})).filter(r=>r.name)}
+const delConfirm=(f,sel,label)=>{f.querySelector(sel).innerHTML=`<div class="confirm">${label} <span style="display:flex;gap:6px"><button type="button" class="btn sm" data-nodel>Hayır</button><button type="button" class="btn sm danger" data-yesdel>Evet, sil</button></span></div>`};
+const stamp=()=>({addedBy:me.name,addedByUid:me.uid,addedAt:firebase.firestore.FieldValue.serverTimestamp()});
+const editStamp=()=>({editedBy:me.name,editedAt:firebase.firestore.FieldValue.serverTimestamp()});
+function errMsg(x){const c=x&&x.code||"";return c==="permission-denied"?"Yetkiniz yok ya da Firebase kuralları eklenmemiş":c==="unavailable"?"İnternet bağlantısı yok":"Kaydedilemedi ("+(c||x)+")"}
+
+/* pending uploads: picked files become {kind:'img',b64,thumb} or {kind:'pdf',blob,name} until "Kaydet" */
+async function pickFiles(fileList,list,statusEl,allowPdf){
+  const files=[...fileList];let i=0;
+  for(const file of files){i++;statusEl.textContent=`Hazırlanıyor… ${i}/${files.length}`;
+    if(isPdf(file)){if(!allowPdf){toast("Burada yalnızca fotoğraf eklenebilir");continue}
+      if(file.size>15*1024*1024){toast("PDF 15 MB'tan büyük; fotoğrafını çekip ekleyin");continue}
+      list.push({kind:"pdf",blob:file,name:(file.name||"Belge").replace(/\.pdf$/i,"")})}
+    else{try{const p=await photoParts(file);list.push({kind:"img",b64:p.b64,thumb:p.thumb,name:file.name||"Fotoğraf"})}catch(err){toast(imgErr(file))}}}
+  statusEl.textContent=""}
+async function uploadPending(list,priv,prog){
+  const out=[];let k=0;
+  for(const p of list){k++;
+    const id=p.kind==="img"?await putFileB64(p.b64,"image/jpeg",p.name,priv,r=>prog((k-1+r)/list.length)):await putFile(p.blob,"application/pdf",p.name,priv,r=>prog((k-1+r)/list.length));
+    out.push({...p,f:id})}
+  return out}
+const pendHtml=list=>list.map((p,i)=>p.kind==="img"?`<div class="ph"><img src="${p.thumb}" alt="Yeni fotoğraf ${i+1}"><button type="button" data-rmpend="${i}" aria-label="Kaldır">×</button></div>`:`<span class="chip">${esc(p.name)}.pdf <button type="button" class="linkbtn" data-rmpend="${i}">kaldır</button></span>`).join("");
+
+function visitForm(v){
+  const isNew=!v;
+  v=v?JSON.parse(JSON.stringify(v)):{id:uid(),date:iso(today),sira:"",reasons:["Rutin"],scope:["Uygulama"],areas:"Genel",activity:"yok",target:"Yürüyen haşere",materials:[],biocides:[],applicator:"",lead:"",signedBy:"",note:"",photos:[],pdfs:[]};
+  const pend=[];const people=k=>VISITS.map(x=>x[k]);
+  const {f,ov}=sheet(`
+    <h2>${isNew?"Yeni ziyaret":"Ziyareti düzenle"}</h2>
+    <div class="grid2"><div class="field"><label for="vf-date">Uygulama tarihi</label><input id="vf-date" type="date" name="date" value="${v.date}" required></div>
+      <div class="field"><label for="vf-sira">Form sıra no</label><input id="vf-sira" type="text" name="sira" value="${esc(v.sira)}" inputmode="numeric" placeholder="ör. 690017"></div></div>
+    <div class="field"><span class="lab">Servis formu ve belgeler</span><div class="photos" id="vf-photos"></div>
+      <label class="btn primary" style="justify-self:start">Belge yükle<input type="file" accept="${ACC}" multiple id="vf-file" hidden></label>
+      <span class="muted" style="font-size:12.5px">Kamerayla çekebilir, galeriden seçebilir ya da PDF ekleyebilirsiniz. Formun iki yüzünü de ekleyin.</span><span id="vf-status" class="muted" style="font-size:13px" role="status"></span></div>
+    <div class="field"><span class="lab">Ziyaret nedeni</span><div class="checks">${REASONS.map(r=>`<label><input type="checkbox" name="reason" value="${r}" ${v.reasons.includes(r)?"checked":""}>${r}</label>`).join("")}</div></div>
+    <div class="field"><span class="lab">Kapsam</span><div class="checks">${SCOPES.map(r=>`<label><input type="checkbox" name="scope" value="${r}" ${v.scope.includes(r)?"checked":""}>${r}</label>`).join("")}</div></div>
+    <div class="grid2"><div class="field"><label for="vf-areas">Kontrol edilen bölümler</label><input id="vf-areas" type="text" name="areas" value="${esc(v.areas)}"></div>
+      <div class="field"><label for="vf-act">Zararlı aktivitesi</label><select id="vf-act" name="activity"><option value="yok" ${v.activity==="yok"?"selected":""}>Yok</option><option value="var" ${v.activity==="var"?"selected":""}>Var</option><option value="belirsiz" ${v.activity==="belirsiz"?"selected":""}>Formda belirtilmemiş</option></select></div></div>
+    <div class="field"><label for="vf-target">Hedef zararlı / aktivite açıklaması</label><input id="vf-target" type="text" name="target" value="${esc(v.target)}"></div>
+    <div class="field"><span class="lab">Kullanılan malzemeler</span><div class="rowsx" data-rows="mat">${rowsHtml("mat",v.materials,"dl-mat")}</div><button type="button" class="btn sm" data-add="mat" style="justify-self:start">+ Satır</button></div>
+    <div class="field"><span class="lab">Kullanılan biyosidal ürünler</span><div class="rowsx" data-rows="bio">${rowsHtml("bio",v.biocides,"dl-bio")}</div><button type="button" class="btn sm" data-add="bio" style="justify-self:start">+ Satır</button></div>
+    <div class="grid2"><div class="field"><label for="vf-app">Uygulayıcı</label><input id="vf-app" type="text" name="applicator" value="${esc(v.applicator)}" list="dl-app"></div>
+      <div class="field"><label for="vf-lead">Ekip sorumlusu</label><input id="vf-lead" type="text" name="lead" value="${esc(v.lead)}" list="dl-lead"></div></div>
+    <div class="field"><label for="vf-sign">İşletme adına imzalayan</label><input id="vf-sign" type="text" name="signedBy" value="${esc(v.signedBy)}" list="dl-sign"></div>
+    <div class="field"><label for="vf-note">Not / düzeltici-önleyici faaliyet</label><textarea id="vf-note" name="note">${esc(v.note)}</textarea></div>
+    <div class="bar" id="vf-bar" hidden><i></i></div><p class="err" id="vf-err"></p><div id="vf-confirm"></div>
+    <div class="sheet-acts"><div>${!isNew&&isAdm()?`<button type="button" class="btn danger" data-del>Ziyareti sil</button>`:""}</div><div style="display:flex;gap:8px"><button type="button" class="btn" data-cancel>Vazgeç</button><button type="submit" class="btn primary" id="vf-save">Kaydet</button></div></div>
+    ${datalist("dl-mat",MATERIALS)}${datalist("dl-bio",(META.products||[]).map(p=>p.name))}${datalist("dl-app",people("applicator"))}${datalist("dl-lead",people("lead"))}${datalist("dl-sign",people("signedBy"))}`);
+  const draw=()=>{$("#vf-photos").innerHTML=v.photos.map((p,i)=>`<div class="ph"><img src="${p.t}" alt="Sayfa ${i+1}"><button type="button" data-rmph="${i}" aria-label="Fotoğrafı kaldır">×</button></div>`).join("")+v.pdfs.map((p,i)=>`<span class="chip">${esc(p.name)}.pdf <button type="button" class="linkbtn" data-rmpdf="${i}">kaldır</button></span>`).join("")+pendHtml(pend)||`<span class="muted" style="font-size:13.5px">Henüz belge yok</span>`};
+  draw();
+  f.addEventListener("click",e=>{const t=e.target;
+    if(t.closest("[data-add]")){const k=t.closest("[data-add]").dataset.add;f.querySelector(`[data-rows="${k}"]`).insertAdjacentHTML("beforeend",rowsHtml(k,[{name:"",qty:""}],k==="mat"?"dl-mat":"dl-bio"))}
+    else if(t.closest("[data-rm]"))t.closest(".rowx").remove();
+    else if(t.closest("[data-rmph]")){v.photos.splice(+t.closest("[data-rmph]").dataset.rmph,1);draw()}
+    else if(t.closest("[data-rmpdf]")){v.pdfs.splice(+t.closest("[data-rmpdf]").dataset.rmpdf,1);draw()}
+    else if(t.closest("[data-rmpend]")){pend.splice(+t.closest("[data-rmpend]").dataset.rmpend,1);draw()}
+    else if(t.closest("[data-cancel]")){if(!f.dataset.busy)ov.remove()}
+    else if(t.closest("[data-del]"))delConfirm(f,"#vf-confirm","Bu ziyaret kaydı silinsin mi?");
+    else if(t.closest("[data-nodel]"))$("#vf-confirm").innerHTML="";
+    else if(t.closest("[data-yesdel]")){db.collection("hk_visits").doc(v.id).delete().then(()=>{ov.remove();toast("Ziyaret silindi")},x=>toast(errMsg(x)))}});
+  $("#vf-file").addEventListener("change",async e=>{const fl=e.target.files;await pickFiles(fl,pend,$("#vf-status"),true);e.target.value="";draw()});
+  f.addEventListener("submit",async()=>{
+    const fd=new FormData(f);if(!fd.get("date")){$("#vf-err").textContent="Tarih girin.";return}
+    const btn=$("#vf-save");btn.disabled=true;f.dataset.busy="1";$("#vf-err").textContent="";
+    try{
+      if(pend.length){const bar=$("#vf-bar");bar.hidden=false;btn.textContent="Yükleniyor…";const up=await uploadPending(pend,false,r=>bar.firstChild.style.width=Math.round(r*100)+"%");
+        up.forEach(p=>p.kind==="img"?v.photos.push({f:p.f,t:p.thumb}):v.pdfs.push({f:p.f,name:p.name}));pend.length=0}
+      const data={date:fd.get("date"),sira:fd.get("sira").trim(),reasons:fd.getAll("reason"),scope:fd.getAll("scope"),areas:fd.get("areas").trim(),activity:fd.get("activity"),target:fd.get("target").trim(),materials:readRows(f,"mat"),biocides:readRows(f,"bio"),applicator:fd.get("applicator").trim(),lead:fd.get("lead").trim(),signedBy:fd.get("signedBy").trim(),note:fd.get("note").trim(),photos:v.photos,pdfs:v.pdfs};
+      if(isNew)await db.collection("hk_visits").doc(v.id).set({...data,...stamp()});else await db.collection("hk_visits").doc(v.id).update({...data,...editStamp()});
+      ov.remove();toast(isNew?"Ziyaret kaydedildi":"Ziyaret güncellendi")
+    }catch(x){delete f.dataset.busy;btn.disabled=false;btn.textContent="Kaydet";$("#vf-err").textContent=errMsg(x)}});
+}
+function docForm(d){
+  const isNew=!d;
+  d=d?JSON.parse(JSON.stringify(d)):{id:uid(),group:"firma",title:"",ref:"",date:"",valid:"",status:"dosyada",requested:"",note:"",file:null,hidden:false};
+  const pend=[];
+  const {f,ov}=sheet(`<h2>${isNew?"Yeni belge":"Belgeyi düzenle"}</h2>
+    <div class="field"><label for="df-title">Belge adı</label><input id="df-title" type="text" name="title" value="${esc(d.title)}" placeholder="ör. Sigorta poliçesi 2026" required></div>
+    <div class="field"><span class="lab">Dosya</span><div class="photos" id="df-files"></div>
+      <label class="btn primary" style="justify-self:start">${d.file?"Dosyayı değiştir":"Belge yükle"}<input type="file" accept="${ACC}" multiple id="df-up" hidden></label>
+      <span class="muted" style="font-size:12.5px">Kamerayla çekebilir, galeriden seçebilir ya da PDF ekleyebilirsiniz. Birden fazla sayfa çekerseniz her biri ayrı belge olarak eklenir.</span><span id="df-status" class="muted" style="font-size:13px" role="status"></span></div>
+    <div class="grid2"><div class="field"><label for="df-group">Grup</label><select id="df-group" name="group">${Object.keys(DOCGROUPS).map(g=>`<option value="${g}" ${d.group===g?"selected":""}>${DOCGROUPS[g]}</option>`).join("")}</select></div>
+      <div class="field"><label for="df-ref">Belge no</label><input id="df-ref" type="text" name="ref" value="${esc(d.ref)}"></div></div>
+    <div class="grid2"><div class="field"><label for="df-date">Belge tarihi</label><input id="df-date" type="date" name="date" value="${d.date||""}"></div>
+      <div class="field"><label for="df-valid">Geçerlilik sonu</label><input id="df-valid" type="date" name="valid" value="${d.valid||""}"></div></div>
+    ${isAdm()?`<div class="grid2"><div class="field"><label for="df-status">Durum</label><select id="df-status" name="status">${Object.keys(STATUS).map(k=>`<option value="${k}" ${d.status===k?"selected":""}>${STATUS[k][0]}</option>`).join("")}</select></div>
+      <div class="field"><label for="df-req">Talep tarihi</label><input id="df-req" type="date" name="requested" value="${d.requested||""}"></div></div>
+    <div class="checks"><label><input type="checkbox" name="hidden" ${d.hidden?"checked":""}>Denetçi sayfasında gösterme</label></div>`:""}
+    <div class="field"><label for="df-note">Not</label><input id="df-note" type="text" name="note" value="${esc(d.note)}"></div>
+    <div class="bar" id="df-bar" hidden><i></i></div><p class="err" id="df-err"></p><div id="df-confirm"></div>
+    <div class="sheet-acts"><div>${!isNew&&isAdm()?`<button type="button" class="btn danger" data-del>Belgeyi sil</button>`:""}</div><div style="display:flex;gap:8px"><button type="button" class="btn" data-cancel>Vazgeç</button><button type="submit" class="btn primary" id="df-save">Kaydet</button></div></div>`);
+  const draw=()=>{$("#df-files").innerHTML=(d.file&&!pend.length?`<span class="chip">Mevcut dosya: ${esc(d.file.name||"belge")}</span>`:"")+pendHtml(pend)};draw();
+  f.addEventListener("click",e=>{const t=e.target;
+    if(t.closest("[data-rmpend]")){pend.splice(+t.closest("[data-rmpend]").dataset.rmpend,1);draw()}
+    else if(t.closest("[data-cancel]")){if(!f.dataset.busy)ov.remove()}
+    else if(t.closest("[data-del]"))delConfirm(f,"#df-confirm","Belge listeden silinsin mi?");
+    else if(t.closest("[data-nodel]"))$("#df-confirm").innerHTML="";
+    else if(t.closest("[data-yesdel]")){db.collection("hk_docs").doc(d.id).delete().then(()=>{ov.remove();toast("Belge silindi")},x=>toast(errMsg(x)))}});
+  $("#df-up").addEventListener("change",async e=>{await pickFiles(e.target.files,pend,$("#df-status"),true);e.target.value="";draw()});
+  f.addEventListener("submit",async()=>{const fd=new FormData(f);const title=fd.get("title").trim();if(!title){$("#df-err").textContent="Belge adı girin.";return}
+    if(isNew&&!pend.length){$("#df-err").textContent="Belgenin fotoğrafını ya da PDF'ini ekleyin.";return}
+    const btn=$("#df-save");btn.disabled=true;f.dataset.busy="1";$("#df-err").textContent="";
+    try{
+      const base={title,group:fd.get("group"),ref:fd.get("ref").trim(),date:fd.get("date")||"",valid:fd.get("valid")||"",note:fd.get("note").trim()};
+      if(isAdm())Object.assign(base,{status:fd.get("status"),requested:fd.get("requested")||"",hidden:!!fd.get("hidden")});else if(isNew)Object.assign(base,{status:"dosyada",requested:"",hidden:false});
+      let up=[];if(pend.length){const bar=$("#df-bar");bar.hidden=false;btn.textContent="Yükleniyor…";up=await uploadPending(pend,false,r=>bar.firstChild.style.width=Math.round(r*100)+"%")}
+      const fileOf=p=>({f:p.f,name:p.name,mime:p.kind==="pdf"?"application/pdf":"image/jpeg"});
+      if(isNew){for(let i=0;i<up.length;i++){const id=i?uid():d.id;await db.collection("hk_docs").doc(id).set({...base,title:up.length>1?`${title} (${i+1}/${up.length})`:title,file:fileOf(up[i]),order:Date.now(),...stamp()})}}
+      else await db.collection("hk_docs").doc(d.id).update({...base,...(up.length?{file:fileOf(up[0])}:{}),...editStamp()});
+      ov.remove();toast(isNew?"Belge eklendi":"Belge güncellendi")
+    }catch(x){delete f.dataset.busy;btn.disabled=false;btn.textContent="Kaydet";$("#df-err").textContent=errMsg(x)}});
+}
+function invForm(x){
+  const isNew=!x;
+  x=x?JSON.parse(JSON.stringify(x)):{id:uid(),date:iso(today),no:"",period:iso(today).slice(0,7),amount:null,note:"",files:[]};
+  const pend=[];
+  const {f,ov}=sheet(`<h2>${isNew?"Yeni fatura":"Faturayı düzenle"}</h2>
+    <div class="field"><span class="lab">Fatura</span><div class="photos" id="if-files"></div>
+      <label class="btn primary" style="justify-self:start">Belge yükle<input type="file" accept="${ACC}" multiple id="if-up" hidden></label>
+      <span class="muted" style="font-size:12.5px">Kamerayla çekebilir, galeriden seçebilir ya da e-faturanın PDF'ini ekleyebilirsiniz.</span><span id="if-status" class="muted" style="font-size:13px" role="status"></span></div>
+    <div class="grid2"><div class="field"><label for="if-date">Fatura tarihi</label><input id="if-date" type="date" name="date" value="${x.date||""}" required></div>
+      <div class="field"><label for="if-no">Fatura no</label><input id="if-no" type="text" name="no" value="${esc(x.no)}" autocapitalize="characters"></div></div>
+    <div class="grid2"><div class="field"><label for="if-per">Hizmet dönemi</label><input id="if-per" type="month" name="period" value="${x.period||""}"></div>
+      <div class="field"><label for="if-amt">Tutar, KDV dahil (₺)</label><input id="if-amt" type="text" name="amount" inputmode="decimal" value="${x.amount!=null?String(x.amount).replace(".",","):""}" placeholder="ör. 2.400,00"></div></div>
+    <div class="field"><label for="if-note">Not</label><input id="if-note" type="text" name="note" value="${esc(x.note)}"></div>
+    <div class="bar" id="if-bar" hidden><i></i></div><p class="err" id="if-err"></p><div id="if-confirm"></div>
+    <div class="sheet-acts"><div>${!isNew&&isAdm()?`<button type="button" class="btn danger" data-del>Faturayı sil</button>`:""}</div><div style="display:flex;gap:8px"><button type="button" class="btn" data-cancel>Vazgeç</button><button type="submit" class="btn primary" id="if-save">Kaydet</button></div></div>`);
+  const draw=()=>{$("#if-files").innerHTML=x.files.map((p,i)=>`<span class="chip">${p.mime==="application/pdf"?"PDF":"Fotoğraf"} ${i+1} <button type="button" class="linkbtn" data-rmf="${i}">kaldır</button></span>`).join("")+pendHtml(pend)||`<span class="muted" style="font-size:13.5px">Henüz dosya yok</span>`};draw();
+  f.addEventListener("click",e=>{const t=e.target;
+    if(t.closest("[data-rmpend]")){pend.splice(+t.closest("[data-rmpend]").dataset.rmpend,1);draw()}
+    else if(t.closest("[data-rmf]")){x.files.splice(+t.closest("[data-rmf]").dataset.rmf,1);draw()}
+    else if(t.closest("[data-cancel]")){if(!f.dataset.busy)ov.remove()}
+    else if(t.closest("[data-del]"))delConfirm(f,"#if-confirm","Fatura silinsin mi?");
+    else if(t.closest("[data-nodel]"))$("#if-confirm").innerHTML="";
+    else if(t.closest("[data-yesdel]")){db.collection("hk_invoices").doc(x.id).delete().then(()=>{ov.remove();toast("Fatura silindi")},er=>toast(errMsg(er)))}});
+  $("#if-up").addEventListener("change",async e=>{await pickFiles(e.target.files,pend,$("#if-status"),true);e.target.value="";draw()});
+  f.addEventListener("submit",async()=>{const fd=new FormData(f);
+    if(!fd.get("date")){$("#if-err").textContent="Fatura tarihini girin.";return}
+    const raw=String(fd.get("amount")||"").trim();let amount=null;
+    if(raw){amount=parseFloat(raw.replace(/\s|₺/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."));if(!isFinite(amount)){$("#if-err").textContent="Tutar anlaşılamadı. Örnek: 2.400,00";return}}
+    if(isNew&&!pend.length){$("#if-err").textContent="Faturanın fotoğrafını ya da PDF'ini ekleyin.";return}
+    const btn=$("#if-save");btn.disabled=true;f.dataset.busy="1";$("#if-err").textContent="";
+    try{
+      if(pend.length){const bar=$("#if-bar");bar.hidden=false;btn.textContent="Yükleniyor…";const up=await uploadPending(pend,true,r=>bar.firstChild.style.width=Math.round(r*100)+"%");up.forEach(p=>x.files.push({f:p.f,mime:p.kind==="pdf"?"application/pdf":"image/jpeg"}));pend.length=0}
+      const data={date:fd.get("date"),no:fd.get("no").trim(),period:fd.get("period")||"",amount,note:fd.get("note").trim(),files:x.files};
+      if(isNew)await db.collection("hk_invoices").doc(x.id).set({...data,...stamp()});else await db.collection("hk_invoices").doc(x.id).update({...data,...editStamp()});
+      ov.remove();toast(isNew?"Fatura kaydedildi":"Fatura güncellendi")
+    }catch(er){delete f.dataset.busy;btn.disabled=false;btn.textContent="Kaydet";$("#if-err").textContent=errMsg(er)}});
+}
+function saveMeta(patch,msg){return db.collection("hk_meta").doc("main").update({...patch,...editStamp()}).then(()=>{if(msg)toast(msg)},x=>toast(errMsg(x)))}
+function stationForm(s,isNew){
+  s=JSON.parse(JSON.stringify(s));
+  const {f,ov}=sheet(`<h2>${isNew?"Yeni istasyon":"İstasyonu düzenle"}</h2>
+    <div class="field"><label for="sf-type">Tür</label><select id="sf-type" name="type">${Object.keys(TYPES).map(t=>`<option value="${t}" ${s.type===t?"selected":""}>${TYPES[t].ad}</option>`).join("")}</select></div>
+    <div class="grid2"><div class="field"><label for="sf-no">Numara</label><input id="sf-no" type="text" name="no" value="${esc(s.no)}" placeholder="ör. 9"></div>
+    <div class="field"><label for="sf-area">Bölüm</label><input id="sf-area" type="text" name="area" value="${esc(s.area)}" list="dl-area" placeholder="ör. Mutfak"></div></div>
+    <div class="field"><label for="sf-note">Not</label><input id="sf-note" type="text" name="note" value="${esc(s.note||"")}"></div>
+    <div id="sf-confirm"></div>
+    <div class="sheet-acts"><div>${isNew?"":`<button type="button" class="btn danger" data-del>Sil</button>`}</div><div style="display:flex;gap:8px"><button type="button" class="btn" data-cancel>Vazgeç</button><button type="submit" class="btn primary">Kaydet</button></div></div>
+    ${datalist("dl-area",(META.stations||[]).map(x=>x.area))}`);
+  f.addEventListener("click",e=>{const t=e.target;
+    if(t.closest("[data-cancel]"))ov.remove();
+    else if(t.closest("[data-del]"))delConfirm(f,"#sf-confirm","İstasyon plandan silinsin mi?");
+    else if(t.closest("[data-nodel]"))$("#sf-confirm").innerHTML="";
+    else if(t.closest("[data-yesdel]")){selSt=null;ov.remove();saveMeta({stations:(META.stations||[]).filter(x=>x.id!==s.id)},"İstasyon silindi")}});
+  f.addEventListener("submit",()=>{const fd=new FormData(f);Object.assign(s,{type:fd.get("type"),no:fd.get("no").trim(),area:fd.get("area").trim(),note:fd.get("note").trim()});
+    const list=(META.stations||[]).slice();const i=list.findIndex(x=>x.id===s.id);if(i>=0)list[i]=s;else list.push(s);selSt=s.id;ov.remove();saveMeta({stations:list},"İstasyon kaydedildi")});
+}
+function prodForm(p){
+  const isNew=!p;
+  p=p?JSON.parse(JSON.stringify(p)):{id:uid(),name:"",form:"",active:"",antidote:"",ruhsat:"",target:"",onList:false,doc:null};
+  const {f,ov}=sheet(`<h2>${isNew?"Yeni ürün":"Ürünü düzenle"}</h2>
+    <div class="field"><label for="pf-name">Ticari ad</label><input id="pf-name" type="text" name="name" value="${esc(p.name)}"></div>
+    <div class="grid2"><div class="field"><label for="pf-form">Uygulama şekli</label><input id="pf-form" type="text" name="form" value="${esc(p.form)}"></div>
+    <div class="field"><label for="pf-ruhsat">Ruhsat tarihi ve sayısı</label><input id="pf-ruhsat" type="text" name="ruhsat" value="${esc(p.ruhsat)}"></div></div>
+    <div class="grid2"><div class="field"><label for="pf-active">Aktif madde</label><input id="pf-active" type="text" name="active" value="${esc(p.active)}"></div>
+    <div class="field"><label for="pf-anti">Antidot</label><input id="pf-anti" type="text" name="antidote" value="${esc(p.antidote)}"></div></div>
+    <div class="field"><label for="pf-target">Hedef zararlı</label><input id="pf-target" type="text" name="target" value="${esc(p.target||"")}"></div>
+    <div class="field"><label for="pf-doc">Ruhsat / güvenlik bilgi formu belgesi</label><select id="pf-doc" name="doc"><option value="">Yok</option>${DOCS.filter(d=>d.file).map(d=>`<option value="${esc(d.id)}" ${p.doc===d.id?"selected":""}>${esc(d.title)}</option>`).join("")}</select></div>
+    <div class="checks"><label><input type="checkbox" name="onList" ${p.onList?"checked":""}>İşletmeye özel onaylı pestisit listesinde</label></div>
+    <div id="pf-confirm"></div>
+    <div class="sheet-acts"><div>${isNew?"":`<button type="button" class="btn danger" data-del>Ürünü sil</button>`}</div><div style="display:flex;gap:8px"><button type="button" class="btn" data-cancel>Vazgeç</button><button type="submit" class="btn primary">Kaydet</button></div></div>`);
+  f.addEventListener("click",e=>{const t=e.target;
+    if(t.closest("[data-cancel]"))ov.remove();
+    else if(t.closest("[data-del]"))delConfirm(f,"#pf-confirm","Ürün listeden silinsin mi?");
+    else if(t.closest("[data-nodel]"))$("#pf-confirm").innerHTML="";
+    else if(t.closest("[data-yesdel]")){ov.remove();saveMeta({products:(META.products||[]).filter(x=>x.id!==p.id)},"Ürün silindi")}});
+  f.addEventListener("submit",()=>{const fd=new FormData(f);if(!fd.get("name").trim()){toast("Ürün adı girin");return}
+    Object.assign(p,{name:fd.get("name").trim(),form:fd.get("form").trim(),ruhsat:fd.get("ruhsat").trim(),active:fd.get("active").trim(),antidote:fd.get("antidote").trim(),target:fd.get("target").trim(),doc:fd.get("doc")||null,onList:!!fd.get("onList")});
+    const list=(META.products||[]).slice();const i=list.findIndex(x=>x.id===p.id);if(i>=0)list[i]=p;else list.push(p);ov.remove();saveMeta({products:list},"Ürün kaydedildi")});
+}
+
+/* ---------- login (same names and passwords as Kanaat Ödemeler) ---------- */
+function loginForm(){
+  const {f,ov}=sheet(`<h2>Personel girişi</h2><p class="muted" style="margin:0">Kanaat Ödemeler'de kullandığınız ad soyad ve şifreyle girin.</p>
+    <div class="field"><label for="ln">Ad soyad</label><input id="ln" type="text" autocomplete="username" required></div>
+    <div class="field"><label for="lp">Şifre</label><input id="lp" type="password" autocomplete="current-password" required></div>
+    <p class="err" id="le"></p>
+    <div class="sheet-acts"><span></span><div style="display:flex;gap:8px"><button type="button" class="btn" data-cancel>Vazgeç</button><button type="submit" class="btn primary" id="lb">Giriş yap</button></div></div>`);
+  f.querySelector("#ln").focus();
+  f.addEventListener("click",e=>{if(e.target.closest("[data-cancel]"))ov.remove()});
+  f.addEventListener("submit",async()=>{const b=$("#lb");b.disabled=true;b.textContent="Giriş yapılıyor…";$("#le").textContent="";
+    try{await auth.signInWithEmailAndPassword(emailOf($("#ln").value),$("#lp").value.trim());ov.remove()}
+    catch(x){b.disabled=false;b.textContent="Giriş yap";const c=x&&x.code||"";$("#le").textContent=/invalid|wrong-password|user-not-found/.test(c)?"Ad soyad veya şifre hatalı.":/too-many/.test(c)?"Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.":/network/.test(c)?"İnternet bağlantısı yok.":"Giriş yapılamadı ("+c+")."}});
+}
+async function onAuth(u){
+  if(unsubPriv){unsubPriv();unsubPriv=null}INVOICES=[];
+  if(!u){me=null;render();return}
+  try{const s=await db.collection("users").doc(u.uid).get();
+    if(!s.exists){await auth.signOut();toast("Bu hesabın erişimi yok. Yöneticiyle görüşün.");return}
+    const d=s.data();me={uid:u.uid,name:d.name,role:d.role};
+  }catch(e){me=null;toast("Giriş doğrulanamadı ("+(e.code||e)+")");render();return}
+  unsubPriv=db.collection("hk_invoices").onSnapshot(s=>{INVOICES=s.docs.map(x=>({id:x.id,...x.data()}));render()},e=>{if(e.code==="permission-denied")toast("Faturalar için Firebase kuralları eklenmemiş")});
+  render();
+}
+
+/* ---------- first-time setup (admin, once) ---------- */
+function setupHtml(){return`<p style="margin:0">İlk kurulum: Claude'un hazırladığı mevcut kayıtlar (8 ziyaret, yerleşim planı, ürünler, 14 belge) bu sisteme aktarılacak.</p>
+  <div class="field"><label for="sc">Kurulum kodu</label><input id="sc" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX"></div>
+  <div class="bar" id="sbar" hidden><i></i></div><p class="err" id="se"></p><button class="btn primary" id="sb" style="justify-self:start">Kurulumu başlat</button>`}
+function bindSetup(){const b=$("#sb");if(!b)return;b.onclick=runSetup}
+async function runSetup(){
+  const code=String($("#sc").value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");const er=$("#se"),b=$("#sb"),bar=$("#sbar");er.textContent="";
+  if(!code){er.textContent="Kurulum kodunu girin.";return}
+  b.disabled=true;b.textContent="Paket indiriliyor…";setupOpen=true;
+  try{
+    const r=await fetch("kurulum.bin?"+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error("Paket indirilemedi");
+    const ct=new Uint8Array(await r.arrayBuffer());const ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+    const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(code),"PBKDF2",false,["deriveKey"]);
+    const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:ub(SEED_SALT),iterations:SEED_ITER,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+    let seed;try{seed=JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(SEED_IV)},key,ct)))}catch(x){throw new Error("Kurulum kodu hatalı")}
+    bar.hidden=false;const keys=Object.keys(seed.files);const ids={};let k=0;
+    for(const key2 of keys){k++;b.textContent=`Dosyalar yükleniyor… ${k}/${keys.length}`;const fl=seed.files[key2];
+      ids[key2]=await putFileB64(fl.b64,fl.mime,fl.name,false,p=>bar.firstChild.style.width=Math.round((k-1+p)/keys.length*100)+"%")}
+    b.textContent="Kayıtlar yazılıyor…";
+    const ts=firebase.firestore.FieldValue.serverTimestamp();const by={addedBy:me.name,addedByUid:me.uid,addedAt:ts};
+    for(const v of seed.visits){const{id,photoKeys,thumbs,...rest}=v;await db.collection("hk_visits").doc(id).set({...rest,photos:photoKeys.map((pk,i)=>({f:ids[pk],t:thumbs[i]})),pdfs:[],...by})}
+    for(const d of seed.docs){const{id,fileKey,...rest}=d;await db.collection("hk_docs").doc(id).set({...rest,file:fileKey?{f:ids[fileKey],name:seed.files[fileKey].name,mime:seed.files[fileKey].mime}:null,...by})}
+    const{krokiKey,...m}=seed.meta;await db.collection("hk_meta").doc("main").set({...m,kroki:ids[krokiKey],...by});
+    setupOpen=false;render();toast("Kurulum tamamlandı");
+  }catch(x){setupOpen=false;const msg=x&&x.code?errMsg(x):(x.message||String(x));render();const e2=$("#se");if(e2)e2.textContent=msg;else toast(msg)}
+}
+
+/* ---------- toast & update ---------- */
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;t.setAttribute("role","status");document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
+const MY_VER=1;
+async function checkUpdate(){if(!/^https?:/.test(location.protocol))return;
+  try{const r=await fetch(location.pathname+"?ver="+Date.now(),{cache:"no-store"});if(!r.ok)return;const m=(await r.text()).match(/const MY_VER=(\d+);/);const v=m?parseInt(m[1]):0;
+    if(v>MY_VER&&!$(".updbar")){const d=document.createElement("div");d.className="updbar";d.innerHTML=`<span>Yeni sürüm hazır.</span><button type="button">Yenile</button>`;d.querySelector("button").onclick=()=>location.replace(location.pathname+"?v="+v);document.body.appendChild(d)}}catch(e){}}
+setInterval(checkUpdate,180000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdate()});setTimeout(checkUpdate,4000);
+
+/* ---------- boot ---------- */
+function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>no(new Error(src));document.head.appendChild(s)})}
+async function boot(){
+  render();
+  try{for(const m of["app","auth","firestore"])await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-${m}-compat.js`)}
+  catch(e){$("#app").innerHTML=`<div class="wrap"><div class="notice"><h2>Haşere Kontrol Dosyası</h2><p class="err">Bağlantı kurulamadı. İnternetinizi kontrol edip sayfayı yenileyin.</p></div></div>`;return}
+  firebase.initializeApp(FB_CFG);auth=firebase.auth();db=firebase.firestore();
+  try{await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)}catch(e){}
+  const fail=e=>{$("#app").innerHTML=`<div class="wrap"><div class="notice"><h2>Haşere Kontrol Dosyası</h2><p class="err">${e&&e.code==="permission-denied"?"Kayıtlar okunamadı: Firebase kuralları henüz eklenmemiş.":"Kayıtlar okunamadı. Sayfayı yenileyin."}</p></div></div>`};
+  db.collection("hk_meta").doc("main").onSnapshot(s=>{META=s.exists?s.data():null;metaLoaded=true;
+    if(META&&META.kroki&&!krokiUrl)getFile(META.kroki,false).then(f=>{krokiUrl=f.url;render()},()=>{});
+    if(!setupOpen)render()},fail);
+  db.collection("hk_visits").onSnapshot(s=>{VISITS=s.docs.map(x=>({id:x.id,...x.data()}));if(!setupOpen)render()},()=>{});
+  db.collection("hk_docs").onSnapshot(s=>{DOCS=s.docs.map(x=>({id:x.id,...x.data()}));if(!setupOpen)render()},()=>{});
+  auth.onAuthStateChanged(u=>{if(!setupOpen)onAuth(u)});
+  if(location.hash){setTimeout(()=>{const t=document.getElementById(location.hash.slice(1));if(t)t.scrollIntoView()},800)}
+}
+boot();
+})();
+
+</script>
+</body>
+</html>
