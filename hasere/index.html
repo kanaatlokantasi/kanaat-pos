@@ -294,7 +294,7 @@ const ACC="image/*,application/pdf,.pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,.gif,.
 /* ---------- state ---------- */
 let auth=null,db=null,me=null;           // me: {uid,name,role}
 let META=null,VISITS=[],DOCS=[],INVOICES=[],metaLoaded=false,visitsLoaded=false,docsLoaded=false;
-let selSt=null,placing=null,hiddenTypes=new Set(),krokiUrl=null,unsubPriv=null,setupOpen=false;
+let selSt=null,placing=null,hiddenTypes=new Set(),krokiUrl=null,unsubInv=null,invOk=false,setupOpen=false;
 const isAdm=()=>!!(me&&me.role==="admin");
 const isUser=()=>!!me;
 const canEditVisit=v=>isAdm()||(me&&v.addedByUid===me.uid);
@@ -371,7 +371,7 @@ function render(){
     <a href="#plan" data-sec="plan">Yerleşim planı</a>
     <a href="#urunler" data-sec="urunler">Biyosidal ürünler</a>
     <a href="#belgeler" data-sec="belgeler">Belgeler</a>
-    ${me?`<a href="#faturalar" data-sec="faturalar">Faturalar</a>`:""}
+    ${invOk||me?`<a href="#faturalar" data-sec="faturalar">Faturalar</a>`:""}
     <a href="#acil" data-sec="acil">Acil durum</a>
   </div></nav>
   <main class="wrap">
@@ -405,7 +405,7 @@ function render(){
       ${isUser()?`<button class="btn" data-act="new-doc">+ Belge ekle</button>`:""}</div>
       ${Object.keys(DOCGROUPS).map(g=>{const ds=DOCS.filter(d=>d.group===g&&(isUser()||!d.hidden)).sort((a,b)=>(a.order||0)-(b.order||0)||String(a.title).localeCompare(b.title,"tr"));if(!ds.length)return"";return`<div class="docgroup"><h3>${DOCGROUPS[g]}</h3><div class="docs">${ds.map(docRow).join("")}</div></div>`}).join("")}
     </section>
-    ${me?invoicesHtml():""}
+    ${invOk||me?invoicesHtml():""}
     <section id="acil">
       <div class="sec-head"><div><h2>Acil durum</h2></div></div>
       <div class="emerg">
@@ -419,7 +419,7 @@ function render(){
   document.body.classList.toggle("placing",!!placing);
   spy();
 }
-function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 3</div></footer>`}
+function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 4</div></footer>`}
 function countByType(){const st=META.stations||[];return Object.keys(TYPES).map(t=>[t,st.filter(s=>s.type===t).length]).filter(x=>x[1]).map(([t,n])=>`${n} ${TYPES[t].kisa}`).join(" · ")}
 function stationsSorted(){const o=Object.keys(TYPES);return (META.stations||[]).slice().sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)||(parseInt(a.no)||0)-(parseInt(b.no)||0))}
 function popHtml(){
@@ -474,11 +474,11 @@ function invoicesHtml(){
   const rows=INVOICES.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   const total=rows.reduce((s,x)=>s+(isFinite(x.amount)?x.amount:0),0);
   return`<section id="faturalar">
-    <div class="sec-head"><div><h2>Kesilen faturalar</h2><p>Kılavuz IPM'nin hizmet faturaları. <span class="private">Yalnızca giriş yapan personel görür; denetçi sayfasında çıkmaz</span></p></div>
-    <button class="btn primary" data-act="new-inv">+ Fatura ekle</button></div>
+    <div class="sec-head"><div><h2>Kesilen faturalar</h2><p>Kılavuz IPM'nin hizmet faturaları.${me&&!invOk?` <span class="private">Faturalar şu an yalnızca giriş yapanlara görünüyor; denetçinin görmesi için Firebase kuralı güncellenmeli</span>`:""}</p></div>
+    ${me?`<button class="btn primary" data-act="new-inv">+ Fatura ekle</button>`:""}</div>
     ${rows.length?`<div class="inv-card"><table class="inv"><thead><tr><th>Fatura tarihi</th><th>Fatura no</th><th>Dönem</th><th style="text-align:right">Tutar (KDV dahil)</th><th>Dosya</th><th></th></tr></thead><tbody>
       ${rows.map(x=>`<tr><td>${fmt(x.date)}</td><td class="mono">${esc(x.no||"—")}</td><td>${esc(mfmt(x.period))}${x.note?`<div class="muted" style="font-size:12.5px">${esc(x.note)}</div>`:""}</td><td class="n">${tl(x.amount)}</td><td>${(x.files||[]).map((f,i)=>`<button class="btn sm" data-act="open-pfile" data-f="${esc(f.f)}">${f.mime==="application/pdf"?"PDF":"Fotoğraf"}${x.files.length>1?" "+(i+1):""}</button>`).join(" ")||"—"}</td><td>${canEditInv(x)?`<button class="btn sm" data-act="edit-inv" data-id="${esc(x.id)}">Düzenle</button>`:""}</td></tr>`).join("")}
-    </tbody><tfoot><tr><td colspan="3">${rows.length} fatura</td><td class="n">${tl(total)}</td><td colspan="2"></td></tr></tfoot></table></div>`:`<p class="muted">Henüz fatura eklenmedi. “+ Fatura ekle” ile faturanın fotoğrafını çekebilir ya da PDF'ini yükleyebilirsiniz.</p>`}
+    </tbody><tfoot><tr><td colspan="3">${rows.length} fatura</td><td class="n">${tl(total)}</td><td colspan="2"></td></tr></tfoot></table></div>`:`<p class="muted">${me?"Henüz fatura eklenmedi. “+ Fatura ekle” ile faturanın fotoğrafını çekebilir ya da PDF'ini yükleyebilirsiniz.":"Henüz fatura eklenmedi."}</p>`}
   </section>`;
 }
 
@@ -790,17 +790,19 @@ function loginForm(){
     catch(x){b.disabled=false;b.textContent="Giriş yap";const c=x&&x.code||"";$("#le").textContent=/invalid|wrong-password|user-not-found/.test(c)?"Ad soyad veya şifre hatalı.":/too-many/.test(c)?"Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.":/network/.test(c)?"İnternet bağlantısı yok.":"Giriş yapılamadı ("+c+")."}});
 }
 async function onAuth(u){
-  if(unsubPriv){unsubPriv();unsubPriv=null}INVOICES=[];
-  if(!u){me=null;render();return}
+  if(!u){me=null;subInv();render();return}
   try{const s=await db.collection("users").doc(u.uid).get();
     if(!s.exists){await auth.signOut();toast("Bu hesabın erişimi yok. Yöneticiyle görüşün.");return}
     const d=s.data();me={uid:u.uid,name:d.name,role:d.role};
   }catch(e){me=null;toast("Giriş doğrulanamadı ("+(e.code||e)+")");render();return}
-  unsubPriv=db.collection("hk_invoices").onSnapshot(s=>{INVOICES=s.docs.map(x=>({id:x.id,...x.data()}));render()},e=>{if(e.code==="permission-denied")toast("Faturalar için Firebase kuralları eklenmemiş")});
+  subInv();
   render();
 }
 
 /* ---------- first-time setup (admin, once) ---------- */
+/* invoices are public; re-subscribe on sign-in/out so a rule that only lets signed-in people read still works for them */
+function subInv(){if(unsubInv){try{unsubInv()}catch(e){}}
+  unsubInv=db.collection("hk_invoices").onSnapshot(s=>{INVOICES=s.docs.map(x=>({id:x.id,...x.data()}));invOk=true;if(!setupOpen)render()},e=>{invOk=false;INVOICES=[];if(!setupOpen)render()})}
 function setupHtml(){return`<p style="margin:0">İlk kurulum: Claude'un hazırladığı mevcut kayıtlar (8 ziyaret, yerleşim planı, ürünler, 14 belge) bu sisteme aktarılacak.</p>
   <div class="field"><label for="sc">Kurulum kodu</label><input id="sc" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXXX-XXXXX"></div>
   <div class="bar" id="sbar" hidden><i></i></div><p class="err" id="se"></p><button class="btn primary" id="sb" style="justify-self:start">Kurulumu başlat</button>`}
@@ -829,7 +831,7 @@ async function runSetup(){
 
 /* ---------- toast & update ---------- */
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;t.setAttribute("role","status");document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
-const MY_VER=3;
+const MY_VER=4;
 async function checkUpdate(){if(!/^https?:/.test(location.protocol))return;
   try{const r=await fetch(location.pathname+"?ver="+Date.now(),{cache:"no-store"});if(!r.ok)return;const m=(await r.text()).match(/const MY_VER=(\d+);/);const v=m?parseInt(m[1]):0;
     if(v>MY_VER&&!$(".updbar")){const d=document.createElement("div");d.className="updbar";d.innerHTML=`<span>Yeni sürüm hazır.</span><button type="button">Yenile</button>`;d.querySelector("button").onclick=()=>location.replace(location.pathname+"?v="+v);document.body.appendChild(d)}}catch(e){}}
@@ -849,6 +851,7 @@ async function boot(){
     if(!setupOpen)render()},fail);
   db.collection("hk_visits").onSnapshot(s=>{VISITS=s.docs.map(x=>({id:x.id,...x.data()}));if(!setupOpen)render()},()=>{});
   db.collection("hk_docs").onSnapshot(s=>{DOCS=s.docs.map(x=>({id:x.id,...x.data()}));if(!setupOpen)render()},()=>{});
+  subInv();
   auth.onAuthStateChanged(u=>{if(!setupOpen)onAuth(u)});
   if(location.hash){setTimeout(()=>{const t=document.getElementById(location.hash.slice(1));if(t)t.scrollIntoView()},800)}
 }
