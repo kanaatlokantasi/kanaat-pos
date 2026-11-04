@@ -184,6 +184,8 @@ html[lang=ar] .ctitle,html[lang=zh] .ctitle,html[lang=ja] .ctitle,html[lang=ko] 
 .qrbig svg{display:block;width:100%;height:auto}
 .trlist{border:1px dashed var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:15px}
 .trlist div{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+.tl2{display:flex;flex-direction:column;min-width:0}.tl2 small{color:var(--muted);font-size:13px;font-weight:400}
+.cn small.gl{font-style:italic}
 .trlist .trt{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-weight:700}
 #waiter{min-height:100vh;padding:20px 0 40px}
 #waiter h2{margin:0;font:700 22px "Noto Serif",Georgia,serif;color:var(--green)}
@@ -266,7 +268,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 17 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 18 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -822,7 +824,7 @@ function cartQR(){
   const svg=qrSvg(url);
   $("cartbody").innerHTML=`<h3 class="ctitle">${esc(CL(CART_UI.show))}</h3>
    ${svg?`<p class="cnote">${esc(CL(CART_UI.scan))}</p><div class="qrbig">${svg}</div>`:`<p class="cnote">${esc(CL(CART_UI.long))}</p>`}
-   <div class="trlist" lang="tr" dir="ltr">${L.map(l=>`<div><span>${l.q} × ${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
+   <div class="trlist" lang="tr" dir="ltr">${L.map(l=>`<div><span class="tl2"><b>${l.q} × ${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</b>${lang!=="tr"?`<small dir="auto">${esc(nameIn(l.it))}${l.v?" ("+vLabel(l.v)+")":""}</small>`:""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
      <div class="trt"><span>Toplam</span><b>${price(cartTotal(L))}</b></div></div>
    <button class="clink" type="button" id="cback">${esc(CL(CART_UI.back))}</button>`;
 }
@@ -880,7 +882,7 @@ function waiterView(payload){
     box.innerHTML=`<div class="wrap"><h2>Misafir Adisyonu</h2>
      <p class="wsub">Misafirin kendi seçtiği yemekler · ${tm}${LN[glang]?" · Misafirin dili: "+esc(LN[glang]):""}</p>
      <div class="wnote">Bu liste misafirin kendi seçimidir. Bitmiş yemekleri silin, adetleri düzeltin. Değişiklikler yalnızca bu telefonda görünür.</div>
-     <div class="wlines">${W.map((l,i)=>`<div class="wl${l.q?"":" off"}"><div class="cn"><b>${esc(l.it.tr)}${l.v?` <span class="vtag">${vLabel(l.v,1)}</span>`:""}</b><small>${price(lp(l))}</small></div>
+     <div class="wlines">${W.map((l,i)=>`<div class="wl${l.q?"":" off"}"><div class="cn"><b>${esc(l.it.tr)}${l.v?` <span class="vtag">${vLabel(l.v,1)}</span>`:""}</b>${glang!=="tr"&&LI[glang]?`<small class="gl" dir="auto" lang="${glang}">${esc(l.it.t[LI[glang]-1])}</small>`:""}<small>${price(lp(l))}</small></div>
        <span class="step"><button type="button" data-wd="${i}">−</button><b>${l.q}</b><button type="button" data-wi="${i}">+</button></span><em>${price(l.q*lp(l))}</em></div>`).join("")||"<p>Liste boş.</p>"}</div>
      <div class="ctot"><span>Toplam (${live.reduce((a,l)=>a+l.q,0)} adet)</span><b>${price(live.reduce((a,l)=>a+l.q*lp(l),0))}</b></div>
      ${live.length?`<button class="cbtn" type="button" id="wok">Onayla ve misafire göster</button>`:""}
