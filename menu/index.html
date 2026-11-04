@@ -195,6 +195,12 @@ html[lang=ar] .ctitle,html[lang=zh] .ctitle,html[lang=ja] .ctitle,html[lang=ko] 
 .tipbox .cnote{margin-top:8px}
 .csub{display:flex;justify-content:space-between;padding:6px 0 0;color:var(--muted)}
 .cart .crow .addbox{flex-direction:row;align-items:center}
+.fwarn{margin:8px 0 0;background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:8px 10px;font-size:13px;font-weight:600}
+.fx{display:flex;justify-content:flex-end;gap:4px;color:var(--muted);font-size:13.5px;padding:2px 0 0}
+.fxnote{text-align:end;color:var(--muted);font-size:11.5px;margin:2px 0 0}
+.splitrow{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.splitrow .step b{min-width:30px}
+.pp{display:flex;justify-content:space-between;padding:8px 0 0;font-weight:600}
 .clink{display:block;width:100%;margin-top:8px;border:0;background:none;color:var(--muted);font:600 14px inherit;padding:10px;text-align:center;text-decoration:underline;cursor:pointer}
 .qrbig{background:#fff;border-radius:14px;padding:10px;margin:12px auto;max-width:300px}
 .qrbig svg{display:block;width:100%;height:auto}
@@ -266,7 +272,11 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
       <button class="fbtn" data-f="c" type="button" aria-pressed="false"></button>
       <button class="fbtn" data-f="v" type="button" aria-pressed="false"></button>
       <button class="fbtn" data-f="V" type="button" aria-pressed="false"></button>
+      <button class="fbtn" data-f="xG" type="button" aria-pressed="false"></button>
+      <button class="fbtn" data-f="xN" type="button" aria-pressed="false"></button>
+      <button class="fbtn" data-f="xM" type="button" aria-pressed="false"></button>
     </div>
+    <p class="fwarn hide" id="fwarn"></p>
     <nav class="cats" id="cats"></nav>
   </div>
 </div>
@@ -284,7 +294,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 30 · 05.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 31 · 05.11.2026</p>
   </div>
 </footer>
 
@@ -493,7 +503,9 @@ function render(){
   $("t-legend").textContent=L(UI.legend);
   $("t-prices").textContent=L(UI.prices);
   $("t-hours").textContent=L(UI.hours);
-  document.querySelectorAll(".fbtn").forEach(b=>{const k=b.dataset.f,src=MEAT[k]||DIET[k];b.textContent=src[0]+" "+Lt(src)});
+  const XF={xG:["🌾",DIET.GF],xN:["🌰",DIET.NF],xM:["🥛",DIET.DF]};
+  document.querySelectorAll(".fbtn").forEach(b=>{const k=b.dataset.f;if(XF[k]){b.textContent=XF[k][0]+" "+Lt(XF[k][1]);return}const src=MEAT[k]||DIET[k];b.textContent=src[0]+" "+Lt(src)});
+  $("fwarn").textContent="⚠️ "+L(UI.allergy);
   $("legend").innerHTML=LEGEND_ALG.map(a=>`<span class="t a">${ALG[a][0]} ${esc(Lt(ALG[a]))}</span>`).join("")+
     ["V","v"].map(d=>`<span class="t d">${DIET[d][0]} ${esc(Lt(DIET[d]))}</span>`).join("");
   let nav="",html="";
@@ -521,13 +533,15 @@ const BYID={};
 for(const c of MENU)for(const it of c.items)BYID[it.id]=it;
 function filter(){
   const q=norm($("q").value.trim());
+  $("fwarn").classList.toggle("hide",!(fsel&&fsel[0]==="x"));
   let any=false;
   for(const sec of document.querySelectorAll("section.cat")){
     let vis=0;
     for(const el of sec.querySelectorAll(".item")){
       const it=BYID[el.dataset.id];
       let ok=true;
-      if(fsel==="V")ok=it.diet.includes("V");
+      if(fsel&&fsel[0]==="x")ok=!it.alg.includes(fsel[1]);
+      else if(fsel==="V")ok=it.diet.includes("V");
       else if(fsel==="v")ok=it.diet.includes("v")||it.diet.includes("V");
       else if(fsel)ok=it.meat.includes(fsel);
       if(ok&&q){const hay=norm(it.tr+" "+(lang==="tr"?"":it.t[LI[lang]-1])+" "+it.t[0]);ok=hay.includes(q)}
@@ -788,6 +802,7 @@ const CART_UI={
  long:["Liste QR'a sığmayacak kadar uzun. Lütfen garsona ekranı gösterin.","The list is too long for a QR code. Please show this screen to your waiter.","القائمة طويلة جدًا لرمز QR. يرجى إظهار هذه الشاشة للنادل.","Список слишком длинный для QR-кода. Покажите, пожалуйста, этот экран официанту.","La lista es demasiado larga para un código QR. Muestre esta pantalla a su camarero.","La liste est trop longue pour un QR code. Montrez cet écran à votre serveur.","清单过长，无法生成二维码。请直接把此屏幕给服务员看。","Die Liste ist zu lang für einen QR-Code. Bitte zeigen Sie diesen Bildschirm Ihrem Kellner.","リストが長すぎてQRコードにできません。この画面を係員にお見せください。","목록이 너무 길어 QR 코드로 만들 수 없습니다. 이 화면을 직원에게 보여 주세요."]
 };
 const BYCODE={};for(const c of MENU)for(const it of c.items)BYCODE[it.c]=it;
+const SPLIT_UI={fx:["TCMB döviz alış kuru, {d}", "Central Bank of Türkiye rate, {d}", "سعر البنك المركزي التركي، {d}", "Курс ЦБ Турции, {d}", "Tipo del Banco Central de Turquía, {d}", "Taux de la Banque centrale de Turquie, {d}", "土耳其央行汇率，{d}", "Kurs der türkischen Zentralbank, {d}", "トルコ中央銀行レート、{d}", "터키 중앙은행 환율, {d}"],people:["Kişi sayısı", "Number of people", "عدد الأشخاص", "Количество человек", "Número de personas", "Nombre de personnes", "人数", "Anzahl Personen", "人数", "인원 수"],each:["Kişi başı", "Per person", "للشخص الواحد", "На человека", "Por persona", "Par personne", "每人", "Pro Person", "お一人様", "1인당"]};
 const TIP_UI={"title": ["Gönüllü bahşiş (isteğe bağlı)", "Voluntary tip (optional)", "إكرامية (اختيارية)", "Чаевые (по желанию)", "Propina voluntaria (opcional)", "Pourboire (facultatif)", "自愿小费（可选）", "Freiwilliges Trinkgeld (optional)", "チップ（任意）", "팁 (선택 사항)"], "none": ["Yok", "None", "بدون", "Нет", "Ninguna", "Aucun", "不加", "Keins", "なし", "없음"], "custom": ["Diğer", "Other", "مبلغ آخر", "Другая сумма", "Otra", "Autre", "其他", "Anderer Betrag", "その他", "직접 입력"], "amount": ["Tutar", "Amount", "المبلغ", "Сумма", "Importe", "Montant", "金额", "Betrag", "金額", "금액"], "sub": ["Ara toplam", "Subtotal", "المجموع الفرعي", "Подытог", "Subtotal", "Sous-total", "小计", "Zwischensumme", "小計", "소계"], "line": ["Gönüllü bahşiş", "Voluntary tip", "إكرامية", "Чаевые", "Propina", "Pourboire", "小费", "Trinkgeld", "チップ", "팁"], "note": ["Hesabınıza servis ücreti eklenmez; bahşiş tamamen isteğe bağlıdır.", "No service charge is added to your bill; tipping is entirely optional.", "لا تُضاف رسوم خدمة إلى فاتورتك، والإكرامية اختيارية تمامًا.", "Плата за обслуживание не включена в счёт; чаевые — исключительно по желанию.", "No se añade cargo por servicio a su cuenta; la propina es totalmente opcional.", "Aucun frais de service n'est ajouté ; le pourboire est entièrement facultatif.", "账单不含服务费，小费完全自愿。", "Es wird keine Servicegebühr berechnet; Trinkgeld ist völlig freiwillig.", "サービス料は含まれていません。チップは完全に任意です。", "서비스 요금은 청구되지 않으며, 팁은 전적으로 선택 사항입니다."]};
 const DRINK_UI={"q": ["İçecekleri eklediniz mi?", "Did you add your drinks?", "هل أضفت المشروبات؟", "Вы добавили напитки?", "¿Ha añadido las bebidas?", "Avez-vous ajouté les boissons ?", "您添加饮料了吗？", "Haben Sie die Getränke hinzugefügt?", "お飲み物は追加しましたか？", "음료도 추가하셨나요?"], "sub": ["Su, ayran ve diğer içecekler sık unutulur:", "Water, ayran and other drinks are often forgotten:", "كثيرًا ما يُنسى الماء والعيران والمشروبات الأخرى:", "Воду, айран и другие напитки часто забывают:", "El agua, el ayran y otras bebidas se suelen olvidar:", "L'eau, l'ayran et les autres boissons sont souvent oubliés :", "水、酸奶饮料和其他饮品经常被遗忘：", "Wasser, Ayran und andere Getränke werden oft vergessen:", "お水やアイラン、その他のお飲み物はよく忘れられます：", "물, 아이란 등 음료는 자주 빠뜨리곤 해요:"], "cont": ["Devam et", "Continue", "متابعة", "Продолжить", "Continuar", "Continuer", "继续", "Weiter", "続ける", "계속"]};
 let CART={};
@@ -797,8 +812,14 @@ const vOk=(it,v)=>vPrice(it,v)!=null;
 const keyOf=(c,v)=>v?c+"~"+v:c;
 const splitKey=k=>{const [c,v]=k.split("~");return [c,v||""]};
 let TIP=null; // {k:"p",v:10} yüzde | {k:"m",v:kuruş}
-try{const s=JSON.parse(localStorage.getItem("kanaat-cart")||"{}");for(const k in s){if(k==="_tip"){const t=s[k];if(t&&(t.k==="p"||t.k==="m")&&t.v>0)TIP=t;continue}const [c,v]=splitKey(k);if(BYCODE[c]&&vOk(BYCODE[c],v)&&s[k]>0)CART[k]=Math.min(99,s[k]|0)}}catch(_){}
-function cartSave(){try{localStorage.setItem("kanaat-cart",JSON.stringify(TIP?{...CART,_tip:TIP}:CART))}catch(_){}}
+let SPLIT=1,FX=null;
+fetch("../fx.json?t="+Date.now()).then(r=>r.json()).then(j=>{if(j&&j.EUR>0&&j.USD>0){FX=j;if(typeof cartPaint==="function")cartPaint()}}).catch(()=>{});
+const LOC=g=>g==="zh"?"zh-CN":g;
+function fxText(tl,g){if(!FX||!(tl>0))return "";const f=(v,c)=>new Intl.NumberFormat(LOC(g),{style:"currency",currency:c,maximumFractionDigits:2}).format(v);
+  return "≈ "+[["EUR",FX.EUR],["USD",FX.USD],["GBP",FX.GBP]].filter(([,r])=>r>0).map(([c,r])=>f(tl/r,c)).join(" · ")}
+const fxNote=g=>FX?SPLIT_UI.fx[LI[g]].replace("{d}",FX.date||""):"";
+try{const s=JSON.parse(localStorage.getItem("kanaat-cart")||"{}");for(const k in s){if(k==="_tip"){const t=s[k];if(t&&(t.k==="p"||t.k==="m")&&t.v>0)TIP=t;continue}if(k==="_split"){SPLIT=Math.max(1,Math.min(30,s[k]|0));continue}const [c,v]=splitKey(k);if(BYCODE[c]&&vOk(BYCODE[c],v)&&s[k]>0)CART[k]=Math.min(99,s[k]|0)}}catch(_){}
+function cartSave(){try{const o={...CART};if(TIP)o._tip=TIP;if(SPLIT>1)o._split=SPLIT;localStorage.setItem("kanaat-cart",JSON.stringify(o))}catch(_){}}
 const cartLines=()=>Object.entries(CART).map(([k,q])=>{const [c,v]=splitKey(k);return {it:BYCODE[c],v,q,k}}).filter(l=>l.q>0&&l.it&&vOk(l.it,l.v));
 const lp=l=>vPrice(l.it,l.v);
 const vLabel=(v,tr)=>v==="a"?(tr?"AZ":CL(CART_UI.az)):v==="t"?(tr?"TEK":CL(CART_UI.tek)):"";
@@ -838,7 +859,11 @@ function tipBox(sub){
 function totalsHTML(L){
   const s=subOf(L),t=tipOf(s,TIP);
   return (t?`<div class="csub"><span>${esc(CL(TIP_UI.sub))}</span><b dir="ltr">${price(s)}</b></div><div class="csub"><span>${esc(CL(TIP_UI.line))}</span><b dir="ltr">${price(t)}</b></div>`:"")+
-    `<div class="ctot"><span>${esc(CL(CART_UI.total))}</span><b dir="ltr">${price(s+t)}</b></div>`;
+    `<div class="ctot"><span>${esc(CL(CART_UI.total))}</span><b dir="ltr">${price(s+t)}</b></div>`+
+    (FX?`<div class="fx" dir="ltr">${esc(fxText(s+t,lang))}</div>`:"")+
+    `<div class="splitrow"><span>👥 ${esc(CL(SPLIT_UI.people))}</span><span class="step"><button type="button" data-split="-1">−</button><b>${SPLIT}</b><button type="button" data-split="1">+</button></span></div>`+
+    (SPLIT>1?`<div class="pp"><span>${esc(CL(SPLIT_UI.each))} (${SPLIT})</span><b dir="ltr">${price(Math.round((s+t)*100/SPLIT)/100)}</b></div>`+(FX?`<div class="fx" dir="ltr">${esc(fxText((s+t)/SPLIT,lang))}</div>`:""):"")+
+    (FX?`<p class="fxnote">${esc(fxNote(lang))}</p>`:"");
 }
 function cartSheet(){
   cartView="sheet";
@@ -863,7 +888,7 @@ function drinkStep(next){
    <button class="cbtn" type="button" id="dcont">${esc(CL(DRINK_UI.cont))}</button>`;
 }
 function guardDrinks(next){drinkStep(next);return true}
-function tipToken(){return !TIP?"":TIP.k==="p"?"._p"+TIP.v:"._m"+TIP.v}
+function tipToken(){return (!TIP?"":TIP.k==="p"?"._p"+TIP.v:"._m"+TIP.v)+(SPLIT>1?"._s"+SPLIT:"")}
 function cartPayload(){
   const t=Math.round(Date.now()/6e4).toString(36);
   return lang+"."+t+"."+cartLines().map(l=>l.it.c+l.v+(l.q>1?l.q:"")).join(".")+tipToken();
@@ -877,10 +902,10 @@ function cartQR(){
    ${svg?`<p class="cnote">${esc(CL(CART_UI.scan))}</p><div class="qrbig">${svg}</div>`:`<p class="cnote">${esc(CL(CART_UI.long))}</p>`}
    <div class="trlist" lang="tr" dir="ltr">${L.map(l=>`<div><span class="tl2"><b>${l.q} × ${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</b>${lang!=="tr"?`<small dir="auto">${esc(nameIn(l.it))}${l.v?" ("+vLabel(l.v)+")":""}</small>`:""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
      ${t?`<div class="trt"><span>Ara toplam</span><b>${price(s)}</b></div><div><span>Gönüllü bahşiş</span><b>${price(t)}</b></div>`:""}
-     <div class="trt"><span>Toplam</span><b>${price(s+t)}</b></div></div>
+     <div class="trt"><span>Toplam</span><b>${price(s+t)}</b></div>${SPLIT>1?`<div><span>Kişi başı (${SPLIT} kişi)</span><b>${price(Math.round((s+t)*100/SPLIT)/100)}</b></div>`:""}</div>
    <button class="clink" type="button" id="cback">${esc(CL(CART_UI.back))}</button>`;
 }
-function cartSaveImg(){const L=cartLines();const s=subOf(L);Promise.all([document.fonts.ready,logoReady]).then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft),tip:tipOf(s,TIP)}),"kanaat-hesabim.png"))}
+function cartSaveImg(){const L=cartLines();const s=subOf(L);Promise.all([document.fonts.ready,logoReady]).then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft),tip:tipOf(s,TIP),split:SPLIT}),"kanaat-hesabim.png"))}
 function cartOpen(){chatClose();chefClose();tipCustom=false;cartSheet();$("cart").classList.add("open")}
 function cartClose(){$("cart").classList.remove("open")}
 
@@ -892,6 +917,7 @@ $("cart").addEventListener("click",e=>{
   const tp=e.target.closest("[data-tip]");
   if(tp){const k=tp.dataset.tip;if(k==="0"){TIP=null;tipCustom=false}else if(k==="m"){tipCustom=true;if(TIP&&TIP.k==="p")TIP=null}else{TIP={k:"p",v:+k.slice(1)};tipCustom=false}
     cartSave();cartPaint();if(k==="m"){const inp=$("tipamt");if(inp)inp.focus()}return}
+  const sp=e.target.closest("[data-split]");if(sp){SPLIT=Math.max(1,Math.min(30,SPLIT+(+sp.dataset.split)));cartSave();$("ctots").innerHTML=totalsHTML(cartLines());return}
   if(e.target.closest("#cshowqr")){if(guardDrinks("qr"))return;return cartQR()}
   if(e.target.closest("#csave")){if(guardDrinks("save"))return;return cartSaveImg()}
   if(e.target.closest("#dcont")){if(drinkNext==="save"){cartSheet();return cartSaveImg()}return cartQR()}
@@ -934,7 +960,7 @@ $("calc").addEventListener("click",e=>{
 
 // ---- Garson görünümü: misafirin QR'ı okutulunca (#g=...) Türkçe adisyon ----
 function waiterView(payload){
-  const {g:glang,at,W,tip}=parsePayload(payload);
+  const {g:glang,at,W,tip,split}=parsePayload(payload);
   document.documentElement.lang="tr";document.documentElement.dir="ltr";
   document.body.classList.add("waiter");
   const LN=Object.fromEntries(LANGS.map(([c,n])=>[c,n]));
@@ -947,13 +973,13 @@ function waiterView(payload){
      <div class="wnote">Bu liste misafirin kendi seçimidir. Bitmiş yemekleri silin, adetleri düzeltin. Değişiklikler yalnızca bu telefonda görünür.</div>
      <div class="wlines">${W.map((l,i)=>`<div class="wl${l.q?"":" off"}"><div class="cn"><b>${esc(l.it.tr)}${l.v?` <span class="vtag">${vLabel(l.v,1)}</span>`:""}</b>${glang!=="tr"&&LI[glang]?`<small class="gl" dir="auto" lang="${glang}">${esc(l.it.t[LI[glang]-1])}</small>`:""}<small>${price(lp(l))}</small></div>
        <span class="step"><button type="button" data-wd="${i}">−</button><b>${l.q}</b><button type="button" data-wi="${i}">+</button></span><em>${price(l.q*lp(l))}</em></div>`).join("")||"<p>Liste boş.</p>"}</div>
-     ${(()=>{const sb=subOf(live),tt=tipOf(sb,tip);return (tt?`<div class="csub"><span>Ara toplam</span><b>${price(sb)}</b></div><div class="csub"><span>Gönüllü bahşiş${tip.k==="p"?" (%"+tip.v+")":""} · misafirin isteği</span><b>${price(tt)}</b></div>`:"")+`<div class="ctot"><span>Toplam (${live.reduce((a,l)=>a+l.q,0)} adet)</span><b>${price(sb+tt)}</b></div>`})()}
+     ${(()=>{const sb=subOf(live),tt=tipOf(sb,tip);return (tt?`<div class="csub"><span>Ara toplam</span><b>${price(sb)}</b></div><div class="csub"><span>Gönüllü bahşiş${tip.k==="p"?" (%"+tip.v+")":""} · misafirin isteği</span><b>${price(tt)}</b></div>`:"")+`<div class="ctot"><span>Toplam (${live.reduce((a,l)=>a+l.q,0)} adet)</span><b>${price(sb+tt)}</b></div>`+(split>1?`<div class="pp"><span>Kişi başı (${split} kişi)</span><b>${price(Math.round((sb+tt)*100/split)/100)}</b></div>`:"")})()}
      ${live.length?`<button class="cbtn" type="button" id="wok">Onayla ve misafire göster</button>`:""}
      <a class="clink" href="${location.pathname}?lang=tr">Menüyü aç</a></div>`;
   };
   const showQR=()=>{
     const live=W.filter(l=>l.q>0);
-    const url=location.origin+location.pathname+"#o="+makePayload(glang,Date.now(),live,tip);const svg=qrSvg(url);const sb=subOf(live),tt=tipOf(sb,tip);
+    const url=location.origin+location.pathname+"#o="+makePayload(glang,Date.now(),live,tip,split);const svg=qrSvg(url);const sb=subOf(live),tt=tipOf(sb,tip);
     box.innerHTML=`<div class="wrap"><h2>Onaylanan Adisyon</h2>
      <p class="wsub">Misafir bu kodu kendi telefonunun kamerasıyla okutsun. Hesap ${LN[glang]?"<b>"+esc(LN[glang])+"</b> ":""}açılır ve misafir kaydedebilir.</p>
      ${svg?`<div class="qrbig">${svg}</div>`:`<div class="wnote">Liste QR'a sığmadı. Misafire ekranı gösterin.</div>`}
@@ -981,10 +1007,10 @@ const OK_UI={
 };
 function parsePayload(p){
   const parts=p.split(".");const g=LI[parts[0]]!==undefined?parts[0]:"en";const at=parseInt(parts[1],36)*6e4;
-  let tip=null;const W=[];for(const tok of parts.slice(2)){if(tok[0]==="_"){const n=parseInt(tok.slice(2),10);if(n>0&&(tok[1]==="p"||tok[1]==="m"))tip={k:tok[1],v:Math.min(n,tok[1]==="p"?100:10000000)};continue}const c=tok.slice(0,4),m=tok.slice(4).match(/^([at]?)(\d*)$/);if(!m)continue;const v=m[1],q=parseInt(m[2]||"1",10);if(BYCODE[c]&&vOk(BYCODE[c],v)&&q>0)W.push({it:BYCODE[c],v,q:Math.min(99,q)})}
-  return {g,at:isFinite(at)&&at>0?at:Date.now(),W,tip};
+  let tip=null,split=1;const W=[];for(const tok of parts.slice(2)){if(tok[0]==="_"){const n=parseInt(tok.slice(2),10);if(n>0&&(tok[1]==="p"||tok[1]==="m"))tip={k:tok[1],v:Math.min(n,tok[1]==="p"?100:10000000)};if(tok[1]==="s"&&n>1)split=Math.min(30,n);continue}const c=tok.slice(0,4),m=tok.slice(4).match(/^([at]?)(\d*)$/);if(!m)continue;const v=m[1],q=parseInt(m[2]||"1",10);if(BYCODE[c]&&vOk(BYCODE[c],v)&&q>0)W.push({it:BYCODE[c],v,q:Math.min(99,q)})}
+  return {g,at:isFinite(at)&&at>0?at:Date.now(),W,tip,split};
 }
-function makePayload(g,at,W,tip){return g+"."+Math.round(at/6e4).toString(36)+"."+W.filter(l=>l.q>0).map(l=>l.it.c+(l.v||"")+(l.q>1?l.q:"")).join(".")+(tip?"._"+tip.k+tip.v:"")}
+function makePayload(g,at,W,tip,split){return g+"."+Math.round(at/6e4).toString(36)+"."+W.filter(l=>l.q>0).map(l=>l.it.c+(l.v||"")+(l.q>1?l.q:"")).join(".")+(tip?"._"+tip.k+tip.v:"")+(split>1?"._s"+split:"")}
 let LOGO_IMG=null;
 const logoReady=new Promise(res=>{const im=new Image();im.onload=()=>{LOGO_IMG=im;res()};im.onerror=()=>res();im.src="img/logo-lacivert.png"});
 function wrapText(x,text,maxW){
@@ -1007,7 +1033,7 @@ function billCanvas(lines,g,at,opt){opt=opt||{};
     m.font='italic 17px "Noto Serif",Georgia,serif';const b=g!=="tr"?wrapText(m,l.it.tr+(l.v?" ("+vLabel(l.v,1)+")":""),nameW):[];
     return {l,a,b,h:a.length*29+b.length*23+14}});
   const head=TOP+146+titL.length*32+subL.length*26+26;
-  const H=head+rows.reduce((s,r)=>s+r.h,0)+150+(tip?80:0);
+  const split=Math.max(1,opt.split|0);const H=head+rows.reduce((s,r)=>s+r.h,0)+150+(tip?80:0)+(split>1?44:0)+(FX?(split>1?96:62):0);
   const c=document.createElement("canvas");c.width=W;c.height=H;
   const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);
   if(LOGO_IMG&&LOGO_IMG.naturalWidth){const lh=104,lw=LOGO_IMG.naturalWidth*lh/LOGO_IMG.naturalHeight;x.drawImage(LOGO_IMG,(W-lw)/2,22,lw,lh)}
@@ -1031,6 +1057,12 @@ function billCanvas(lines,g,at,opt){opt=opt||{};
     x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillText(price(v),end,y+22);y+=36}y+=8}
   x.fillStyle="#2A2620";x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.font="700 26px "+F;x.fillText(CART_UI.total[li],start,y+28);
   x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillText(price(sub+tip),end,y+28);
+  const tot=sub+tip;
+  if(FX){y+=30;x.fillStyle="#6F675B";x.font="400 19px "+F;x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillText(fxText(tot,g),end,y+28)}
+  if(split>1){y+=44;x.fillStyle="#2A2620";x.font="600 22px "+F;x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.fillText(SPLIT_UI.each[li]+" ("+split+")",start,y+28);
+    x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillText(price(Math.round(tot*100/split)/100),end,y+28);
+    if(FX){y+=30;x.fillStyle="#6F675B";x.font="400 19px "+F;x.fillText(fxText(tot/split,g),end,y+28)}}
+  if(FX){y+=30;x.fillStyle="#6F675B";x.font="400 15px "+F;x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"left":"right";x.fillText(fxNote(g),end,y+28)}
   x.direction=rtl?"rtl":"ltr";x.textAlign="center";x.fillStyle="#6F675B";x.font="400 18px "+F;x.fillText(OK_UI.info[li],W/2,y+76);
   return c;
 }
@@ -1038,13 +1070,13 @@ function shareCanvas(c,fname){c.toBlob(async b=>{const f=new File([b],fname||"ka
   try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"Kanaat Lokantası"});return}}catch(e){if(e.name==="AbortError")return}
   const url=c.toDataURL("image/png");const w=document.createElement("a");w.href=url;w.download=fname||"kanaat-hesap.png";document.body.appendChild(w);w.click();w.remove()})}
 function approvedView(payload){
-  const {g,at,W,tip}=parsePayload(payload);
+  const {g,at,W,tip,split}=parsePayload(payload);
   lang=g;document.documentElement.lang=g;document.documentElement.dir=g==="ar"?"rtl":"ltr";
   document.body.classList.add("waiter");
   const box=$("waiter");box.classList.remove("hide");
   const tot=W.reduce((a,l)=>a+l.q*lp(l),0);
-  Promise.all([document.fonts.ready,logoReady]).then(()=>{
-    const c=billCanvas(W,g,at,{tip:tipOf(subOf(W),tip)});const url=c.toDataURL("image/png");
+  Promise.all([document.fonts.ready,logoReady,fetch("../fx.json?t="+Date.now()).then(r=>r.json()).then(j=>{if(j&&j.EUR>0)FX=j}).catch(()=>{})]).then(()=>{
+    const c=billCanvas(W,g,at,{tip:tipOf(subOf(W),tip),split});const url=c.toDataURL("image/png");
     box.innerHTML=`<div class="wrap"><h2>${esc(CL(OK_UI.title))}</h2><p class="wsub">✓ ${esc(CL(OK_UI.sub))}</p>
      <div class="okimg"><img src="${url}" alt="${esc(CL(OK_UI.title))}"></div>
      <button class="cbtn" type="button" id="oksave">${esc(CL(OK_UI.save))}</button>
