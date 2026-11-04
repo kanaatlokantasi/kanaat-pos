@@ -279,7 +279,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 20 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 21 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -981,28 +981,46 @@ function parsePayload(p){
 function makePayload(g,at,W,tip){return g+"."+Math.round(at/6e4).toString(36)+"."+W.filter(l=>l.q>0).map(l=>l.it.c+(l.v||"")+(l.q>1?l.q:"")).join(".")+(tip?"._"+tip.k+tip.v:"")}
 let LOGO_IMG=null;
 const logoReady=new Promise(res=>{const im=new Image();im.onload=()=>{LOGO_IMG=im;res()};im.onerror=()=>res();im.src="img/logo-lacivert.png"});
+function wrapText(x,text,maxW){
+  const cjk=/[぀-ヿ㐀-鿿가-힯]/.test(text);
+  const toks=cjk?[...text]:text.split(/(\s+)/);const out=[];let cur="";
+  for(const t of toks){const nx=cur+t;if(x.measureText(nx).width<=maxW||!cur.trim()){cur=nx}else{out.push(cur.trimEnd());cur=t.trimStart()}
+    while(x.measureText(cur).width>maxW&&cur.length>1){let k=cur.length-1;while(k>1&&x.measureText(cur.slice(0,k)).width>maxW)k--;out.push(cur.slice(0,k));cur=cur.slice(k)}}
+  if(cur.trim())out.push(cur.trimEnd());return out.length?out:[""];
+}
 function billCanvas(lines,g,at,opt){opt=opt||{};
-  const li=LI[g],rtl=g==="ar",W=720,pad=36,rowH=58;
-  const NAVY="#1B2A5C",TOP=50;
-  const tip=+opt.tip||0;const c=document.createElement("canvas");const H=TOP+240+lines.length*rowH+120+(tip?76:0);c.width=W;c.height=H;
-  const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);
+  const li=LI[g],rtl=g==="ar",W=720,pad=36,NAVY="#1B2A5C",TOP=50,nameW=W-2*pad-150;
   const F='"Noto Sans","Noto Sans Arabic","Noto Sans SC","Noto Sans JP","Noto Sans KR",system-ui,sans-serif';
+  const tip=+opt.tip||0;
+  const m=document.createElement("canvas").getContext("2d");
+  const subTxt=(opt.sub||OK_UI.sub[li])+" · "+new Date(at).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+  m.font="400 20px "+F;const subL=wrapText(m,subTxt,W-2*pad);
+  m.font="600 26px "+F;const titL=wrapText(m,opt.title||OK_UI.title[li],W-2*pad);
+  const rows=lines.map(l=>{const vl=l.v?" ("+(l.v==="a"?CART_UI.az[li]:CART_UI.tek[li])+")":"";const nm=(g==="tr"?l.it.tr:l.it.t[li-1])+vl;
+    m.font="600 22px "+F;const a=wrapText(m,l.q+" × "+nm,nameW);
+    m.font='italic 17px "Noto Serif",Georgia,serif';const b=g!=="tr"?wrapText(m,l.it.tr+(l.v?" ("+vLabel(l.v,1)+")":""),nameW):[];
+    return {l,a,b,h:a.length*29+b.length*23+14}});
+  const head=TOP+146+titL.length*32+subL.length*26+26;
+  const H=head+rows.reduce((s,r)=>s+r.h,0)+150+(tip?80:0);
+  const c=document.createElement("canvas");c.width=W;c.height=H;
+  const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);
   if(LOGO_IMG&&LOGO_IMG.naturalWidth){const lh=104,lw=LOGO_IMG.naturalWidth*lh/LOGO_IMG.naturalHeight;x.drawImage(LOGO_IMG,(W-lw)/2,22,lw,lh)}
   else{x.fillStyle=NAVY;x.font='italic 700 40px "Noto Serif",Georgia,serif';x.textAlign="center";x.fillText("Kanaat Lokantası",W/2,90)}
   x.fillStyle=NAVY;x.fillRect(pad,TOP+92,W-2*pad,2);
-  x.textAlign="center";x.fillStyle=NAVY;x.font="600 26px "+F;x.direction=rtl?"rtl":"ltr";x.fillText(opt.title||OK_UI.title[li],W/2,TOP+146);
-  x.fillStyle="#6F675B";x.font="400 20px "+F;
-  x.fillText((opt.sub||OK_UI.sub[li])+" · "+new Date(at).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),W/2,TOP+178);
-  let y=TOP+220;x.strokeStyle="#E6DDCC";x.beginPath();x.moveTo(pad,y-14);x.lineTo(W-pad,y-14);x.stroke();
+  let y=TOP+146;x.textAlign="center";x.direction=rtl?"rtl":"ltr";
+  x.fillStyle=NAVY;x.font="600 26px "+F;for(const t of titL){x.fillText(t,W/2,y);y+=32}
+  x.fillStyle="#6F675B";x.font="400 20px "+F;y+=0;for(const t of subL){x.fillText(t,W/2,y);y+=26}
+  y=head;x.strokeStyle="#E6DDCC";x.beginPath();x.moveTo(pad,y-14);x.lineTo(W-pad,y-14);x.stroke();
   const start=rtl?W-pad:pad,end=rtl?pad:W-pad;
-  for(const l of lines){const vl=l.v?" ("+(l.v==="a"?CART_UI.az[li]:CART_UI.tek[li])+")":"";const nm=g==="tr"?l.it.tr:l.it.t[li-1];
+  for(const r of rows){let yy=y+10;
     x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.fillStyle="#2A2620";x.font="600 22px "+F;
-    let base=nm,s=l.q+" × "+base+vl;while(x.measureText(s).width>W-2*pad-170&&base.length>4){base=base.slice(0,-2);s=l.q+" × "+base+"…"+vl}
-    x.fillText(s,start,y+10);
-    x.fillStyle="#6F675B";x.font='italic 17px "Noto Serif",Georgia,serif';x.direction="ltr";x.textAlign=rtl?"right":"left";if(g!=="tr")x.fillText(l.it.tr+(l.v?" ("+vLabel(l.v,1)+")":""),start,y+34);
-    x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillStyle="#2A2620";x.font="600 22px "+F;x.fillText(price(l.q*lp(l)),end,y+10);y+=rowH}
+    for(const t of r.a){x.fillText(t,start,yy);yy+=29}
+    x.fillStyle="#6F675B";x.font='italic 17px "Noto Serif",Georgia,serif';x.direction="ltr";x.textAlign=rtl?"right":"left";
+    yy-=5;for(const t of r.b){x.fillText(t,start,yy);yy+=23}
+    x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillStyle="#2A2620";x.font="600 22px "+F;x.fillText(price(r.l.q*lp(r.l)),end,y+10);
+    y+=r.h}
   const sub=lines.reduce((a,l)=>a+l.q*lp(l),0);
-  x.strokeStyle="#2A2620";x.beginPath();x.moveTo(pad,y-10);x.lineTo(W-pad,y-10);x.stroke();
+  y+=8;x.strokeStyle="#2A2620";x.beginPath();x.moveTo(pad,y-10);x.lineTo(W-pad,y-10);x.stroke();
   if(tip){for(const [lb,v] of [[TIP_UI.sub[li],sub],[TIP_UI.line[li],tip]]){x.fillStyle="#2A2620";x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.font="400 21px "+F;x.fillText(lb,start,y+22);
     x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillText(price(v),end,y+22);y+=36}y+=8}
   x.fillStyle="#2A2620";x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.font="700 26px "+F;x.fillText(CART_UI.total[li],start,y+28);
