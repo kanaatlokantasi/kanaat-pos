@@ -91,6 +91,28 @@ footer a{color:var(--green)}
 .photo figcaption{padding:12px 16px 16px}
 .photo figcaption b{font:700 17px "Noto Serif",Georgia,serif;display:block}
 .hide{display:none!important}
+
+.chef{position:fixed;inset:0;z-index:30;background:rgba(20,15,10,.55);display:none;align-items:center;justify-content:center;padding:16px}
+.chef.open{display:flex;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{transform:translateY(16px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.ccard{position:relative;background:var(--card);width:100%;max-width:380px;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:pop .3s ease}
+.chead{display:flex;align-items:center;gap:12px;padding:16px 16px 10px;background:var(--green);color:#fff}
+@media (prefers-color-scheme:dark){.chead{background:#12392C}}
+.chead img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid #fff;flex:none;background:#fff}
+.chead small{display:block;font-size:12.5px;opacity:.85}
+.chead b{display:block;font:700 19px/1.2 "Noto Serif",Georgia,serif}
+html[lang=ar] .chead b,html[lang=zh] .chead b,html[lang=ja] .chead b,html[lang=ko] .chead b{font-family:inherit}
+.cx{position:absolute;top:8px;inset-inline-end:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.cdish{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--chip)}
+.cbody{padding:14px 16px 16px}
+.cbody .row{margin-bottom:2px}
+.cbtn{display:block;width:100%;margin-top:14px;border:0;border-radius:12px;background:var(--green);color:#fff;font:600 16px/1 inherit;padding:14px;cursor:pointer}
+@media (prefers-color-scheme:dark){.cbtn{color:#10241B}}
+.cfab{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));inset-inline-end:16px;z-index:15;width:58px;height:58px;border-radius:50%;padding:0;border:3px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,.25);overflow:hidden;cursor:pointer;background:#fff}
+.cfab img{width:100%;height:100%;object-fit:cover;display:block}
+.item.flash{animation:flash 1.6s ease}
+@keyframes flash{0%,40%{box-shadow:0 0 0 3px var(--green)}100%{box-shadow:var(--shadow)}}
 </style>
 </head>
 <body>
@@ -137,13 +159,22 @@ footer a{color:var(--green)}
     <p id="t-hours"></p>
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
-    <p class="ver" dir="ltr">Sürüm 3 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 4 · 04.11.2026</p>
   </div>
 </footer>
 
 <div class="ov" id="langov" role="dialog" aria-modal="true">
   <div class="sheet" id="langsheet"></div>
 </div>
+<div class="chef" id="chef" role="dialog" aria-modal="true" aria-labelledby="ctitle">
+  <div class="ccard">
+    <div class="chead"><img src="img/sef.jpg" alt=""><div><small id="ctoday"></small><b id="ctitle"></b></div></div>
+    <button class="cx" id="cx" type="button" aria-label="×">×</button>
+    <img class="cdish" id="cdish" alt="">
+    <div class="cbody" id="cbody"></div>
+  </div>
+</div>
+<button class="cfab" id="cfab" type="button"><img src="img/sef.jpg" alt=""></button>
 <div class="ov photo" id="photov" role="dialog" aria-modal="true">
   <figure><img id="pimg" alt=""><figcaption><b id="pname"></b><span id="pdesc"></span></figcaption></figure>
 </div>
@@ -376,7 +407,7 @@ $("langbtn").addEventListener("click",()=>$("langov").classList.add("open"));
 $("langov").addEventListener("click",e=>{
   const b=e.target.closest("button[data-lang]");
   if(b){lang=b.dataset.lang;try{localStorage.setItem("kanaat-menu-lang",lang)}catch(_){ }
-    const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render()}
+    const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render();if($("chef").classList.contains("open"))chefOpen()}
   if(b||e.target===e.currentTarget)$("langov").classList.remove("open");
 });
 $("menu").addEventListener("click",e=>{
@@ -389,8 +420,38 @@ $("menu").addEventListener("click",e=>{
 });
 $("photov").addEventListener("click",()=>$("photov").classList.remove("open"));
 addEventListener("keydown",e=>{if(e.key==="Escape"){$("photov").classList.remove("open");$("langov").classList.remove("open")}});
+const CHEF_UI={title:["Şefin Tavsiyesi","Chef's Recommendation","توصية الشيف","Рекомендация шефа","Recomendación del chef","La suggestion du chef","主厨推荐","Empfehlung des Küchenchefs","シェフのおすすめ","셰프 추천"],
+ today:["Bugün","Today","اليوم","Сегодня","Hoy","Aujourd'hui","今日","Heute","本日","오늘"],
+ show:["Menüde göster","Show in menu","عرض في القائمة","Показать в меню","Ver en el menú","Voir dans le menu","在菜单中查看","Im Menü zeigen","メニューで見る","메뉴에서 보기"],
+ close:["Kapat","Close","إغلاق","Закрыть","Cerrar","Fermer","关闭","Schließen","閉じる","닫기"]};
+// Pazar=0 … Cumartesi=6
+const CHEF_DAYS=["Ayva Tatlısı (Kaymaklı)","Hünkar Beğendi","Elbasan Tava","Kadınbudu Köfte","Etli Yaprak Sarma","Karnıyarık","Kuzu Kaburga Dolması"];
+const CL=a=>a[LI[lang]];
+function chefItem(){const n=CHEF_DAYS[new Date().getDay()];for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
+function chefOpen(){
+  const it=chefItem();if(!it)return;
+  $("ctoday").textContent=CL(CHEF_UI.today);$("ctitle").textContent=CL(CHEF_UI.title);
+  $("cx").setAttribute("aria-label",CL(CHEF_UI.close));$("cfab").setAttribute("aria-label",CL(CHEF_UI.title));
+  const d=$("cdish");
+  if(it.img){d.classList.remove("hide");d.dataset.r=REMOTE+"images/"+encodeURIComponent(it.img);d.onerror=()=>{if(d.dataset.r){d.src=d.dataset.r;d.dataset.r=""}else d.classList.add("hide")};d.src="img/"+it.loc}else d.classList.add("hide");
+  const notes=itemDesc(it);
+  $("cbody").innerHTML=`<div class="row"><h3 class="name" lang="tr" dir="ltr">${esc(it.tr)}</h3><span class="price" dir="ltr">${price(it.p)}</span></div>`+
+    (lang!=="tr"?`<p class="desc">${esc(it.t[LI[lang]-1])}</p>`:"")+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
+    `<button class="cbtn" id="cshow" type="button">${esc(CL(CHEF_UI.show))}</button>`;
+  $("cshow").onclick=()=>{chefClose();fsel=null;$("q").value="";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
+    const el=document.querySelector(`.item[data-id="${it.id}"]`);if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")}};
+  $("chef").classList.add("open");
+}
+function chefClose(){$("chef").classList.remove("open")}
+$("cx").addEventListener("click",chefClose);
+$("chef").addEventListener("click",e=>{if(e.target===e.currentTarget)chefClose()});
+$("cfab").addEventListener("click",chefOpen);
+addEventListener("keydown",e=>{if(e.key==="Escape")chefClose()});
 lang=pickLang();
 render();
+$("cfab").setAttribute("aria-label",CL(CHEF_UI.title));
+let seen=false;try{seen=sessionStorage.getItem("kanaat-chef")==="1"}catch(_){}
+if(!seen&&chefItem()){setTimeout(()=>{chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},1500)}
 </script>
 </body>
 </html>
