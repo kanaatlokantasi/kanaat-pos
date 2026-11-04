@@ -63,6 +63,9 @@ html[dir=rtl] section.cat h2{font-family:"Noto Sans Arabic",serif}
 .name{flex:1;margin:0;font:700 16px/1.25 "Noto Serif",Georgia,serif}
 .price{flex:none;font-weight:600;font-size:15.5px;white-space:nowrap}
 .desc{margin:3px 0 0;font-size:14px}
+.name.tl{font:600 16px/1.3 inherit}
+.trname{margin:2px 0 0;color:var(--muted);font:600 13.5px/1.3 "Noto Serif",Georgia,serif;font-style:italic}
+html[dir=rtl] .trname{text-align:right}
 .sub{margin:3px 0 0;color:var(--muted);font-size:13px}
 .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
 .t{display:inline-flex;align-items:center;gap:3px;font-size:12px;line-height:1;padding:5px 7px;border-radius:6px;background:var(--chip);color:var(--ink)}
@@ -123,6 +126,7 @@ html[lang=ar] .chead b,html[lang=zh] .chead b,html[lang=ja] .chead b,html[lang=k
 .chatlog{flex:1;overflow-y:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:8px}
 .msg{max-width:86%;padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.45}
 .msg p{margin:0}
+.msg p+p{margin-top:8px}
 .msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-start-start-radius:4px}
 .msg.me{align-self:flex-end;background:var(--green);color:#fff;border-end-end-radius:4px}
 @media (prefers-color-scheme:dark){.msg.me{color:#10241B}}
@@ -193,7 +197,7 @@ html[dir=rtl] .dchips button{padding:4px 4px 4px 10px}
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 8 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 10 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -233,7 +237,7 @@ const UI={
  allergy:["Alerjiniz varsa lütfen sipariş vermeden önce garsonumuza söyleyin.","If you have a food allergy, please tell your waiter before ordering.","إذا كانت لديك حساسية من أي طعام، يرجى إبلاغ النادل قبل الطلب.","Если у вас есть пищевая аллергия, пожалуйста, сообщите официанту перед заказом.","Si tiene alguna alergia alimentaria, informe a su camarero antes de pedir.","En cas d'allergie alimentaire, merci de prévenir votre serveur avant de commander."],
  legend:["Simgeler","Labels","الرموز","Обозначения","Etiquetas","Légende"],
  prices:["Fiyatlar Türk lirasıdır (₺).","Prices are in Turkish lira (₺).","الأسعار بالليرة التركية (₺).","Цены указаны в турецких лирах (₺).","Precios en liras turcas (₺).","Prix en livres turques (₺)."],
- hours:["Her gün 07:00–23:00","Open every day 07:00–23:00","مفتوح يوميًا 07:00–23:00","Ежедневно 07:00–23:00","Abierto todos los días 07:00–23:00","Ouvert tous les jours 07:00–23:00"],
+ hours:["Her gün 07:00–22:30","Open every day 07:00–22:30","مفتوح يوميًا 07:00–22:30","Ежедневно 07:00–22:30","Abierto todos los días 07:00–22:30","Ouvert tous les jours 07:00–22:30"],
  lang:["Dil seçin","Choose language","اختر اللغة","Выберите язык","Elija idioma","Choisir la langue"]
 };
 const CAT={
@@ -291,7 +295,7 @@ const DIET={
  DF:["✓","Sütsüz","Dairy-free","خالٍ من الألبان","Без молочных продуктов","Sin lácteos","Sans produits laitiers"]
 };
 const ZH={
- UI:{sub:"传统土耳其家常菜 · 于斯屈达尔",search:"搜索菜单",empty:"未找到菜品",allergy:"如有食物过敏，请在点餐前告知服务员。",legend:"标识说明",prices:"价格单位为土耳其里拉（₺）。",hours:"每天营业 07:00–23:00",lang:"选择语言"},
+ UI:{sub:"传统土耳其家常菜 · 于斯屈达尔",search:"搜索菜单",empty:"未找到菜品",allergy:"如有食物过敏，请在点餐前告知服务员。",legend:"标识说明",prices:"价格单位为土耳其里拉（₺）。",hours:"每天营业 07:00–22:30",lang:"选择语言"},
  CAT:{soup:"汤类",kofte:"肉丸（köfte）",rice:"米饭和面食",veg:"热蔬菜菜肴",meat:"肉类、鸡肉和鱼",grill:"烧烤",olive:"橄榄油菜肴",salad:"沙拉和配菜",compote:"糖水水果",dessert:"甜点",drink:"饮料",togo:"外带甜点（按公斤）",yog:"外带酸奶",jam:"外带自制果酱"},
  CNOTE:{veg:"大多与肉同煮",grill:"制作约需15分钟",olive:"冷食"},
  NOTE:{gv:"配蒜醋汁",grill:"现点现烤，15–20分钟",garlic:"含大蒜",rp:"含葡萄干和松子",cream:"配水牛奶凝脂奶油",sheep:"绵羊奶制作",sep:"凝脂奶油另计",breakfast:"仅早餐时段供应"},
@@ -307,21 +311,21 @@ for(const [k,v] of Object.entries(ZH.MEAT))MEAT[k].push(v);
 for(const [k,v] of Object.entries(ZH.ALG))ALG[k].push(v);
 for(const [k,v] of Object.entries(ZH.DIET))DIET[k].push(v);
 const MORE={
- de:{UI:{sub:"Traditionelle türkische Hausmannskost · Üsküdar",search:"Speisekarte durchsuchen",empty:"Keine Gerichte gefunden",allergy:"Bei Lebensmittelallergien informieren Sie bitte vor der Bestellung Ihren Kellner.",legend:"Kennzeichnung",prices:"Preise in Türkischen Lira (₺).",hours:"Täglich geöffnet 07:00–23:00",lang:"Sprache wählen"},
+ de:{UI:{sub:"Traditionelle türkische Hausmannskost · Üsküdar",search:"Speisekarte durchsuchen",empty:"Keine Gerichte gefunden",allergy:"Bei Lebensmittelallergien informieren Sie bitte vor der Bestellung Ihren Kellner.",legend:"Kennzeichnung",prices:"Preise in Türkischen Lira (₺).",hours:"Täglich geöffnet 07:00–22:30",lang:"Sprache wählen"},
   CAT:{soup:"Suppen",kofte:"Frikadellen (Köfte)",rice:"Reis & Nudeln",veg:"Warme Gemüsegerichte",meat:"Fleisch, Hähnchen & Fisch",grill:"Vom Grill",olive:"Gerichte in Olivenöl",salad:"Salate & Beilagen",compote:"Kompotte",dessert:"Desserts",drink:"Getränke",togo:"Desserts zum Mitnehmen (pro kg)",yog:"Joghurt zum Mitnehmen",jam:"Hausgemachte Konfitüren zum Mitnehmen"},
   CNOTE:{veg:"Meist mit Fleisch gekocht",grill:"Zubereitung ca. 15 Minuten",olive:"Kalt serviert"},
   NOTE:{gv:"Mit Knoblauch-Essig-Sauce serviert",grill:"Frisch gegrillt, 15–20 Min.",garlic:"Enthält Knoblauch",rp:"Mit Korinthen und Pinienkernen",cream:"Mit Büffelrahm (Kaymak) serviert",sheep:"Aus Schafsmilch",sep:"Rahm wird extra berechnet",breakfast:"Nur zur Frühstückszeit"},
   MEAT:{b:"Rind",l:"Lamm",c:"Hähnchen",t:"Truthahn",f:"Fisch"},
   ALG:{G:"Gluten",M:"Milch",E:"Ei",N:"Schalenfrüchte",C:"Sellerie",F:"Fisch"},
   DIET:{V:"Vegan",v:"Vegetarisch",GF:"Glutenfrei",NF:"Ohne Nüsse",SF:"Zuckerfrei",DF:"Milchfrei"}},
- ja:{UI:{sub:"伝統的なトルコ家庭料理 · ユスキュダル",search:"メニューを検索",empty:"該当する料理がありません",allergy:"食物アレルギーのある方は、ご注文の前に係員にお知らせください。",legend:"表示の説明",prices:"価格はトルコリラ（₺）です。",hours:"毎日 07:00–23:00 営業",lang:"言語を選択"},
+ ja:{UI:{sub:"伝統的なトルコ家庭料理 · ユスキュダル",search:"メニューを検索",empty:"該当する料理がありません",allergy:"食物アレルギーのある方は、ご注文の前に係員にお知らせください。",legend:"表示の説明",prices:"価格はトルコリラ（₺）です。",hours:"毎日 07:00–22:30 営業",lang:"言語を選択"},
   CAT:{soup:"スープ",kofte:"肉団子（キョフテ）",rice:"ご飯・パスタ",veg:"温かい野菜料理",meat:"肉・鶏肉・魚料理",grill:"グリル",olive:"オリーブオイル料理",salad:"サラダ・付け合わせ",compote:"コンポート",dessert:"デザート",drink:"ドリンク",togo:"お持ち帰りデザート（kg単位）",yog:"お持ち帰りヨーグルト",jam:"お持ち帰り自家製ジャム"},
   CNOTE:{veg:"ほとんどが肉と一緒に煮込んだ料理です",grill:"調理に約15分かかります",olive:"冷たい料理です"},
   NOTE:{gv:"にんにくと酢のソース添え",grill:"注文後にグリル、15〜20分",garlic:"にんにく入り",rp:"カラントと松の実入り",cream:"水牛乳のクロテッドクリーム添え",sheep:"羊乳使用",sep:"クリームは別料金",breakfast:"朝食の時間帯のみ"},
   MEAT:{b:"牛肉",l:"ラム肉",c:"鶏肉",t:"七面鳥",f:"魚"},
   ALG:{G:"グルテン",M:"乳",E:"卵",N:"ナッツ",C:"セロリ",F:"魚"},
   DIET:{V:"ヴィーガン",v:"ベジタリアン",GF:"グルテンフリー",NF:"ナッツ不使用",SF:"砂糖不使用",DF:"乳製品不使用"}},
- ko:{UI:{sub:"전통 터키 가정식 · 위스퀴다르",search:"메뉴 검색",empty:"검색 결과가 없습니다",allergy:"식품 알레르기가 있으시면 주문 전에 직원에게 알려 주세요.",legend:"표시 안내",prices:"가격은 터키 리라(₺) 기준입니다.",hours:"매일 07:00–23:00 영업",lang:"언어 선택"},
+ ko:{UI:{sub:"전통 터키 가정식 · 위스퀴다르",search:"메뉴 검색",empty:"검색 결과가 없습니다",allergy:"식품 알레르기가 있으시면 주문 전에 직원에게 알려 주세요.",legend:"표시 안내",prices:"가격은 터키 리라(₺) 기준입니다.",hours:"매일 07:00–22:30 영업",lang:"언어 선택"},
   CAT:{soup:"수프",kofte:"미트볼 (쾨프테)",rice:"밥과 파스타",veg:"따뜻한 채소 요리",meat:"고기, 닭고기, 생선",grill:"그릴",olive:"올리브유 요리",salad:"샐러드와 곁들임",compote:"콤포트",dessert:"디저트",drink:"음료",togo:"포장 디저트 (kg 단위)",yog:"포장 요구르트",jam:"포장 수제 잼"},
   CNOTE:{veg:"대부분 고기와 함께 조리합니다",grill:"조리에 약 15분 소요",olive:"차갑게 제공됩니다"},
   NOTE:{gv:"마늘 식초 소스와 함께 제공",grill:"주문 후 굽기, 15–20분",garlic:"마늘 포함",rp:"건포도와 잣 포함",cream:"물소 우유 클로티드 크림과 함께 제공",sheep:"양젖으로 만듦",sep:"크림은 별도 요금",breakfast:"아침 식사 시간에만 제공"},
@@ -365,6 +369,11 @@ function tags(it){
   if(it.kcal)h+=`<span class="kcal">${it.kcal} kcal</span>`;
   return h?`<div class="tags">${h}</div>`:"";
 }
+function headHTML(it){
+  const pr=`<span class="price" dir="ltr">${price(it.p)}</span>`;
+  if(lang==="tr")return `<div class="row"><h3 class="name" lang="tr">${esc(it.tr)}</h3>${pr}</div>`;
+  return `<div class="row"><h3 class="name tl">${esc(it.t[LI[lang]-1])}</h3>${pr}</div><p class="trname" lang="tr" dir="ltr">${esc(it.tr)}</p>`;
+}
 function itemDesc(it){
   const parts=[];
   if(lang==="tr"){ if(it.trn)parts.push(it.trn) }
@@ -393,8 +402,7 @@ function render(){
     html+=`<div class="items">`;
     for(const it of c.items){
       const notes=itemDesc(it);
-      html+=`<article class="item" data-id="${it.id}">${imgTag(it)}<div class="body"><div class="row"><h3 class="name" lang="tr" dir="ltr">${esc(it.tr)}</h3><span class="price" dir="ltr">${price(it.p)}</span></div>`;
-      if(lang!=="tr")html+=`<p class="desc">${esc(it.t[LI[lang]-1])}</p>`;
+      html+=`<article class="item" data-id="${it.id}">${imgTag(it)}<div class="body">${headHTML(it)}`;
       if(notes.length)html+=`<p class="sub">${notes.map(esc).join(" · ")}</p>`;
       html+=tags(it)+`</div></article>`;
     }
@@ -434,7 +442,7 @@ function spy(){
   for(const s of secs){if(s.getBoundingClientRect().top<140)cur=s}
   document.querySelectorAll(".cats a").forEach(a=>{
     const on=cur&&a.dataset.c===cur.id.slice(2);
-    if(on&&!a.classList.contains("on")){a.classList.add("on");a.scrollIntoView({inline:"center",block:"nearest"})}
+    if(on&&!a.classList.contains("on")){a.classList.add("on");const n=a.parentNode;n.scrollLeft=a.offsetLeft-(n.clientWidth-a.offsetWidth)/2}
     else if(!on)a.classList.remove("on");
   });
 }
@@ -456,8 +464,8 @@ $("menu").addEventListener("click",e=>{
   const b=e.target.closest("[data-zoom]");if(!b)return;
   const it=BYID[b.dataset.zoom];
   $("pimg").src=b.querySelector("img").currentSrc||b.querySelector("img").src;
-  $("pname").textContent=it.tr;
-  $("pdesc").textContent=lang==="tr"?(it.trn||""):it.t[LI[lang]-1];
+  $("pname").textContent=lang==="tr"?it.tr:it.t[LI[lang]-1];
+  $("pdesc").textContent=lang==="tr"?(it.trn||""):it.tr;
   $("photov").classList.add("open");
 });
 $("photov").addEventListener("click",()=>$("photov").classList.remove("open"));
@@ -477,11 +485,10 @@ function chefOpen(){
   const d=$("cdish");
   if(it.img){d.classList.remove("hide");d.dataset.r=REMOTE+"images/"+encodeURIComponent(it.img);d.onerror=()=>{if(d.dataset.r){d.src=d.dataset.r;d.dataset.r=""}else d.classList.add("hide")};d.src="img/"+it.loc}else d.classList.add("hide");
   const notes=itemDesc(it);
-  $("cbody").innerHTML=`<div class="row"><h3 class="name" lang="tr" dir="ltr">${esc(it.tr)}</h3><span class="price" dir="ltr">${price(it.p)}</span></div>`+
-    (lang!=="tr"?`<p class="desc">${esc(it.t[LI[lang]-1])}</p>`:"")+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
+  $("cbody").innerHTML=headHTML(it)+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
     `<button class="cbtn" id="cshow" type="button">${esc(CL(CHEF_UI.show))}</button>`;
   $("cshow").onclick=()=>{chefClose();fsel=null;$("q").value="";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
-    const el=document.querySelector(`.item[data-id="${it.id}"]`);if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")}};
+    jumpTo(document.querySelector(`.item[data-id="${it.id}"]`))};
   $("chef").classList.add("open");
 }
 function chefClose(){$("chef").classList.remove("open")}
@@ -493,7 +500,7 @@ addEventListener("keydown",e=>{if(e.key==="Escape")chefClose()});
 const CHAT={
  title:["Şefe Sorun","Ask the Chef","اسأل الشيف","Спросите шефа","Pregunte al chef","Demandez au chef","问问主厨","Fragen Sie den Küchenchef","シェフに質問","셰프에게 물어보세요"],
  sub:["Bir soru seçin","Pick a question","اختر سؤالًا","Выберите вопрос","Elija una pregunta","Choisissez une question","请选择一个问题","Wählen Sie eine Frage","質問を選んでください","질문을 선택하세요"],
- hello:["Hoş geldiniz! Ben mutfağın ustasıyım. Size nasıl yardımcı olabilirim?","Welcome! I'm the chef here. How can I help you?","أهلًا وسهلًا! أنا الشيف هنا. كيف يمكنني مساعدتك؟","Добро пожаловать! Я шеф-повар. Чем могу помочь?","¡Bienvenido! Soy el chef. ¿En qué puedo ayudarle?","Bienvenue ! Je suis le chef. Comment puis-je vous aider ?","欢迎光临！我是这里的主厨。有什么可以帮您？","Willkommen! Ich bin der Küchenchef. Wie kann ich helfen?","いらっしゃいませ！料理長です。何かお手伝いしましょうか？","어서 오세요! 저는 이곳 셰프입니다. 무엇을 도와드릴까요?"],
+ hello:["Hoş geldiniz! Size nasıl yardımcı olabilirim?", "Welcome! How can I help you?", "أهلًا وسهلًا! كيف يمكنني مساعدتك؟", "Добро пожаловать! Чем могу помочь?", "¡Bienvenido! ¿En qué puedo ayudarle?", "Bienvenue ! Comment puis-je vous aider ?", "欢迎光临！有什么可以帮您？", "Willkommen! Wie kann ich helfen?", "いらっしゃいませ！何かお手伝いしましょうか？", "어서 오세요! 무엇을 도와드릴까요?"],
  story:["Hikâyemizin devamı","Read our full story","اقرأ قصتنا كاملة","Вся наша история","Lea nuestra historia","Lire notre histoire","阅读完整故事","Unsere ganze Geschichte","私たちの物語を読む","우리 이야기 더 보기"],
  insta:["Bizi beğendiyseniz Instagram'da da takip edin, sizi orada da görmekten mutluluk duyarız! 😊","If you're enjoying your visit, follow us on Instagram. We'd love to see you there too! 😊","إذا أعجبتك زيارتك، تابعنا على إنستغرام. يسعدنا أن نراك هناك أيضًا! 😊","Если вам у нас нравится, подписывайтесь на наш Instagram — будем рады видеть вас и там! 😊","Si está disfrutando de su visita, síganos en Instagram. ¡Nos encantará verle también allí! 😊","Si vous appréciez votre visite, suivez-nous sur Instagram. Au plaisir de vous y retrouver ! 😊","如果您喜欢这里，欢迎在 Instagram 上关注我们，期待在那里与您相见！😊","Wenn es Ihnen bei uns gefällt, folgen Sie uns auf Instagram. Wir freuen uns, Sie auch dort zu sehen! 😊","お気に召しましたら、ぜひInstagramもフォローしてください。そちらでもお会いできるのを楽しみにしています！😊","마음에 드셨다면 인스타그램도 팔로우해 주세요. 그곳에서도 뵙길 바랍니다! 😊"],
  follow:["Instagram'da takip et","Follow on Instagram","تابعنا على إنستغرام","Подписаться в Instagram","Seguir en Instagram","Suivre sur Instagram","在 Instagram 关注","Auf Instagram folgen","Instagramでフォロー","인스타그램 팔로우"],
@@ -505,9 +512,9 @@ const CHAT={
   {id:"first",dishes:["Özbek Pilavı","Zeytinyağlı Enginar","Ayva Tatlısı (Kaymaklı)"],
    q:["İlk kez geliyorum, ne denemeliyim?","It's my first time here. What should I try?","هذه أول زيارة لي، ماذا أجرّب؟","Я здесь впервые. Что попробовать?","Es mi primera vez. ¿Qué debería probar?","C'est ma première visite. Que dois-je goûter ?","我第一次来，应该尝尝什么？","Ich bin zum ersten Mal hier. Was soll ich probieren?","初めて来ました。何を食べればいいですか？","처음 왔어요. 무엇을 먹어 볼까요?"],
    a:["İlk ziyaretiniz için ana yemekte kuzu etli Özbek pilavı, yanına zeytinyağlı enginar, tatlıda da kaymaklı ayva tatlısı öneririm. Görmek için yemeğe dokunun:","For your first visit, I recommend Uzbek-style pilaf with lamb as your main dish, artichoke in olive oil on the side, and quince dessert with clotted cream to finish. Tap a dish to see it:","لزيارتك الأولى أنصحك بالأرز الأوزبكي بلحم الضأن كطبق رئيسي، ومعه الخرشوف بزيت الزيتون، وفي الختام حلوى السفرجل مع القشطة. اضغط على أي طبق لرؤيته:","Для первого визита советую узбекский плов с бараниной, к нему артишок на оливковом масле, а на десерт айву с каймаком. Нажмите на блюдо, чтобы посмотреть:","Para su primera visita le recomiendo el pilaf uzbeko con cordero como plato principal, alcachofa en aceite de oliva como acompañamiento y, de postre, membrillo con nata. Toque un plato para verlo:","Pour une première visite, je vous recommande le pilaf ouzbek à l'agneau en plat principal, l'artichaut à l'huile d'olive en accompagnement, et le coing à la crème en dessert. Touchez un plat pour le voir :","第一次来的话，我推荐主菜点乌兹别克风味羊肉抓饭，配一道橄榄油洋蓟，甜点来一份配凝脂奶油的榅桲。点击菜名即可查看：","Für Ihren ersten Besuch empfehle ich als Hauptgericht usbekischen Pilaw mit Lamm, dazu Artischocke in Olivenöl und zum Dessert Quitte mit Rahm. Tippen Sie auf ein Gericht:","初めての方には、メインにラム肉のウズベク風ピラフ、付け合わせにアーティチョークのオリーブオイル煮、デザートにクリーム添えのマルメロをおすすめします。料理をタップしてご覧ください：","처음 오셨다면 메인으로 양고기 우즈베크식 필라프, 곁들임으로 올리브유 아티초크, 디저트로 크림을 곁들인 모과 디저트를 추천합니다. 요리를 눌러 확인하세요:"]},
-  {id:"story",act:"story",
+  {id:"story",
    q:["Lokantanın hikâyesi nedir?","What is the story of this place?","ما قصة هذا المطعم؟","Какова история этого места?","¿Cuál es la historia de este lugar?","Quelle est l'histoire de cette maison ?","这家店有什么故事？","Was ist die Geschichte dieses Lokals?","このお店の歴史は？","이 식당의 이야기가 궁금해요"],
-   a:["Lokantamız 1933'te Üsküdar'da, sütlü tatlı ve dondurmacılıkta köklü bir geleneği olan Kargılı Ailesi tarafından kuruldu. Bugün hâlâ bir aile işletmesiyiz; mutfakta 40 yılı aşkın tecrübeli ustalarımız var. Her gün 100'den fazla çeşidi taze hazırlıyoruz. New York Times, Le Monde ve Lonely Planet'te yer aldık; Gault&Millau Türkiye Rehberi'nde 2025 ve 2026'da Geleneksel Mutfak ödülü aldık.","Our lokanta was founded in 1933 in Üsküdar by the Kargılı family, who come from a long tradition of milk desserts and ice cream. We're still a family business, and some of our cooks have more than 40 years of experience. Every day we prepare over 100 dishes fresh. We've been featured in the New York Times, Le Monde and Lonely Planet, and won the Traditional Cuisine award in the Gault&Millau Turkey Guide in 2025 and 2026.","تأسست اللوكانتا عام 1933 في أسكودار على يد عائلة كارغيلي، وهي عائلة عريقة في صناعة الحلويات بالحليب والآيس كريم. ما زلنا مشروعًا عائليًا، ولدى بعض طهاتنا خبرة تزيد على 40 عامًا. نحضّر كل يوم أكثر من 100 صنف طازج. ظهرنا في نيويورك تايمز ولوموند ولونلي بلانيت، وفزنا بجائزة المطبخ التقليدي في دليل غو إي ميّو تركيا عامي 2025 و2026.","Наша локанта была основана в 1933 году в Ускюдаре семьёй Каргылы, давно известной своими молочными десертами и мороженым. Мы по-прежнему семейное заведение, а у некоторых наших поваров более 40 лет опыта. Каждый день мы готовим свыше 100 блюд. О нас писали New York Times, Le Monde и Lonely Planet, а в 2025 и 2026 годах мы получили награду в категории «Традиционная кухня» гида Gault&Millau Турция.","Nuestra lokanta fue fundada en 1933 en Üsküdar por la familia Kargılı, con una larga tradición en postres lácteos y helados. Seguimos siendo un negocio familiar y algunos de nuestros cocineros tienen más de 40 años de experiencia. Cada día preparamos más de 100 platos frescos. Hemos aparecido en el New York Times, Le Monde y Lonely Planet, y ganamos el premio de Cocina Tradicional de la Guía Gault&Millau Turquía en 2025 y 2026.","Notre lokanta a été fondée en 1933 à Üsküdar par la famille Kargılı, issue d'une longue tradition de desserts lactés et de glaces. Nous sommes toujours une maison familiale, et certains de nos cuisiniers ont plus de 40 ans d'expérience. Chaque jour, nous préparons plus de 100 plats frais. Nous avons été cités par le New York Times, Le Monde et le Lonely Planet, et récompensés dans la catégorie Cuisine traditionnelle du guide Gault&Millau Turquie en 2025 et 2026.","本店于1933年由卡尔格勒家族在于斯屈达尔创立，这个家族在奶制甜点和冰淇淋方面有着悠久传统。我们至今仍是家族经营，部分厨师拥有40多年经验。每天新鲜制作100多种菜品。我们曾被《纽约时报》、《世界报》和《孤独星球》介绍，并于2025年和2026年获得高特米鲁土耳其指南传统美食奖。","Unsere Lokanta wurde 1933 in Üsküdar von der Familie Kargılı gegründet, die eine lange Tradition in Milchdesserts und Eis hat. Wir sind bis heute ein Familienbetrieb, und manche unserer Köche haben über 40 Jahre Erfahrung. Täglich bereiten wir über 100 Gerichte frisch zu. Wir wurden in der New York Times, Le Monde und Lonely Planet vorgestellt und erhielten 2025 und 2026 die Auszeichnung für traditionelle Küche im Gault&Millau Türkei.","当店は1933年、ミルクデザートとアイスクリームの長い伝統を持つカルギル家によってユスキュダルで創業しました。今も家族経営で、40年以上の経験を持つ料理人もいます。毎日100種類以上の料理を手作りしています。ニューヨーク・タイムズ、ル・モンド、ロンリープラネットで紹介され、2025年と2026年にはゴ・エ・ミヨ トルコ版で伝統料理部門の賞を受賞しました。","저희 로칸타는 1933년 위스퀴다르에서 우유 디저트와 아이스크림의 오랜 전통을 지닌 카르기를르 가문이 세웠습니다. 지금도 가족이 운영하며, 40년 넘는 경력의 요리사도 있습니다. 매일 100가지가 넘는 요리를 신선하게 준비합니다. 뉴욕 타임스, 르 몽드, 론리 플래닛에 소개되었고, 2025년과 2026년 고 에 미요 터키 가이드에서 전통 요리 부문 상을 받았습니다."]},
+   a:["Lokantamız 1933'te Üsküdar'da kuruldu. Kurucumuz Kargılı Ailesi, yaklaşık 150 yıllık sütlü tatlı ve dondurmacılık geleneğinden gelir. Bugün hâlâ bir aile işletmesiyiz: üretimden satın almaya, mutfaktan servise kadar her aşamada aileden biri çalışır. Mutfakta 40 yılı aşkın tecrübeli ustalarımız var.\n\nHer gün 100–120 çeşit tatlı, zeytinyağlı, sıcak yemek, dondurma ve yoğurt taze hazırlanır. İlkemiz basit: malzemede en iyisi. Uygun kalitede malzeme bulamazsak o yemeği yapmayız. 1970'lerden beri geliştirdiğimiz paketleme sayesinde yemeklerimiz evlere ve iş yerlerine de ulaşır.\n\n2000 yılında Vizyon Dergisi'nin \"Yiyecekte En İyi 100\" araştırmasında En İyi Esnaf Lokantası, En İyi Dondurma, En İyi Yoğurt, En İyi Ekmek Kadayıfı ve En İyi Paça Çorbası seçildik. New York Times, Le Monde ve Elle'de yer aldık; Lonely Planet, Rough Guide, Le Guide du Routard ve Louis Vuitton rehberleri bizi tavsiye ediyor. Gault&Millau Türkiye Rehberi'nde 2025 ve 2026'da Geleneksel Mutfak ödülü aldık.", "Our lokanta was founded in 1933 in Üsküdar by the Kargılı family, whose tradition of milk desserts and ice cream goes back about 150 years. We are still a family business: a family member works at every stage, from production and purchasing to the kitchen and service, and some of our cooks have more than 40 years of experience.\n\nEvery day we prepare 100–120 kinds of desserts, olive oil dishes, hot dishes, ice cream and yoghurt fresh. Our rule is simple: only the best ingredients. If we can't find the right quality, we don't make that dish. Thanks to packaging we have been developing since the 1970s, our food also reaches homes and offices.\n\nIn 2000, Vizyon magazine's “Best 100 in Food” survey named us the best traditional lokanta, with the best ice cream, yoghurt, ekmek kadayıfı and trotters soup. We have been featured in the New York Times, Le Monde and Elle, and are recommended by Lonely Planet, Rough Guide, Le Guide du Routard and the Louis Vuitton guide. In 2025 and 2026 we received the Traditional Cuisine award in the Gault&Millau Turkey Guide.", "تأسست اللوكانتا عام 1933 في أسكودار على يد عائلة كارغيلي، التي تمتد تقاليدها في صناعة الحلويات بالحليب والآيس كريم إلى نحو 150 عامًا. ما زلنا مشروعًا عائليًا: يعمل أحد أفراد العائلة في كل مرحلة، من الإنتاج والشراء إلى المطبخ والخدمة، ولدى بعض طهاتنا خبرة تزيد على 40 عامًا.\n\nنحضّر كل يوم من 100 إلى 120 صنفًا طازجًا من الحلويات وأطباق زيت الزيتون والأطباق الساخنة والآيس كريم واللبن. قاعدتنا بسيطة: أفضل المكونات فقط، وإن لم نجد الجودة المناسبة لا نحضّر ذلك الطبق. وبفضل طرق التغليف التي نطوّرها منذ السبعينيات، تصل أطباقنا أيضًا إلى المنازل وأماكن العمل.\n\nفي عام 2000 اختارنا استطلاع «أفضل 100 في الطعام» لمجلة فيزيون أفضل لوكانتا تقليدية، مع أفضل آيس كريم ولبن وإكمك قطايف وشوربة كوارع. ظهرنا في نيويورك تايمز ولوموند وإيل، وتوصي بنا أدلة لونلي بلانيت وراف غايد ولو غيد دو روتار ولويس فويتون. وفي عامي 2025 و2026 حصلنا على جائزة المطبخ التقليدي في دليل غو إي ميّو تركيا.", "Наша локанта основана в 1933 году в Ускюдаре семьёй Каргылы, чьи традиции молочных десертов и мороженого насчитывают около 150 лет. Мы по-прежнему семейное заведение: на каждом этапе, от производства и закупок до кухни и обслуживания, работает кто-то из семьи, а у некоторых наших поваров более 40 лет опыта.\n\nКаждый день мы готовим 100–120 видов десертов, блюд на оливковом масле, горячих блюд, мороженого и йогурта. Наше правило простое: только лучшие продукты. Если нужного качества нет, мы это блюдо не готовим. Благодаря упаковке, которую мы совершенствуем с 1970-х годов, наша еда доезжает и до домов, и до офисов.\n\nВ 2000 году в рейтинге «Лучшие 100 в еде» журнала Vizyon нас назвали лучшей традиционной локантой, а наши мороженое, йогурт, экмек кадайыф и суп из ножек — лучшими. О нас писали New York Times, Le Monde и Elle, нас рекомендуют Lonely Planet, Rough Guide, Le Guide du Routard и путеводитель Louis Vuitton. В 2025 и 2026 годах мы получили награду в категории «Традиционная кухня» гида Gault&Millau Турция.", "Nuestra lokanta fue fundada en 1933 en Üsküdar por la familia Kargılı, con una tradición de postres lácteos y helados de unos 150 años. Seguimos siendo un negocio familiar: un miembro de la familia trabaja en cada etapa, desde la producción y las compras hasta la cocina y el servicio, y algunos de nuestros cocineros tienen más de 40 años de experiencia.\n\nCada día preparamos frescos entre 100 y 120 tipos de postres, platos en aceite de oliva, platos calientes, helados y yogur. Nuestra regla es sencilla: solo los mejores ingredientes. Si no encontramos la calidad adecuada, no preparamos ese plato. Gracias a los envases que perfeccionamos desde los años setenta, nuestra comida llega también a hogares y oficinas.\n\nEn 2000, la encuesta «Los 100 mejores en comida» de la revista Vizyon nos eligió la mejor lokanta tradicional, con el mejor helado, yogur, ekmek kadayıfı y sopa de manitas. Hemos aparecido en el New York Times, Le Monde y Elle, y nos recomiendan Lonely Planet, Rough Guide, Le Guide du Routard y la guía Louis Vuitton. En 2025 y 2026 recibimos el premio de Cocina Tradicional de la Guía Gault&Millau Turquía.", "Notre lokanta a été fondée en 1933 à Üsküdar par la famille Kargılı, héritière d'une tradition de desserts lactés et de glaces vieille d'environ 150 ans. Nous sommes toujours une maison familiale : un membre de la famille est présent à chaque étape, de la production et des achats à la cuisine et au service, et certains de nos cuisiniers ont plus de 40 ans d'expérience.\n\nChaque jour, nous préparons 100 à 120 sortes de desserts, plats à l'huile d'olive, plats chauds, glaces et yaourts. Notre règle est simple : seulement les meilleurs produits. Si nous ne trouvons pas la bonne qualité, nous ne faisons pas le plat. Grâce aux emballages que nous perfectionnons depuis les années 1970, nos plats arrivent aussi dans les foyers et les bureaux.\n\nEn 2000, l'enquête « Les 100 meilleurs en cuisine » du magazine Vizyon nous a désignés meilleure lokanta traditionnelle, avec la meilleure glace, le meilleur yaourt, le meilleur ekmek kadayıfı et la meilleure soupe de pieds. Nous avons été cités par le New York Times, Le Monde et Elle, et sommes recommandés par le Lonely Planet, le Rough Guide, le Guide du Routard et le guide Louis Vuitton. En 2025 et 2026, nous avons reçu le prix Cuisine traditionnelle du guide Gault&Millau Turquie.", "本店于1933年由卡尔格勒家族在于斯屈达尔创立，这个家族制作奶制甜点和冰淇淋的传统已有约150年。我们至今仍是家族经营：从生产、采购到厨房和服务，每个环节都有家族成员参与，部分厨师拥有40多年经验。\n\n我们每天新鲜制作100到120种甜点、橄榄油菜、热菜、冰淇淋和酸奶。我们的原则很简单：只用最好的食材；找不到合格的原料，就不做那道菜。凭借自1970年代以来不断改进的包装方法，我们的菜品也能送到家中和办公室。\n\n2000年，《Vizyon》杂志“美食百佳”评选将我们评为最佳传统小馆，冰淇淋、酸奶、糖浆面包甜点和羊蹄汤也获评最佳。我们曾被《纽约时报》、《世界报》和《ELLE》介绍，并获《孤独星球》、Rough Guide、Le Guide du Routard 和路易威登指南推荐。2025年和2026年，我们获得高特米鲁土耳其指南传统美食奖。", "Unsere Lokanta wurde 1933 in Üsküdar von der Familie Kargılı gegründet, deren Tradition in Milchdesserts und Eis rund 150 Jahre zurückreicht. Wir sind bis heute ein Familienbetrieb: In jedem Bereich, von Herstellung und Einkauf bis Küche und Service, arbeitet ein Familienmitglied mit, und manche unserer Köche haben über 40 Jahre Erfahrung.\n\nTäglich bereiten wir 100 bis 120 Sorten Desserts, Olivenölgerichte, warme Gerichte, Eis und Joghurt frisch zu. Unsere Regel ist einfach: nur die besten Zutaten. Finden wir nicht die passende Qualität, kochen wir das Gericht nicht. Dank Verpackungen, die wir seit den 1970er-Jahren weiterentwickeln, kommt unser Essen auch nach Hause und ins Büro.\n\nIm Jahr 2000 kürte uns die Umfrage „Die besten 100 beim Essen“ des Magazins Vizyon zur besten traditionellen Lokanta, dazu mit dem besten Eis, Joghurt, Ekmek Kadayıfı und der besten Lammfußsuppe. Wir wurden in der New York Times, Le Monde und Elle vorgestellt und werden von Lonely Planet, Rough Guide, Le Guide du Routard und dem Louis-Vuitton-Guide empfohlen. 2025 und 2026 erhielten wir die Auszeichnung für traditionelle Küche im Gault&Millau Türkei.", "当店は1933年、約150年続くミルクデザートとアイスクリームの伝統を持つカルギル家によってユスキュダルで創業しました。今も家族経営で、製造・仕入れから厨房、接客まで、すべての工程に家族の誰かが携わっています。40年以上の経験を持つ料理人もいます。\n\n毎日100〜120種類のデザート、オリーブオイル料理、温かい料理、アイスクリーム、ヨーグルトを手作りしています。ルールはシンプルで、最高の食材だけを使うこと。納得できる品質の材料がなければ、その料理は作りません。1970年代から改良を重ねてきた梱包技術により、ご家庭やオフィスにもお届けしています。\n\n2000年にはヴィジョン誌の「食のベスト100」で最優秀の伝統的ロカンタに選ばれ、アイスクリーム、ヨーグルト、エキメッキ・カダユフ、羊の足のスープもベストに選ばれました。ニューヨーク・タイムズ、ル・モンド、ELLEで紹介され、ロンリープラネット、ラフガイド、ギド・デュ・ルタール、ルイ・ヴィトン シティガイドでも推薦されています。2025年と2026年にはゴ・エ・ミヨ トルコ版で伝統料理部門の賞を受賞しました。", "저희 로칸타는 1933년 위스퀴다르에서 카르기를르 가문이 세웠습니다. 이 가문의 우유 디저트와 아이스크림 전통은 약 150년에 이릅니다. 지금도 가족이 운영하며, 생산과 구매부터 주방과 서비스까지 모든 단계에 가족 구성원이 함께하고, 40년 넘는 경력의 요리사도 있습니다.\n\n매일 100~120가지의 디저트, 올리브유 요리, 따뜻한 요리, 아이스크림과 요구르트를 신선하게 만듭니다. 원칙은 간단합니다. 최고의 재료만 사용하고, 알맞은 품질의 재료를 구하지 못하면 그 요리는 만들지 않습니다. 1970년대부터 발전시켜 온 포장 방식 덕분에 가정과 사무실에도 음식을 전해 드립니다.\n\n2000년 비지온 매거진의 '음식 베스트 100' 조사에서 최고의 전통 로칸타로 선정되었고, 아이스크림, 요구르트, 에크멕 카다이프, 양 족발 수프도 최고로 꼽혔습니다. 뉴욕 타임스, 르 몽드, 엘르에 소개되었으며 론리 플래닛, 러프 가이드, 르 기드 뒤 루타르, 루이 비통 가이드에서도 추천합니다. 2025년과 2026년에는 고 에 미요 터키 가이드에서 전통 요리 부문 상을 받았습니다."]},
   {id:"veg",act:"veg",
    q:["Vejetaryen ne var?","What can vegetarians eat?","ما الأطباق النباتية؟","Что есть для вегетарианцев?","¿Qué hay para vegetarianos?","Qu'y a-t-il pour les végétariens ?","有什么素食？","Was gibt es für Vegetarier?","ベジタリアン向けの料理は？","채식 메뉴가 있나요?"],
    a:["Zeytinyağlılarımızın çoğu vegan, salatalar ve kompostolar da öyle. Aşağıdaki düğmeyle menüde sadece vejetaryen yemekleri görebilirsiniz. Not: sıcak sebze yemeklerimizin çoğu etle pişer.","Most of our olive oil dishes are vegan, and so are the salads and compotes. Use the button below to see only vegetarian dishes. Note: most of our hot vegetable dishes are cooked with meat.","معظم أطباقنا بزيت الزيتون نباتية صرفة، وكذلك السلطات والكومبوت. استخدم الزر أدناه لعرض الأطباق النباتية فقط. ملاحظة: معظم أطباق الخضار الساخنة تُطبخ مع اللحم.","Большинство наших блюд на оливковом масле веганские, как и салаты и компоты. Нажмите кнопку ниже, чтобы увидеть только вегетарианские блюда. Обратите внимание: большинство горячих овощных блюд готовится с мясом.","La mayoría de nuestros platos en aceite de oliva son veganos, igual que las ensaladas y compotas. Use el botón de abajo para ver solo platos vegetarianos. Nota: la mayoría de los platos calientes de verduras se cocinan con carne.","La plupart de nos plats à l'huile d'olive sont végans, tout comme les salades et compotes. Utilisez le bouton ci-dessous pour n'afficher que les plats végétariens. Attention : la plupart des plats chauds de légumes sont cuisinés avec de la viande.","我们大部分橄榄油菜都是纯素的，沙拉和糖水水果也是。点击下方按钮即可只看素食菜品。注意：大部分热蔬菜菜肴是与肉同煮的。","Die meisten unserer Olivenölgerichte sind vegan, ebenso Salate und Kompotte. Mit der Taste unten sehen Sie nur vegetarische Gerichte. Hinweis: Die meisten warmen Gemüsegerichte werden mit Fleisch gekocht.","オリーブオイル料理のほとんどはヴィーガンで、サラダやコンポートも同様です。下のボタンでベジタリアン料理だけを表示できます。なお、温かい野菜料理の多くは肉と一緒に煮込んでいます。","올리브유 요리는 대부분 비건이고, 샐러드와 콤포트도 마찬가지입니다. 아래 버튼을 누르면 채식 요리만 볼 수 있어요. 참고: 따뜻한 채소 요리는 대부분 고기와 함께 조리합니다."]},
@@ -522,9 +529,9 @@ const CHAT={
    a:["Lütfen sipariş vermeden önce garsonumuza söyleyin, mutfağa iletir. Her yemeğin altındaki turuncu etiketler alerjenleri gösterir: gluten, süt, yumurta, kuruyemiş, kereviz ve balık. Etiketler yol göstericidir, kesin bilgi için garsonumuza danışın.","Please tell your waiter before ordering; they will let the kitchen know. The orange labels under each dish show allergens: gluten, milk, egg, nuts, celery and fish. The labels are a guide, so please check with your waiter to be sure.","يرجى إبلاغ النادل قبل الطلب، وسيُعلم المطبخ. تشير الملصقات البرتقالية تحت كل طبق إلى مسببات الحساسية: الغلوتين، الحليب، البيض، المكسرات، الكرفس والسمك. هذه الملصقات للإرشاد فقط، فيُرجى التأكد من النادل.","Пожалуйста, сообщите официанту перед заказом — он передаст на кухню. Оранжевые метки под каждым блюдом показывают аллергены: глютен, молоко, яйцо, орехи, сельдерей и рыба. Метки носят справочный характер, поэтому уточните у официанта.","Por favor, avise a su camarero antes de pedir; él informará a la cocina. Las etiquetas naranjas bajo cada plato indican alérgenos: gluten, leche, huevo, frutos secos, apio y pescado. Son orientativas; confírmelo con su camarero.","Merci de prévenir votre serveur avant de commander, il informera la cuisine. Les étiquettes orange sous chaque plat indiquent les allergènes : gluten, lait, œuf, fruits à coque, céleri et poisson. Elles sont indicatives ; vérifiez auprès de votre serveur.","请在点餐前告诉服务员，他会转告厨房。每道菜下方的橙色标签标示过敏原：麸质、奶、蛋、坚果、芹菜和鱼。标签仅供参考，请向服务员确认。","Bitte sagen Sie es vor der Bestellung Ihrem Kellner – er informiert die Küche. Die orangefarbenen Hinweise unter jedem Gericht zeigen Allergene: Gluten, Milch, Ei, Schalenfrüchte, Sellerie und Fisch. Sie dienen nur zur Orientierung; bitte fragen Sie beim Kellner nach.","ご注文の前に係員にお知らせください。厨房に伝えます。各料理の下のオレンジ色の表示はアレルゲン（グルテン、乳、卵、ナッツ、セロリ、魚）です。表示は目安ですので、必ず係員にご確認ください。","주문 전에 직원에게 알려 주세요. 주방에 전달해 드립니다. 각 요리 아래 주황색 표시는 알레르기 유발 성분(글루텐, 우유, 달걀, 견과류, 셀러리, 생선)을 나타냅니다. 표시는 참고용이니 직원에게 꼭 확인해 주세요."]},
   {id:"togo",act:"togo",
    q:["Paket alabilir miyim?","Can I take something away?","هل يمكنني أخذ طلب سفري؟","Можно взять с собой?","¿Puedo pedir para llevar?","Puis-je emporter quelque chose ?","可以外带吗？","Kann ich etwas mitnehmen?","持ち帰りはできますか？","포장할 수 있나요?"],
-   a:["Elbette! Tatlılarımızı kiloyla, koyun yoğurdumuzu çömlekte ve ev yapımı reçellerimizi kavanozda paket alabilirsiniz. İstanbul'dan tatlı bir hatıra olur.","Of course! You can take our desserts by the kilo, sheep's milk yoghurt in a clay pot, and our homemade jams. A sweet souvenir from Istanbul.","بالتأكيد! يمكنك أخذ حلوياتنا بالكيلو، ولبن الغنم في وعاء فخاري، ومربياتنا المنزلية. هدية حلوة من إسطنبول.","Конечно! Десерты можно взять на вес, овечий йогурт — в глиняном горшке, а также наше домашнее варенье. Сладкий сувенир из Стамбула.","¡Por supuesto! Puede llevarse nuestros postres por kilo, yogur de oveja en olla de barro y nuestras mermeladas caseras. Un dulce recuerdo de Estambul.","Bien sûr ! Vous pouvez emporter nos desserts au kilo, du yaourt de brebis en pot de terre et nos confitures maison. Un doux souvenir d'Istanbul.","当然可以！甜点可按公斤外带，还有陶罐装绵羊奶酸奶和自制果酱。是来自伊斯坦布尔的甜蜜纪念品。","Natürlich! Unsere Desserts gibt es pro Kilo, Schafsmilchjoghurt im Tontopf und hausgemachte Konfitüren zum Mitnehmen. Ein süßes Souvenir aus Istanbul.","もちろんです！デザートはキロ単位で、羊乳ヨーグルトは土鍋入りで、自家製ジャムもお持ち帰りいただけます。イスタンブールの甘いお土産にどうぞ。","물론이죠! 디저트는 킬로 단위로, 양젖 요구르트는 토기에 담아, 수제 잼도 포장해 가실 수 있어요. 이스탄불의 달콤한 기념품이 될 거예요."]},
-  {id:"hours",act:"map",
-   q:["Çalışma saatleriniz ve adresiniz?","Opening hours and address?","ما مواعيد العمل والعنوان؟","Часы работы и адрес?","¿Horario y dirección?","Horaires et adresse ?","营业时间和地址？","Öffnungszeiten und Adresse?","営業時間と住所は？","영업시간과 주소는요?"]}
+   a:["Elbette! Tatlılarımızı kiloyla, koyun yoğurdumuzu çömlekte ve ev yapımı reçellerimizi kavanozda paket alabilirsiniz. Dondurmamız da uygun paketlerle saatlerce yolda erimeden götürülebilir. Üsküdar'dan tatlı bir hatıra olur.", "Of course! You can take our desserts by the kilo, sheep's milk yoghurt in a clay pot, and our homemade jams. With the right packaging, our ice cream can travel for hours without melting. A sweet souvenir from Üsküdar.", "بالتأكيد! يمكنك أخذ حلوياتنا بالكيلو، ولبن الغنم في وعاء فخاري، ومربياتنا المنزلية. وبفضل التغليف المناسب يمكن حمل الآيس كريم لساعات دون أن يذوب. هدية حلوة من أسكودار.", "Конечно! Десерты можно взять на вес, овечий йогурт — в глиняном горшке, а также наше домашнее варенье. В подходящей упаковке наше мороженое часами не тает в дороге. Сладкий сувенир из Ускюдара.", "¡Por supuesto! Puede llevarse nuestros postres por kilo, yogur de oveja en olla de barro y nuestras mermeladas caseras. Con el embalaje adecuado, nuestro helado aguanta horas de viaje sin derretirse. Un dulce recuerdo de Üsküdar.", "Bien sûr ! Vous pouvez emporter nos desserts au kilo, du yaourt de brebis en pot de terre et nos confitures maison. Grâce à un emballage adapté, notre glace peut voyager des heures sans fondre. Un doux souvenir d'Üsküdar.", "当然可以！甜点可按公斤外带，还有陶罐装绵羊奶酸奶和自制果酱。我们的冰淇淋采用专门包装，路上几个小时都不会融化。是来自于斯屈达尔的甜蜜纪念品。", "Natürlich! Unsere Desserts gibt es pro Kilo, Schafsmilchjoghurt im Tontopf und hausgemachte Konfitüren zum Mitnehmen. Mit der passenden Verpackung übersteht unser Eis stundenlange Fahrten, ohne zu schmelzen. Ein süßes Souvenir aus Üsküdar.", "もちろんです！デザートはキロ単位で、羊乳ヨーグルトは土鍋入りで、自家製ジャムもお持ち帰りいただけます。アイスクリームも専用の梱包なら、何時間移動しても溶けません。ユスキュダルの甘いお土産にどうぞ。", "물론이죠! 디저트는 킬로 단위로, 양젖 요구르트는 토기에 담아, 수제 잼도 포장해 가실 수 있어요. 아이스크림도 알맞게 포장하면 몇 시간을 이동해도 녹지 않아요. 위스퀴다르의 달콤한 기념품이 될 거예요."]},
+  {id:"hours",
+   q:["Çalışma saatleriniz nedir?", "What are your opening hours?", "ما مواعيد العمل؟", "Какие у вас часы работы?", "¿Cuál es su horario?", "Quels sont vos horaires ?", "营业时间是几点？", "Wann haben Sie geöffnet?", "営業時間は？", "영업시간이 어떻게 되나요?"]}
  ]
 };
 const IG_URL="https://www.instagram.com/kanaatlokantasi1933/";
@@ -532,12 +539,17 @@ const IG_SVG='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke
 let invited=false;
 const MAP_URL="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul";
 const ADDR="Selmanipak Cad. No:9, Üsküdar, İstanbul";
+function jumpTo(el){
+  if(!el)return;
+  requestAnimationFrame(()=>{const r=el.getBoundingClientRect();
+    scrollTo({top:Math.max(0,scrollY+r.top-(innerHeight-r.height)/2),behavior:"auto"});
+    el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")});
+}
 function findByName(n){for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
 function goItem(it){
   chefClose();chatClose();fsel=null;$("q").value="";
   document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
-  const el=document.querySelector(`.item[data-id="${it.id}"]`);
-  if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")}
+  jumpTo(document.querySelector(`.item[data-id="${it.id}"]`));
 }
 function thumb(it){return it.img?`<img src="img/${esc(it.loc)}" data-r="${esc(REMOTE+"images/"+encodeURIComponent(it.img))}" onerror="if(this.dataset.r){this.src=this.dataset.r;this.dataset.r=''}else{this.remove()}" alt="">`:""}
 let asked=new Set();
@@ -552,13 +564,13 @@ function chatChoices(){
 }
 function chatAnswer(q){
   let html="";
-  if(q.id==="hours"){html=`<p>${esc(CL(UI.hours))}.<br>${esc(ADDR)}</p>`}
-  else html=`<p>${esc(CL(q.a))}</p>`;
+  if(q.id==="hours"){html=`<p>${esc(CL(UI.hours))}</p>`}
+  else html=CL(q.a).split("\n\n").map(t=>`<p>${esc(t)}</p>`).join("");
   const dishes=q.dishes==="TODAY"?[chefItem()]:(q.dishes||[]).map(findByName);
   const ds=dishes.filter(Boolean);
   if(q.dishes==="TODAY"&&ds[0]){const it=ds[0];
-    html+=`<button class="dcard" type="button" data-go="${it.id}">${thumb(it)}<span><b lang="tr">${esc(it.tr)}</b><small>${esc(lang==="tr"?(it.trn||""):it.t[LI[lang]-1])}</small><em dir="ltr">${price(it.p)}</em></span></button>`}
-  else if(ds.length)html+=`<div class="dchips">${ds.map(it=>`<button type="button" data-go="${it.id}">${thumb(it)}<span lang="tr">${esc(it.tr)}</span></button>`).join("")}</div>`;
+    html+=`<button class="dcard" type="button" data-go="${it.id}">${thumb(it)}<span><b>${esc(lang==="tr"?it.tr:it.t[LI[lang]-1])}</b><small lang="tr" dir="ltr">${esc(lang==="tr"?(it.trn||""):it.tr)}</small><em dir="ltr">${price(it.p)}</em></span></button>`}
+  else if(ds.length)html+=`<div class="dchips">${ds.map(it=>`<button type="button" data-go="${it.id}">${thumb(it)}<span>${esc(lang==="tr"?it.tr:it.t[LI[lang]-1])}</span></button>`).join("")}</div>`;
   if(q.act==="veg")html+=`<button class="cact" type="button" data-act="veg">${DIET.v[0]} ${esc(Lt(DIET.v))}</button>`;
   if(q.act==="togo")html+=`<button class="cact" type="button" data-act="togo">${esc(CL(CHEF_UI.show))}</button>`;
   if(q.act==="story")html+=`<a class="cact" href="https://www.kanaatlokantasi.com.tr/hakkimizda" target="_blank" rel="noopener">📖 ${esc(CL(CHAT.story))}</a>`;
@@ -587,7 +599,7 @@ $("chat").addEventListener("click",e=>{
   const a=e.target.closest("[data-act]");
   if(a){chatClose();$("q").value="";
     if(a.dataset.act==="veg"){fsel="v";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f==="v"));filter();scrollTo({top:0,behavior:"smooth"})}
-    if(a.dataset.act==="togo"){fsel=null;document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();document.getElementById("c-togo").scrollIntoView({behavior:"smooth"})}}
+    if(a.dataset.act==="togo"){fsel=null;document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();requestAnimationFrame(()=>scrollTo({top:document.getElementById("c-togo").getBoundingClientRect().top+scrollY-170}))}}
 });
 addEventListener("keydown",e=>{if(e.key==="Escape")chatClose()});
 
