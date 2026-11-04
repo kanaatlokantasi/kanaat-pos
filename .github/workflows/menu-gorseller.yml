@@ -1,0 +1,38 @@
+name: Menu gorsellerini indir
+# menu/images.txt'teki fotoğrafları Take a Seat'ten indirip menu/img/ klasörüne kaydeder.
+on:
+  push:
+    paths:
+      - 'menu/images.txt'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: menu-gorseller
+jobs:
+  indir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gorselleri indir ve kucult (en fazla 900 px)
+        run: |
+          command -v mogrify >/dev/null || (sudo apt-get update -q && sudo apt-get install -y -q imagemagick) >/dev/null || true
+          mkdir -p menu/img
+          while read -r name url; do
+            [ -z "$name" ] && continue
+            [ -s "menu/img/$name" ] && continue
+            if curl -fsSL --retry 3 -o "menu/img/$name" "$url"; then
+              mogrify -resize '900x900>' -strip -quality 82 "menu/img/$name" || true
+            else
+              echo "indirilemedi: $name"; rm -f "menu/img/$name"
+            fi
+          done < menu/images.txt
+      - name: Degisiklik varsa kaydet
+        run: |
+          if [ -n "$(git status --porcelain menu/img)" ]; then
+            git config user.name "menu-botu"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add menu/img
+            git commit -m "Menu gorselleri"
+            git pull --rebase -q origin main
+            git push
+          fi
