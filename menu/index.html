@@ -179,6 +179,17 @@ html[lang=ar] .ctitle,html[lang=zh] .ctitle,html[lang=ja] .ctitle,html[lang=ko] 
 .ctot b{font-size:20px}
 .cnote{color:var(--muted);font-size:13.5px;margin:6px 0 0}
 .cbtn.sec{background:var(--green-soft);color:var(--green);margin-top:8px}
+.tipbox{margin-top:14px;padding:12px;border-radius:14px;background:var(--green-soft)}
+.tiph{font-weight:700;color:var(--green);margin-bottom:8px}
+.tipopts{display:flex;flex-wrap:wrap;gap:6px}
+.tipopts button{border:1px solid var(--green);background:var(--card);color:var(--green);font:600 14px/1 inherit;padding:9px 13px;border-radius:999px;cursor:pointer}
+.tipopts button[aria-pressed=true]{background:var(--green);color:#fff}
+@media (prefers-color-scheme:dark){.tipopts button[aria-pressed=true]{color:#10241B}}
+.tipin{display:flex;align-items:center;gap:6px;margin-top:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:0 12px;max-width:200px}
+.tipin input{flex:1;border:0;background:transparent;color:var(--ink);font:600 16px inherit;padding:10px 0;outline:none;min-width:0}
+.tipbox .cnote{margin-top:8px}
+.csub{display:flex;justify-content:space-between;padding:6px 0 0;color:var(--muted)}
+.cart .crow .addbox{flex-direction:row;align-items:center}
 .clink{display:block;width:100%;margin-top:8px;border:0;background:none;color:var(--muted);font:600 14px inherit;padding:10px;text-align:center;text-decoration:underline;cursor:pointer}
 .qrbig{background:#fff;border-radius:14px;padding:10px;margin:12px auto;max-width:300px}
 .qrbig svg{display:block;width:100%;height:auto}
@@ -268,7 +279,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 18 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 19 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -771,20 +782,27 @@ const CART_UI={
  long:["Liste QR'a sığmayacak kadar uzun. Lütfen garsona ekranı gösterin.","The list is too long for a QR code. Please show this screen to your waiter.","القائمة طويلة جدًا لرمز QR. يرجى إظهار هذه الشاشة للنادل.","Список слишком длинный для QR-кода. Покажите, пожалуйста, этот экран официанту.","La lista es demasiado larga para un código QR. Muestre esta pantalla a su camarero.","La liste est trop longue pour un QR code. Montrez cet écran à votre serveur.","清单过长，无法生成二维码。请直接把此屏幕给服务员看。","Die Liste ist zu lang für einen QR-Code. Bitte zeigen Sie diesen Bildschirm Ihrem Kellner.","リストが長すぎてQRコードにできません。この画面を係員にお見せください。","목록이 너무 길어 QR 코드로 만들 수 없습니다. 이 화면을 직원에게 보여 주세요."]
 };
 const BYCODE={};for(const c of MENU)for(const it of c.items)BYCODE[it.c]=it;
+const TIP_UI={"title": ["Gönüllü bahşiş (isteğe bağlı)", "Voluntary tip (optional)", "إكرامية (اختيارية)", "Чаевые (по желанию)", "Propina voluntaria (opcional)", "Pourboire (facultatif)", "自愿小费（可选）", "Freiwilliges Trinkgeld (optional)", "チップ（任意）", "팁 (선택 사항)"], "none": ["Yok", "None", "بدون", "Нет", "Ninguna", "Aucun", "不加", "Keins", "なし", "없음"], "custom": ["Diğer", "Other", "مبلغ آخر", "Другая сумма", "Otra", "Autre", "其他", "Anderer Betrag", "その他", "직접 입력"], "amount": ["Tutar", "Amount", "المبلغ", "Сумма", "Importe", "Montant", "金额", "Betrag", "金額", "금액"], "sub": ["Ara toplam", "Subtotal", "المجموع الفرعي", "Подытог", "Subtotal", "Sous-total", "小计", "Zwischensumme", "小計", "소계"], "line": ["Gönüllü bahşiş", "Voluntary tip", "إكرامية", "Чаевые", "Propina", "Pourboire", "小费", "Trinkgeld", "チップ", "팁"], "note": ["Hesabınıza servis ücreti eklenmez; bahşiş tamamen isteğe bağlıdır.", "No service charge is added to your bill; tipping is entirely optional.", "لا تُضاف رسوم خدمة إلى فاتورتك، والإكرامية اختيارية تمامًا.", "Плата за обслуживание не включена в счёт; чаевые — исключительно по желанию.", "No se añade cargo por servicio a su cuenta; la propina es totalmente opcional.", "Aucun frais de service n'est ajouté ; le pourboire est entièrement facultatif.", "账单不含服务费，小费完全自愿。", "Es wird keine Servicegebühr berechnet; Trinkgeld ist völlig freiwillig.", "サービス料は含まれていません。チップは完全に任意です。", "서비스 요금은 청구되지 않으며, 팁은 전적으로 선택 사항입니다."]};
+const DRINK_UI={"q": ["İçecekleri eklediniz mi?", "Did you add your drinks?", "هل أضفت المشروبات؟", "Вы добавили напитки?", "¿Ha añadido las bebidas?", "Avez-vous ajouté les boissons ?", "您添加饮料了吗？", "Haben Sie die Getränke hinzugefügt?", "お飲み物は追加しましたか？", "음료도 추가하셨나요?"], "sub": ["Su, ayran ve diğer içecekler sık unutulur:", "Water, ayran and other drinks are often forgotten:", "كثيرًا ما يُنسى الماء والعيران والمشروبات الأخرى:", "Воду, айран и другие напитки часто забывают:", "El agua, el ayran y otras bebidas se suelen olvidar:", "L'eau, l'ayran et les autres boissons sont souvent oubliés :", "水、酸奶饮料和其他饮品经常被遗忘：", "Wasser, Ayran und andere Getränke werden oft vergessen:", "お水やアイラン、その他のお飲み物はよく忘れられます：", "물, 아이란 등 음료는 자주 빠뜨리곤 해요:"], "cont": ["Devam et", "Continue", "متابعة", "Продолжить", "Continuar", "Continuer", "继续", "Weiter", "続ける", "계속"]};
 let CART={};
 const VAR={"":"p",a:"az",t:"tek"};
 const vPrice=(it,v)=>v==="a"?it.az:v==="t"?it.tek:it.p;
 const vOk=(it,v)=>vPrice(it,v)!=null;
 const keyOf=(c,v)=>v?c+"~"+v:c;
 const splitKey=k=>{const [c,v]=k.split("~");return [c,v||""]};
-try{const s=JSON.parse(localStorage.getItem("kanaat-cart")||"{}");for(const k in s){const [c,v]=splitKey(k);if(BYCODE[c]&&vOk(BYCODE[c],v)&&s[k]>0)CART[k]=Math.min(99,s[k]|0)}}catch(_){}
-function cartSave(){try{localStorage.setItem("kanaat-cart",JSON.stringify(CART))}catch(_){}}
+let TIP=null; // {k:"p",v:10} yüzde | {k:"m",v:kuruş}
+try{const s=JSON.parse(localStorage.getItem("kanaat-cart")||"{}");for(const k in s){if(k==="_tip"){const t=s[k];if(t&&(t.k==="p"||t.k==="m")&&t.v>0)TIP=t;continue}const [c,v]=splitKey(k);if(BYCODE[c]&&vOk(BYCODE[c],v)&&s[k]>0)CART[k]=Math.min(99,s[k]|0)}}catch(_){}
+function cartSave(){try{localStorage.setItem("kanaat-cart",JSON.stringify(TIP?{...CART,_tip:TIP}:CART))}catch(_){}}
 const cartLines=()=>Object.entries(CART).map(([k,q])=>{const [c,v]=splitKey(k);return {it:BYCODE[c],v,q,k}}).filter(l=>l.q>0&&l.it&&vOk(l.it,l.v));
 const lp=l=>vPrice(l.it,l.v);
 const vLabel=(v,tr)=>v==="a"?(tr?"AZ":CL(CART_UI.az)):v==="t"?(tr?"TEK":CL(CART_UI.tek)):"";
 const cartCount=()=>cartLines().reduce((a,l)=>a+l.q,0);
-const cartTotal=(lines=cartLines())=>lines.reduce((a,l)=>a+l.q*(lp(l)||0),0);
+const subOf=L=>L.reduce((a,l)=>a+l.q*(lp(l)||0),0);
+const tipOf=(sub,t)=>!t?0:t.k==="p"?Math.round(sub*t.v)/100:t.v/100;
+const cartTotal=(lines=cartLines())=>{const s=subOf(lines);return s+tipOf(s,TIP)};
 const nameIn=it=>lang==="tr"?it.tr:it.t[LI[lang]-1];
+const hasDrink=L=>L.some(l=>MENU.find(c=>c.id==="drink").items.includes(l.it));
+let drinkAsked=false,cartView="sheet",tipCustom=false;
 function ctl1(it,v){
   const k=keyOf(it.c,v),q=CART[k]||0,lbl=v?vLabel(v)+" · "+price(vPrice(it,v)):CL(CART_UI.add);
   if(!q)return v?`<button class="addb sm" type="button" data-inc="${k}">+ ${esc(lbl)}</button>`:`<button class="addr" type="button" data-inc="${k}" aria-label="${esc(lbl)}">+</button>`;
@@ -799,36 +817,65 @@ function cartPaint(){
   const n=cartCount();
   $("cartbar").classList.toggle("hide",!n);document.body.classList.toggle("hascart",!!n);
   $("cartbar").innerHTML=`<span>🧾 ${esc(CL(CART_UI.my))} · ${n}</span><b dir="ltr">${price(cartTotal())}</b>`;
-  if($("cart").classList.contains("open"))cartSheet();
+  if($("cart").classList.contains("open")){if(cartView==="drinks")drinkStep(drinkNext);else if(cartView==="sheet")cartSheet()}
 }
 function cartInc(c,d){const q=Math.max(0,Math.min(99,(CART[c]||0)+d));if(q)CART[c]=q;else delete CART[c];cartSave();cartPaint()}
+function tipBox(sub){
+  const opts=[["0",CL(TIP_UI.none)],["p5","%5"],["p10","%10"],["p15","%15"],["m",CL(TIP_UI.custom)]].map(([k,t])=>[k,lang==="tr"?t:t.replace(/^%(\d+)$/,"$1%")]);
+  const cur=!TIP?"0":TIP.k==="p"?"p"+TIP.v:"m";
+  const showIn=cur==="m"||tipCustom;
+  return `<div class="tipbox"><div class="tiph">${esc(CL(TIP_UI.title))}</div>
+   <div class="tipopts">${opts.map(([k,t])=>`<button type="button" data-tip="${k}" aria-pressed="${k===cur||(k==="m"&&tipCustom)}">${esc(t)}</button>`).join("")}</div>
+   ${showIn?`<label class="tipin"><input id="tipamt" type="text" inputmode="decimal" autocomplete="off" placeholder="${esc(CL(TIP_UI.amount))}" value="${TIP&&TIP.k==="m"?TIP.v/100:""}"><span>₺</span></label>`:""}
+   <p class="cnote">${esc(CL(TIP_UI.note))}</p></div>`;
+}
+function totalsHTML(L){
+  const s=subOf(L),t=tipOf(s,TIP);
+  return (t?`<div class="csub"><span>${esc(CL(TIP_UI.sub))}</span><b dir="ltr">${price(s)}</b></div><div class="csub"><span>${esc(CL(TIP_UI.line))}</span><b dir="ltr">${price(t)}</b></div>`:"")+
+    `<div class="ctot"><span>${esc(CL(CART_UI.total))}</span><b dir="ltr">${price(s+t)}</b></div>`;
+}
 function cartSheet(){
+  cartView="sheet";
   const L=cartLines();
   if(!L.length){cartClose();return}
   $("cartbody").innerHTML=`<h3 class="ctitle">${esc(CL(CART_UI.my))}</h3>
    <div class="clines">${L.map(l=>`<div class="cl"><div class="cn"><b>${esc(nameIn(l.it))}${l.v?` <span class="vtag">${esc(vLabel(l.v))}</span>`:""}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</small>`:""}<small dir="ltr">${price(lp(l))}</small></div>
      <span class="step"><button type="button" data-dec="${l.k}">−</button><b>${l.q}</b><button type="button" data-inc="${l.k}">+</button></span><em dir="ltr">${price(l.q*lp(l))}</em></div>`).join("")}</div>
-   <div class="ctot"><span>${esc(CL(CART_UI.total))}</span><b dir="ltr">${price(cartTotal(L))}</b></div>
+   ${tipBox(subOf(L))}
+   <div id="ctots">${totalsHTML(L)}</div>
    <p class="cnote">${esc(CL(CART_UI.note))}</p>
    <button class="cbtn" type="button" id="cshowqr">${esc(CL(CART_UI.show))}</button>
    <button class="cbtn sec" type="button" id="csave">💾 ${esc(CL(OK_UI.save))}</button>
    <button class="clink" type="button" id="cclear">${esc(CL(CART_UI.clear))}</button>`;
 }
+let drinkNext="qr";
+function drinkStep(next){
+  cartView="drinks";drinkNext=next;
+  const D=MENU.find(c=>c.id==="drink").items.filter(it=>it.p!=null);
+  $("cartbody").innerHTML=`<h3 class="ctitle">🥤 ${esc(CL(DRINK_UI.q))}</h3><p class="cnote">${esc(CL(DRINK_UI.sub))}</p>
+   <div class="clines">${D.map(it=>`<div class="crow" data-id="${it.id}"><div class="cn"><b>${esc(nameIn(it))}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox">${ctl(it)}</div></div>`).join("")}</div>
+   <button class="cbtn" type="button" id="dcont">${esc(CL(DRINK_UI.cont))}</button>`;
+}
+function guardDrinks(next){if(!drinkAsked&&!hasDrink(cartLines())){drinkAsked=true;drinkStep(next);return true}return false}
+function tipToken(){return !TIP?"":TIP.k==="p"?"._p"+TIP.v:"._m"+TIP.v}
 function cartPayload(){
   const t=Math.round(Date.now()/6e4).toString(36);
-  return lang+"."+t+"."+cartLines().map(l=>l.it.c+l.v+(l.q>1?l.q:"")).join(".");
+  return lang+"."+t+"."+cartLines().map(l=>l.it.c+l.v+(l.q>1?l.q:"")).join(".")+tipToken();
 }
 function cartQR(){
+  cartView="qr";
   const L=cartLines();
   const url=location.origin+location.pathname+"#g="+cartPayload();
-  const svg=qrSvg(url);
+  const svg=qrSvg(url);const s=subOf(L),t=tipOf(s,TIP);
   $("cartbody").innerHTML=`<h3 class="ctitle">${esc(CL(CART_UI.show))}</h3>
    ${svg?`<p class="cnote">${esc(CL(CART_UI.scan))}</p><div class="qrbig">${svg}</div>`:`<p class="cnote">${esc(CL(CART_UI.long))}</p>`}
    <div class="trlist" lang="tr" dir="ltr">${L.map(l=>`<div><span class="tl2"><b>${l.q} × ${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</b>${lang!=="tr"?`<small dir="auto">${esc(nameIn(l.it))}${l.v?" ("+vLabel(l.v)+")":""}</small>`:""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
-     <div class="trt"><span>Toplam</span><b>${price(cartTotal(L))}</b></div></div>
+     ${t?`<div class="trt"><span>Ara toplam</span><b>${price(s)}</b></div><div><span>Gönüllü bahşiş</span><b>${price(t)}</b></div>`:""}
+     <div class="trt"><span>Toplam</span><b>${price(s+t)}</b></div></div>
    <button class="clink" type="button" id="cback">${esc(CL(CART_UI.back))}</button>`;
 }
-function cartOpen(){chatClose();chefClose();cartSheet();$("cart").classList.add("open")}
+function cartSaveImg(){const L=cartLines();const s=subOf(L);Promise.all([document.fonts.ready,logoReady]).then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft),tip:tipOf(s,TIP)}),"kanaat-hesabim.png"))}
+function cartOpen(){chatClose();chefClose();tipCustom=false;cartSheet();$("cart").classList.add("open")}
 function cartClose(){$("cart").classList.remove("open")}
 
 $("cartbar").addEventListener("click",cartOpen);
@@ -836,11 +883,21 @@ $("cart").addEventListener("click",e=>{
   if(e.target===e.currentTarget)return cartClose();
   const i=e.target.closest("[data-inc]"),d=e.target.closest("[data-dec]");
   if(i)return cartInc(i.dataset.inc,1);if(d)return cartInc(d.dataset.dec,-1);
-  if(e.target.closest("#cshowqr"))return cartQR();
-  if(e.target.closest("#csave")){const L=cartLines();document.fonts.ready.then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft)}),"kanaat-hesabim.png"));return}
+  const tp=e.target.closest("[data-tip]");
+  if(tp){const k=tp.dataset.tip;if(k==="0"){TIP=null;tipCustom=false}else if(k==="m"){tipCustom=true;if(TIP&&TIP.k==="p")TIP=null}else{TIP={k:"p",v:+k.slice(1)};tipCustom=false}
+    cartSave();cartPaint();if(k==="m"){const inp=$("tipamt");if(inp)inp.focus()}return}
+  if(e.target.closest("#cshowqr")){if(guardDrinks("qr"))return;return cartQR()}
+  if(e.target.closest("#csave")){if(guardDrinks("save"))return;return cartSaveImg()}
+  if(e.target.closest("#dcont")){if(drinkNext==="save"){cartSheet();return cartSaveImg()}return cartQR()}
   if(e.target.closest("#cback"))return cartSheet();
-  if(e.target.closest("#cclear")){CART={};cartSave();cartPaint();cartClose()}
+  if(e.target.closest("#cclear")){CART={};TIP=null;cartSave();cartPaint();cartClose()}
   if(e.target.closest("#cartx"))cartClose();
+});
+$("cart").addEventListener("input",e=>{if(e.target.id!=="tipamt")return;
+  const v=Math.round(parseFloat(String(e.target.value).replace(",","."))*100);
+  TIP=v>0?{k:"m",v:Math.min(v,10000000)}:null;cartSave();
+  $("ctots").innerHTML=totalsHTML(cartLines());
+  $("cartbar").innerHTML=`<span>🧾 ${esc(CL(CART_UI.my))} · ${cartCount()}</span><b dir="ltr">${price(cartTotal())}</b>`;
 });
 addEventListener("keydown",e=>{if(e.key==="Escape"){if($("cart").classList.contains("open"))cartClose();else calcClose()}});
 
@@ -871,7 +928,7 @@ $("calc").addEventListener("click",e=>{
 
 // ---- Garson görünümü: misafirin QR'ı okutulunca (#g=...) Türkçe adisyon ----
 function waiterView(payload){
-  const {g:glang,at,W}=parsePayload(payload);
+  const {g:glang,at,W,tip}=parsePayload(payload);
   document.documentElement.lang="tr";document.documentElement.dir="ltr";
   document.body.classList.add("waiter");
   const LN=Object.fromEntries(LANGS.map(([c,n])=>[c,n]));
@@ -884,18 +941,18 @@ function waiterView(payload){
      <div class="wnote">Bu liste misafirin kendi seçimidir. Bitmiş yemekleri silin, adetleri düzeltin. Değişiklikler yalnızca bu telefonda görünür.</div>
      <div class="wlines">${W.map((l,i)=>`<div class="wl${l.q?"":" off"}"><div class="cn"><b>${esc(l.it.tr)}${l.v?` <span class="vtag">${vLabel(l.v,1)}</span>`:""}</b>${glang!=="tr"&&LI[glang]?`<small class="gl" dir="auto" lang="${glang}">${esc(l.it.t[LI[glang]-1])}</small>`:""}<small>${price(lp(l))}</small></div>
        <span class="step"><button type="button" data-wd="${i}">−</button><b>${l.q}</b><button type="button" data-wi="${i}">+</button></span><em>${price(l.q*lp(l))}</em></div>`).join("")||"<p>Liste boş.</p>"}</div>
-     <div class="ctot"><span>Toplam (${live.reduce((a,l)=>a+l.q,0)} adet)</span><b>${price(live.reduce((a,l)=>a+l.q*lp(l),0))}</b></div>
+     ${(()=>{const sb=subOf(live),tt=tipOf(sb,tip);return (tt?`<div class="csub"><span>Ara toplam</span><b>${price(sb)}</b></div><div class="csub"><span>Gönüllü bahşiş${tip.k==="p"?" (%"+tip.v+")":""} · misafirin isteği</span><b>${price(tt)}</b></div>`:"")+`<div class="ctot"><span>Toplam (${live.reduce((a,l)=>a+l.q,0)} adet)</span><b>${price(sb+tt)}</b></div>`})()}
      ${live.length?`<button class="cbtn" type="button" id="wok">Onayla ve misafire göster</button>`:""}
      <a class="clink" href="${location.pathname}?lang=tr">Menüyü aç</a></div>`;
   };
   const showQR=()=>{
     const live=W.filter(l=>l.q>0);
-    const url=location.origin+location.pathname+"#o="+makePayload(glang,Date.now(),live);const svg=qrSvg(url);
+    const url=location.origin+location.pathname+"#o="+makePayload(glang,Date.now(),live,tip);const svg=qrSvg(url);const sb=subOf(live),tt=tipOf(sb,tip);
     box.innerHTML=`<div class="wrap"><h2>Onaylanan Adisyon</h2>
      <p class="wsub">Misafir bu kodu kendi telefonunun kamerasıyla okutsun. Hesap ${LN[glang]?"<b>"+esc(LN[glang])+"</b> ":""}açılır ve misafir kaydedebilir.</p>
      ${svg?`<div class="qrbig">${svg}</div>`:`<div class="wnote">Liste QR'a sığmadı. Misafire ekranı gösterin.</div>`}
      <div class="trlist">${live.map(l=>`<div><span>${l.q} × ${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
-       <div class="trt"><span>Toplam</span><b>${price(live.reduce((a,l)=>a+l.q*lp(l),0))}</b></div></div>
+       ${tt?`<div class="trt"><span>Ara toplam</span><b>${price(sb)}</b></div><div><span>Gönüllü bahşiş</span><b>${price(tt)}</b></div>`:""}<div class="trt"><span>Toplam</span><b>${price(sb+tt)}</b></div></div>
      <button class="clink" type="button" id="wedit">Düzenlemeye dön</button></div>`;
   };
   box.onclick=e=>{const i=e.target.closest("[data-wi]"),d=e.target.closest("[data-wd]");
@@ -918,20 +975,25 @@ const OK_UI={
 };
 function parsePayload(p){
   const parts=p.split(".");const g=LI[parts[0]]!==undefined?parts[0]:"en";const at=parseInt(parts[1],36)*6e4;
-  const W=[];for(const tok of parts.slice(2)){const c=tok.slice(0,4),m=tok.slice(4).match(/^([at]?)(\d*)$/);if(!m)continue;const v=m[1],q=parseInt(m[2]||"1",10);if(BYCODE[c]&&vOk(BYCODE[c],v)&&q>0)W.push({it:BYCODE[c],v,q:Math.min(99,q)})}
-  return {g,at:isFinite(at)&&at>0?at:Date.now(),W};
+  let tip=null;const W=[];for(const tok of parts.slice(2)){if(tok[0]==="_"){const n=parseInt(tok.slice(2),10);if(n>0&&(tok[1]==="p"||tok[1]==="m"))tip={k:tok[1],v:Math.min(n,tok[1]==="p"?100:10000000)};continue}const c=tok.slice(0,4),m=tok.slice(4).match(/^([at]?)(\d*)$/);if(!m)continue;const v=m[1],q=parseInt(m[2]||"1",10);if(BYCODE[c]&&vOk(BYCODE[c],v)&&q>0)W.push({it:BYCODE[c],v,q:Math.min(99,q)})}
+  return {g,at:isFinite(at)&&at>0?at:Date.now(),W,tip};
 }
-function makePayload(g,at,W){return g+"."+Math.round(at/6e4).toString(36)+"."+W.filter(l=>l.q>0).map(l=>l.it.c+(l.v||"")+(l.q>1?l.q:"")).join(".")}
+function makePayload(g,at,W,tip){return g+"."+Math.round(at/6e4).toString(36)+"."+W.filter(l=>l.q>0).map(l=>l.it.c+(l.v||"")+(l.q>1?l.q:"")).join(".")+(tip?"._"+tip.k+tip.v:"")}
+let LOGO_IMG=null;
+const logoReady=new Promise(res=>{const im=new Image();im.onload=()=>{LOGO_IMG=im;res()};im.onerror=()=>res();im.src="img/logo-lacivert.png"});
 function billCanvas(lines,g,at,opt){opt=opt||{};
   const li=LI[g],rtl=g==="ar",W=720,pad=36,rowH=58;
-  const c=document.createElement("canvas");const H=240+lines.length*rowH+120;c.width=W;c.height=H;
-  const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);x.fillStyle="#1D5A46";x.fillRect(0,0,W,96);
+  const NAVY="#1B2A5C",TOP=50;
+  const tip=+opt.tip||0;const c=document.createElement("canvas");const H=TOP+240+lines.length*rowH+120+(tip?76:0);c.width=W;c.height=H;
+  const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);
   const F='"Noto Sans","Noto Sans Arabic","Noto Sans SC","Noto Sans JP","Noto Sans KR",system-ui,sans-serif';
-  x.fillStyle="#fff";x.font='700 34px "Noto Serif",Georgia,serif';x.textAlign="center";x.fillText("Kanaat Lokantası",W/2,60);
-  x.fillStyle="#2A2620";x.font="600 26px "+F;x.direction=rtl?"rtl":"ltr";x.fillText(opt.title||OK_UI.title[li],W/2,146);
+  if(LOGO_IMG&&LOGO_IMG.naturalWidth){const lh=104,lw=LOGO_IMG.naturalWidth*lh/LOGO_IMG.naturalHeight;x.drawImage(LOGO_IMG,(W-lw)/2,22,lw,lh)}
+  else{x.fillStyle=NAVY;x.font='italic 700 40px "Noto Serif",Georgia,serif';x.textAlign="center";x.fillText("Kanaat Lokantası",W/2,90)}
+  x.fillStyle=NAVY;x.fillRect(pad,TOP+92,W-2*pad,2);
+  x.textAlign="center";x.fillStyle=NAVY;x.font="600 26px "+F;x.direction=rtl?"rtl":"ltr";x.fillText(opt.title||OK_UI.title[li],W/2,TOP+146);
   x.fillStyle="#6F675B";x.font="400 20px "+F;
-  x.fillText((opt.sub||OK_UI.sub[li])+" · "+new Date(at).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),W/2,178);
-  let y=220;x.strokeStyle="#E6DDCC";x.beginPath();x.moveTo(pad,y-14);x.lineTo(W-pad,y-14);x.stroke();
+  x.fillText((opt.sub||OK_UI.sub[li])+" · "+new Date(at).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),W/2,TOP+178);
+  let y=TOP+220;x.strokeStyle="#E6DDCC";x.beginPath();x.moveTo(pad,y-14);x.lineTo(W-pad,y-14);x.stroke();
   const start=rtl?W-pad:pad,end=rtl?pad:W-pad;
   for(const l of lines){const vl=l.v?" ("+(l.v==="a"?CART_UI.az[li]:CART_UI.tek[li])+")":"";const nm=g==="tr"?l.it.tr:l.it.t[li-1];
     x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.fillStyle="#2A2620";x.font="600 22px "+F;
@@ -939,9 +1001,12 @@ function billCanvas(lines,g,at,opt){opt=opt||{};
     x.fillText(s,start,y+10);
     x.fillStyle="#6F675B";x.font='italic 17px "Noto Serif",Georgia,serif';x.direction="ltr";x.textAlign=rtl?"right":"left";if(g!=="tr")x.fillText(l.it.tr+(l.v?" ("+vLabel(l.v,1)+")":""),start,y+34);
     x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillStyle="#2A2620";x.font="600 22px "+F;x.fillText(price(l.q*lp(l)),end,y+10);y+=rowH}
+  const sub=lines.reduce((a,l)=>a+l.q*lp(l),0);
   x.strokeStyle="#2A2620";x.beginPath();x.moveTo(pad,y-10);x.lineTo(W-pad,y-10);x.stroke();
-  x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.font="700 26px "+F;x.fillText(CART_UI.total[li],start,y+28);
-  x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillText(price(lines.reduce((a,l)=>a+l.q*lp(l),0)),end,y+28);
+  if(tip){for(const [lb,v] of [[TIP_UI.sub[li],sub],[TIP_UI.line[li],tip]]){x.fillStyle="#2A2620";x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.font="400 21px "+F;x.fillText(lb,start,y+22);
+    x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillText(price(v),end,y+22);y+=36}y+=8}
+  x.fillStyle="#2A2620";x.direction=rtl?"rtl":"ltr";x.textAlign=rtl?"right":"left";x.font="700 26px "+F;x.fillText(CART_UI.total[li],start,y+28);
+  x.direction="ltr";x.textAlign=rtl?"left":"right";x.fillText(price(sub+tip),end,y+28);
   x.direction=rtl?"rtl":"ltr";x.textAlign="center";x.fillStyle="#6F675B";x.font="400 18px "+F;x.fillText(OK_UI.info[li],W/2,y+76);
   return c;
 }
@@ -949,13 +1014,13 @@ function shareCanvas(c,fname){c.toBlob(async b=>{const f=new File([b],fname||"ka
   try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"Kanaat Lokantası"});return}}catch(e){if(e.name==="AbortError")return}
   const url=c.toDataURL("image/png");const w=document.createElement("a");w.href=url;w.download=fname||"kanaat-hesap.png";document.body.appendChild(w);w.click();w.remove()})}
 function approvedView(payload){
-  const {g,at,W}=parsePayload(payload);
+  const {g,at,W,tip}=parsePayload(payload);
   lang=g;document.documentElement.lang=g;document.documentElement.dir=g==="ar"?"rtl":"ltr";
   document.body.classList.add("waiter");
   const box=$("waiter");box.classList.remove("hide");
   const tot=W.reduce((a,l)=>a+l.q*lp(l),0);
-  document.fonts.ready.then(()=>{
-    const c=billCanvas(W,g,at);const url=c.toDataURL("image/png");
+  Promise.all([document.fonts.ready,logoReady]).then(()=>{
+    const c=billCanvas(W,g,at,{tip:tipOf(subOf(W),tip)});const url=c.toDataURL("image/png");
     box.innerHTML=`<div class="wrap"><h2>${esc(CL(OK_UI.title))}</h2><p class="wsub">✓ ${esc(CL(OK_UI.sub))}</p>
      <div class="okimg"><img src="${url}" alt="${esc(CL(OK_UI.title))}"></div>
      <button class="cbtn" type="button" id="oksave">${esc(CL(OK_UI.save))}</button>
