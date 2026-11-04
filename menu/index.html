@@ -294,7 +294,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 40 · 05.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 41 · 05.11.2026</p>
   </div>
 </footer>
 
@@ -898,6 +898,7 @@ function cartPayload(){
   const t=Math.round(Date.now()/6e4).toString(36);
   return lang+"."+t+"."+cartLines().map(l=>l.it.c+l.v+(l.q>1?l.q:"")).join(".")+tipToken();
 }
+const bi=(arr,suf)=>lang==="tr"?"":`<small dir="auto">${esc(CL(arr)+(suf||""))}</small>`;
 function cartQR(){
   cartView="qr";
   const L=cartLines();
@@ -906,8 +907,8 @@ function cartQR(){
   $("cartbody").innerHTML=`<h3 class="ctitle">${esc(CL(CART_UI.show))}</h3>
    ${svg?`<p class="cnote">${esc(CL(CART_UI.scan))}</p><div class="qrbig">${svg}</div>`:`<p class="cnote">${esc(CL(CART_UI.long))}</p>`}
    <div class="trlist" lang="tr" dir="ltr">${L.map(l=>`<div><span class="tl2"><b>${l.q} × ${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</b>${lang!=="tr"?`<small dir="auto">${esc(nameIn(l.it))}${l.v?" ("+vLabel(l.v)+")":""}</small>`:""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
-     ${t?`<div class="trt"><span>Ara toplam</span><b>${price(s)}</b></div><div><span>Gönüllü bahşiş</span><b>${price(t)}</b></div>`:""}
-     <div class="trt"><span>Toplam</span><b>${price(s+t)}</b></div>${SPLIT>1?`<div><span>Kişi başı (${SPLIT} kişi)</span><b>${price(Math.round((s+t)*100/SPLIT)/100)}</b></div>`:""}</div>
+     ${t?`<div class="trt"><span class="tl2"><b>Ara toplam</b>${bi(TIP_UI.sub)}</span><b>${price(s)}</b></div><div><span class="tl2"><b>Gönüllü bahşiş</b>${bi(TIP_UI.line)}</span><b>${price(t)}</b></div>`:""}
+     <div class="trt"><span class="tl2"><b>Toplam</b>${bi(CART_UI.total)}</span><b>${price(s+t)}</b></div>${SPLIT>1?`<div><span class="tl2"><b>Kişi başı (${SPLIT} kişi)</b>${bi(SPLIT_UI.each,` (${SPLIT})`)}</span><b>${price(Math.round((s+t)*100/SPLIT)/100)}</b></div>`:""}</div>
    <button class="clink" type="button" id="cback">${esc(CL(CART_UI.back))}</button>`;
 }
 function cartSaveImg(){const L=cartLines();const s=subOf(L);Promise.all([document.fonts.ready,logoReady]).then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft),tip:tipOf(s,TIP),split:SPLIT}),"kanaat-hesabim.png"))}
