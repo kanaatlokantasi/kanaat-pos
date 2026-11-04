@@ -143,6 +143,9 @@ html[dir=rtl] .dchips button{padding:4px 4px 4px 10px}
 .cact{display:inline-block;margin-top:10px;border:0;border-radius:10px;background:var(--green-soft);color:var(--green);font:600 14px inherit;padding:9px 12px;text-decoration:none;cursor:pointer}
 .chatq{flex:none;display:flex;flex-direction:column;gap:6px;padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);max-height:32%;overflow-y:auto;background:var(--card)}
 .chatq button{border:1px solid var(--green);background:transparent;color:var(--green);border-radius:999px;padding:7px 13px;font:600 13.5px inherit;flex:none;text-align:start;cursor:pointer}
+.igbtn{display:inline-flex;align-items:center;gap:8px;margin-top:10px;padding:10px 14px;border-radius:12px;color:#fff;text-decoration:none;font:600 14px inherit;background:linear-gradient(45deg,#F58529,#DD2A7B 50%,#8134AF 80%,#515BD4)}
+.ighandle{display:block;margin-top:6px;color:var(--muted);font-size:12.5px}
+.igfoot{display:inline-flex;align-items:center;gap:6px}
 </style>
 </head>
 <body>
@@ -189,7 +192,8 @@ html[dir=rtl] .dchips button{padding:4px 4px 4px 10px}
     <p id="t-hours"></p>
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
-    <p class="ver" dir="ltr">Sürüm 6 · 04.11.2026</p>
+    <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
+    <p class="ver" dir="ltr">Sürüm 7 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -491,6 +495,8 @@ const CHAT={
  sub:["Bir soru seçin","Pick a question","اختر سؤالًا","Выберите вопрос","Elija una pregunta","Choisissez une question","请选择一个问题","Wählen Sie eine Frage","質問を選んでください","질문을 선택하세요"],
  hello:["Hoş geldiniz! Ben mutfağın ustasıyım. Size nasıl yardımcı olabilirim?","Welcome! I'm the chef here. How can I help you?","أهلًا وسهلًا! أنا الشيف هنا. كيف يمكنني مساعدتك؟","Добро пожаловать! Я шеф-повар. Чем могу помочь?","¡Bienvenido! Soy el chef. ¿En qué puedo ayudarle?","Bienvenue ! Je suis le chef. Comment puis-je vous aider ?","欢迎光临！我是这里的主厨。有什么可以帮您？","Willkommen! Ich bin der Küchenchef. Wie kann ich helfen?","いらっしゃいませ！料理長です。何かお手伝いしましょうか？","어서 오세요! 저는 이곳 셰프입니다. 무엇을 도와드릴까요?"],
  story:["Hikâyemizin devamı","Read our full story","اقرأ قصتنا كاملة","Вся наша история","Lea nuestra historia","Lire notre histoire","阅读完整故事","Unsere ganze Geschichte","私たちの物語を読む","우리 이야기 더 보기"],
+ insta:["Bizi beğendiyseniz Instagram'da da takip edin, sizi orada da görmekten mutluluk duyarız! 😊","If you're enjoying your visit, follow us on Instagram. We'd love to see you there too! 😊","إذا أعجبتك زيارتك، تابعنا على إنستغرام. يسعدنا أن نراك هناك أيضًا! 😊","Если вам у нас нравится, подписывайтесь на наш Instagram — будем рады видеть вас и там! 😊","Si está disfrutando de su visita, síganos en Instagram. ¡Nos encantará verle también allí! 😊","Si vous appréciez votre visite, suivez-nous sur Instagram. Au plaisir de vous y retrouver ! 😊","如果您喜欢这里，欢迎在 Instagram 上关注我们，期待在那里与您相见！😊","Wenn es Ihnen bei uns gefällt, folgen Sie uns auf Instagram. Wir freuen uns, Sie auch dort zu sehen! 😊","お気に召しましたら、ぜひInstagramもフォローしてください。そちらでもお会いできるのを楽しみにしています！😊","마음에 드셨다면 인스타그램도 팔로우해 주세요. 그곳에서도 뵙길 바랍니다! 😊"],
+ follow:["Instagram'da takip et","Follow on Instagram","تابعنا على إنستغرام","Подписаться в Instagram","Seguir en Instagram","Suivre sur Instagram","在 Instagram 关注","Auf Instagram folgen","Instagramでフォロー","인스타그램 팔로우"],
  maps:["Haritada aç","Open in Maps","افتح في الخريطة","Открыть на карте","Abrir en el mapa","Ouvrir dans Plans","在地图中打开","In Karte öffnen","地図で開く","지도에서 열기"],
  q:[
   {id:"today",dishes:"TODAY",
@@ -521,6 +527,9 @@ const CHAT={
    q:["Çalışma saatleriniz ve adresiniz?","Opening hours and address?","ما مواعيد العمل والعنوان؟","Часы работы и адрес?","¿Horario y dirección?","Horaires et adresse ?","营业时间和地址？","Öffnungszeiten und Adresse?","営業時間と住所は？","영업시간과 주소는요?"]}
  ]
 };
+const IG_URL="https://www.instagram.com/kanaatlokantasi1933/";
+const IG_SVG='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>';
+let invited=false;
 const MAP_URL="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul";
 const ADDR="Selmanipak Cad. No:9, Üsküdar, İstanbul";
 function findByName(n){for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
@@ -560,10 +569,10 @@ function chatAsk(id){
   const q=CHAT.q.find(x=>x.id===id);if(!q)return;
   asked.add(id);chatMsg(`<p>${esc(CL(q.q))}</p>`,true);$("chatq").innerHTML="";
   const t=chatMsg(`<span class="dots"><i></i><i></i><i></i></span>`,false);
-  setTimeout(()=>{t.innerHTML=chatAnswer(q);chatChoices();$("chatq").scrollTop=0;const L=$("chatlog");L.scrollTo({top:Math.max(0,t.offsetTop-L.offsetTop-60),behavior:"smooth"})},700);
+  setTimeout(()=>{t.innerHTML=chatAnswer(q);chatChoices();if(asked.size===2&&!invited){invited=true;setTimeout(()=>{chatMsg(`<p>${esc(CL(CHAT.insta))}</p><a class="igbtn" href="${IG_URL}" target="_blank" rel="noopener">${IG_SVG}<span>${esc(CL(CHAT.follow))}</span></a><small class="ighandle" dir="ltr">@kanaatlokantasi1933</small>`,false)},900)}$("chatq").scrollTop=0;const L=$("chatlog");L.scrollTo({top:Math.max(0,t.offsetTop-L.offsetTop-60),behavior:"smooth"})},700);
 }
 function chatStart(){
-  asked=new Set();$("chatlog").innerHTML="";
+  asked=new Set();invited=false;$("chatlog").innerHTML="";
   $("chattitle").textContent=CL(CHAT.title);$("chatsub").textContent=CL(CHAT.sub);
   $("chatx").setAttribute("aria-label",CL(CHEF_UI.close));
   chatMsg(`<p>${esc(CL(CHAT.hello))}</p>`,false);chatChoices();
