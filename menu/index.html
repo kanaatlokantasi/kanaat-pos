@@ -59,7 +59,7 @@ section.cat h2{margin:0 0 2px;font:700 20px/1.2 "Noto Serif",Georgia,serif;color
 html[dir=rtl] section.cat h2{font-family:"Noto Sans Arabic",serif}
 .cnote{margin:0 0 8px;color:var(--muted);font-size:13.5px}
 .items{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-.item{display:flex;gap:12px;background:var(--card);border-radius:14px;padding:12px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.item{cursor:pointer;display:flex;gap:12px;background:var(--card);border-radius:14px;padding:12px;box-shadow:var(--shadow);border:1px solid var(--line)}
 .ph{flex:none;width:84px;height:84px;border-radius:10px;overflow:hidden;background:var(--chip);border:0;padding:0;cursor:zoom-in}
 .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .body{flex:1;min-width:0}
@@ -294,7 +294,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 39 · 05.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 40 · 05.11.2026</p>
   </div>
 </footer>
 
@@ -578,7 +578,9 @@ $("langov").addEventListener("click",e=>{
   if(b||e.target===e.currentTarget)$("langov").classList.remove("open");
 });
 $("menu").addEventListener("click",e=>{
-  const b=e.target.closest("[data-zoom]");if(!b)return;
+  let b=e.target.closest("[data-zoom]");
+  if(!b){const card=e.target.closest(".item");if(!card||e.target.closest("a,button:not([data-zoom])"))return;b=card.querySelector("[data-zoom]");
+    if(!b||b.classList.contains("hide")||!b.querySelector("img"))return}
   const it=BYID[b.dataset.zoom];
   $("pimg").src=b.querySelector("img").currentSrc||b.querySelector("img").src;
   $("pname").textContent=lang==="tr"?it.tr:it.t[LI[lang]-1];
