@@ -152,6 +152,7 @@ html[dir=rtl] .dchips button{padding:4px 4px 4px 10px}
 .igfoot{display:inline-flex;align-items:center;gap:6px}
 
 .addbox{margin-top:8px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(29,90,70,0)}50%{box-shadow:0 0 0 6px rgba(29,90,70,.35);background:var(--green-soft)}}
 .addb.sm{border-style:dashed;font-size:12.5px;padding:7px 11px}
 .stepw{display:inline-flex;align-items:center;gap:6px}.stepw small{font-weight:600;color:var(--green);font-size:12.5px}
 .vtag{display:inline-block;font-size:11.5px;font-weight:700;color:var(--amber);background:var(--amber-soft);border-radius:5px;padding:1px 5px;vertical-align:1px}
@@ -192,6 +193,30 @@ html[lang=ar] #waiter h2,html[lang=zh] #waiter h2,html[lang=ja] #waiter h2,html[
 .okimg{margin:14px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
 .okimg img{display:block;width:100%}
 body.waiter header.top,body.waiter .bar,body.waiter main,body.waiter footer,body.waiter .cfab,body.waiter .cartbar,body.waiter #empty{display:none!important}
+
+.calcbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;border:0;border-radius:12px;background:#fff;color:var(--green);font:700 15.5px/1 inherit;padding:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+@media (prefers-color-scheme:dark){.calcbtn{background:#E3EEE8;color:#12392C}}
+.calc{position:fixed;inset:0;z-index:25;background:var(--bg);overflow-y:auto;display:none;-webkit-overflow-scrolling:touch}
+.calc.open{display:block}
+body.calcopen{overflow:hidden}
+body.calcopen .cfab{display:none}
+.calctop{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0 0}
+.calchead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.calchead h2{margin:0;font:700 19px "Noto Serif",Georgia,serif;color:var(--green)}
+html[lang=ar] .calchead h2,html[lang=zh] .calchead h2,html[lang=ja] .calchead h2,html[lang=ko] .calchead h2{font-family:inherit}
+.calcback{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 14px/1 inherit;padding:9px 12px;border-radius:999px;cursor:pointer}
+#calclist{padding-bottom:120px}
+.ccat{margin:18px 0 4px;font:700 16px "Noto Serif",Georgia,serif;color:var(--green)}
+html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{font-family:inherit}
+.crow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.crow .cn{flex:1}
+.crow .cn b{font-size:15px;line-height:1.3}
+.crow .cp{font-weight:600;white-space:nowrap}
+.crow .addbox{margin:0;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.addr{width:40px;height:40px;border-radius:50%;border:0;background:var(--green);color:#fff;font:600 22px/1 inherit;cursor:pointer}
+@media (prefers-color-scheme:dark){.addr{color:#10241B}}
+.calc .addb.sm{padding:6px 9px;font-size:12px}
+.cartbar{z-index:26}
 </style>
 </head>
 <body>
@@ -207,6 +232,7 @@ body.waiter header.top,body.waiter .bar,body.waiter main,body.waiter footer,body
       <span id="langname"></span>
     </button>
   </div>
+  <div class="wrap"><button class="calcbtn" id="calcbtn" type="button"></button></div>
 </header>
 
 <div class="bar">
@@ -239,7 +265,7 @@ body.waiter header.top,body.waiter .bar,body.waiter main,body.waiter footer,body
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 14 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 16 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -263,6 +289,14 @@ body.waiter header.top,body.waiter .bar,body.waiter main,body.waiter footer,body
     <div class="chatq" id="chatq"></div>
   </div>
 </div>
+<section class="calc" id="calc" aria-labelledby="calctitle">
+  <div class="calctop"><div class="wrap">
+    <div class="calchead"><button class="calcback" id="calcback" type="button"></button><h2 id="calctitle"></h2></div>
+    <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="cq" type="search" autocomplete="off" enterkeyhint="search"></label>
+    <nav class="cats" id="ccats"></nav>
+  </div></div>
+  <div class="wrap" id="calclist"></div>
+</section>
 <button class="cartbar hide" id="cartbar" type="button"></button>
 <div class="cart" id="cart" role="dialog" aria-modal="true"><div class="csheet"><button class="cx" id="cartx" type="button" aria-label="×">×</button><div id="cartbody"></div></div></div>
 <div id="waiter" class="hide"></div>
@@ -431,6 +465,8 @@ function render(){
   document.documentElement.dir=lang==="ar"?"rtl":"ltr";
   $("langname").textContent=LANGS[LI[lang]][1];
   $("t-sub").textContent=L(UI.sub);
+  if(typeof CHAT!=="undefined")$("calcbtn").textContent="🧾 "+L(CHAT.calc);
+  if(typeof calcRender==="function"&&$("calc").classList.contains("open"))calcRender();
   $("q").placeholder=L(UI.search);
   $("empty").textContent=L(UI.empty);
   $("t-allergy").textContent="⚠️ "+L(UI.allergy);
@@ -450,7 +486,7 @@ function render(){
       const notes=itemDesc(it);
       html+=`<article class="item" data-id="${it.id}">${imgTag(it)}<div class="body">${headHTML(it)}`;
       if(notes.length)html+=`<p class="sub">${notes.map(esc).join(" · ")}</p>`;
-      html+=tags(it)+`<div class="addbox"></div></div></article>`;
+      html+=tags(it)+`</div></article>`;
     }
     html+=`</div></section>`;
   }
@@ -551,6 +587,7 @@ const CHAT={
  story:["Hikâyemizin devamı","Read our full story","اقرأ قصتنا كاملة","Вся наша история","Lea nuestra historia","Lire notre histoire","阅读完整故事","Unsere ganze Geschichte","私たちの物語を読む","우리 이야기 더 보기"],
  insta:["Bizi beğendiyseniz Instagram'da da takip edin, sizi orada da görmekten mutluluk duyarız! 😊","If you're enjoying your visit, follow us on Instagram. We'd love to see you there too! 😊","إذا أعجبتك زيارتك، تابعنا على إنستغرام. يسعدنا أن نراك هناك أيضًا! 😊","Если вам у нас нравится, подписывайтесь на наш Instagram — будем рады видеть вас и там! 😊","Si está disfrutando de su visita, síganos en Instagram. ¡Nos encantará verle también allí! 😊","Si vous appréciez votre visite, suivez-nous sur Instagram. Au plaisir de vous y retrouver ! 😊","如果您喜欢这里，欢迎在 Instagram 上关注我们，期待在那里与您相见！😊","Wenn es Ihnen bei uns gefällt, folgen Sie uns auf Instagram. Wir freuen uns, Sie auch dort zu sehen! 😊","お気に召しましたら、ぜひInstagramもフォローしてください。そちらでもお会いできるのを楽しみにしています！😊","마음에 드셨다면 인스타그램도 팔로우해 주세요. 그곳에서도 뵙길 바랍니다! 😊"],
  follow:["Instagram'da takip et","Follow on Instagram","تابعنا على إنستغرام","Подписаться в Instagram","Seguir en Instagram","Suivre sur Instagram","在 Instagram 关注","Auf Instagram folgen","Instagramでフォロー","인스타그램 팔로우"],
+ calc:["Hesabımı hesapla", "Calculate my bill", "احسب فاتورتي", "Посчитать мой счёт", "Calcular mi cuenta", "Calculer mon addition", "计算我的账单", "Meine Rechnung berechnen", "お会計を計算する", "내 계산서 계산하기"],
  maps:["Haritada aç","Open in Maps","افتح في الخريطة","Открыть на карте","Abrir en el mapa","Ouvrir dans Plans","在地图中打开","In Karte öffnen","地図で開く","지도에서 열기"],
  q:[
   {id:"today",dishes:"TODAY",
@@ -577,6 +614,9 @@ const CHAT={
   {id:"togo",act:"togo",
    q:["Paket alabilir miyim?","Can I take something away?","هل يمكنني أخذ طلب سفري؟","Можно взять с собой?","¿Puedo pedir para llevar?","Puis-je emporter quelque chose ?","可以外带吗？","Kann ich etwas mitnehmen?","持ち帰りはできますか？","포장할 수 있나요?"],
    a:["Elbette! Tatlılarımızı kiloyla, koyun yoğurdumuzu çömlekte ve ev yapımı reçellerimizi kavanozda paket alabilirsiniz. Dondurmamız da uygun paketlerle saatlerce yolda erimeden götürülebilir. Üsküdar'dan tatlı bir hatıra olur.", "Of course! You can take our desserts by the kilo, sheep's milk yoghurt in a clay pot, and our homemade jams. With the right packaging, our ice cream can travel for hours without melting. A sweet souvenir from Üsküdar.", "بالتأكيد! يمكنك أخذ حلوياتنا بالكيلو، ولبن الغنم في وعاء فخاري، ومربياتنا المنزلية. وبفضل التغليف المناسب يمكن حمل الآيس كريم لساعات دون أن يذوب. هدية حلوة من أسكودار.", "Конечно! Десерты можно взять на вес, овечий йогурт — в глиняном горшке, а также наше домашнее варенье. В подходящей упаковке наше мороженое часами не тает в дороге. Сладкий сувенир из Ускюдара.", "¡Por supuesto! Puede llevarse nuestros postres por kilo, yogur de oveja en olla de barro y nuestras mermeladas caseras. Con el embalaje adecuado, nuestro helado aguanta horas de viaje sin derretirse. Un dulce recuerdo de Üsküdar.", "Bien sûr ! Vous pouvez emporter nos desserts au kilo, du yaourt de brebis en pot de terre et nos confitures maison. Grâce à un emballage adapté, notre glace peut voyager des heures sans fondre. Un doux souvenir d'Üsküdar.", "当然可以！甜点可按公斤外带，还有陶罐装绵羊奶酸奶和自制果酱。我们的冰淇淋采用专门包装，路上几个小时都不会融化。是来自于斯屈达尔的甜蜜纪念品。", "Natürlich! Unsere Desserts gibt es pro Kilo, Schafsmilchjoghurt im Tontopf und hausgemachte Konfitüren zum Mitnehmen. Mit der passenden Verpackung übersteht unser Eis stundenlange Fahrten, ohne zu schmelzen. Ein süßes Souvenir aus Üsküdar.", "もちろんです！デザートはキロ単位で、羊乳ヨーグルトは土鍋入りで、自家製ジャムもお持ち帰りいただけます。アイスクリームも専用の梱包なら、何時間移動しても溶けません。ユスキュダルの甘いお土産にどうぞ。", "물론이죠! 디저트는 킬로 단위로, 양젖 요구르트는 토기에 담아, 수제 잼도 포장해 가실 수 있어요. 아이스크림도 알맞게 포장하면 몇 시간을 이동해도 녹지 않아요. 위스퀴다르의 달콤한 기념품이 될 거예요."]},
+  {id:"calc",act:"calc",
+   q:["Hesabımı nasıl hesaplarım?", "How can I work out my bill?", "كيف أحسب فاتورتي؟", "Как посчитать мой счёт?", "¿Cómo calculo mi cuenta?", "Comment calculer mon addition ?", "怎么计算我的账单？", "Wie berechne ich meine Rechnung?", "お会計はどう計算しますか？", "계산서는 어떻게 계산하나요?"],
+   a:["Çok kolay! Üstteki “🧾 {calc}” bölümünü açın, yediğiniz yemekleri “+” ile ekleyin; bazı yemeklerde az porsiyon ya da tek adet de seçebilirsiniz. Altta “{my}” çubuğu toplamı gösterir. Bitince “{show}” düğmesine basın; garsonunuz kodu okutup kontrol eder ve onaylar. Onaylanan hesabı telefonunuza kaydedebilirsiniz.", "It's easy! Open “🧾 {calc}” at the top and add the dishes you had with “+”; for some dishes you can also choose a half portion or a single piece. The “{my}” bar at the bottom shows your total. When you're done, tap “{show}”: your waiter scans the code, checks it and confirms. You can then save the confirmed bill on your phone in your own language.", "الأمر سهل! افتح «🧾 {calc}» في الأعلى وأضف الأطباق التي تناولتها بزر «+»، ويمكنك في بعض الأطباق اختيار نصف حصة أو قطعة واحدة. يُظهر شريط «{my}» في الأسفل المجموع. عند الانتهاء اضغط «{show}»، فيمسح النادل الرمز ويتحقق منه ويؤكده. بعدها يمكنك حفظ الفاتورة المؤكدة على هاتفك بلغتك.", "Это просто! Откройте «🧾 {calc}» вверху и добавьте блюда, которые вы заказали, кнопкой «+»; для некоторых блюд можно выбрать полпорции или 1 шт. Панель «{my}» внизу показывает итог. Когда закончите, нажмите «{show}»: официант отсканирует код, проверит и подтвердит. Подтверждённый счёт можно сохранить в телефоне на своём языке.", "¡Es fácil! Abra «🧾 {calc}» arriba y añada con «+» los platos que ha tomado; en algunos también puede elegir media ración o una unidad. La barra «{my}» de abajo muestra el total. Cuando termine, toque «{show}»: su camarero escaneará el código, lo revisará y lo confirmará. Después podrá guardar la cuenta confirmada en su teléfono, en su idioma.", "C'est simple ! Ouvrez « 🧾 {calc} » en haut et ajoutez avec « + » les plats que vous avez pris ; pour certains, vous pouvez aussi choisir une demi-portion ou une pièce. La barre « {my} » en bas affiche le total. Quand vous avez fini, touchez « {show} » : votre serveur scanne le code, vérifie et confirme. Vous pourrez ensuite enregistrer l'addition confirmée sur votre téléphone, dans votre langue.", "很简单！打开顶部的“🧾 {calc}”，用“+”添加您点过的菜品；部分菜品还可以选择半份或单个。底部的“{my}”栏会显示合计。完成后点击“{show}”，服务员会扫描二维码、核对并确认。之后您可以用自己的语言把确认后的账单保存到手机上。", "Ganz einfach! Öffnen Sie oben „🧾 {calc}“ und fügen Sie Ihre Gerichte mit „+“ hinzu; bei manchen können Sie auch eine halbe Portion oder ein Stück wählen. Die Leiste „{my}“ unten zeigt die Summe. Wenn Sie fertig sind, tippen Sie auf „{show}“: Ihr Kellner scannt den Code, prüft ihn und bestätigt. Danach können Sie die bestätigte Rechnung in Ihrer Sprache auf dem Handy speichern.", "簡単です！上の「🧾 {calc}」を開き、召し上がった料理を「+」で追加してください。料理によってはハーフサイズや1個単位も選べます。画面下の「{my}」バーに合計が表示されます。終わったら「{show}」をタップしてください。係員がコードを読み取り、確認して承認します。承認されたお会計は、ご自分の言語でスマートフォンに保存できます。", "간단해요! 위쪽의 '🧾 {calc}'을 열고 드신 요리를 '+'로 추가하세요. 일부 요리는 하프 사이즈나 1개 단위로도 고를 수 있어요. 아래 '{my}' 바에 합계가 표시됩니다. 다 고르셨으면 '{show}'를 누르세요. 직원이 코드를 스캔해 확인하고 승인합니다. 승인된 계산서는 내 언어로 휴대폰에 저장할 수 있어요."]},
   {id:"hours",
    q:["Çalışma saatleriniz nedir?", "What are your opening hours?", "ما مواعيد العمل؟", "Какие у вас часы работы?", "¿Cuál es su horario?", "Quels sont vos horaires ?", "营业时间是几点？", "Wann haben Sie geöffnet?", "営業時間は？", "영업시간이 어떻게 되나요?"]}
  ]
@@ -594,7 +634,7 @@ function jumpTo(el){
 }
 function findByName(n){for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
 function goItem(it){
-  chefClose();chatClose();fsel=null;$("q").value="";
+  chefClose();chatClose();calcClose();fsel=null;$("q").value="";
   document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
   jumpTo(document.querySelector(`.item[data-id="${it.id}"]`));
 }
@@ -612,7 +652,7 @@ function chatChoices(){
 function chatAnswer(q){
   let html="";
   if(q.id==="hours"){html=`<p>${esc(CL(UI.hours))}</p>`}
-  else html=CL(q.a).split("\n\n").map(t=>`<p>${esc(t)}</p>`).join("");
+  else html=CL(q.a).replace(/\{add\}/g,CL(CART_UI.add)).replace(/\{my\}/g,CL(CART_UI.my)).replace(/\{show\}/g,CL(CART_UI.show)).replace(/\{calc\}/g,CL(CHAT.calc)).split("\n\n").map(t=>`<p>${esc(t)}</p>`).join("");
   const dishes=q.dishes==="TODAY"?[chefItem()]:(q.dishes||[]).map(findByName);
   const ds=dishes.filter(Boolean);
   if(q.dishes==="TODAY"&&ds[0]){const it=ds[0];
@@ -620,6 +660,7 @@ function chatAnswer(q){
   else if(ds.length)html+=`<div class="dchips">${ds.map(it=>`<button type="button" data-go="${it.id}">${thumb(it)}<span>${esc(lang==="tr"?it.tr:it.t[LI[lang]-1])}</span></button>`).join("")}</div>`;
   if(q.act==="veg")html+=`<button class="cact" type="button" data-act="veg">${DIET.v[0]} ${esc(Lt(DIET.v))}</button>`;
   if(q.act==="togo")html+=`<button class="cact" type="button" data-act="togo">${esc(CL(CHEF_UI.show))}</button>`;
+  if(q.act==="calc")html+=`<button class="cact" type="button" data-act="calc">🧾 ${esc(CL(CHAT.calc))}</button>`;
   if(q.act==="story")html+=`<a class="cact" href="https://www.kanaatlokantasi.com.tr/hakkimizda" target="_blank" rel="noopener">📖 ${esc(CL(CHAT.story))}</a>`;
   if(q.act==="map")html+=`<a class="cact" href="${MAP_URL}" target="_blank" rel="noopener">📍 ${esc(CL(CHAT.maps))}</a>`;
   return html;
@@ -645,6 +686,7 @@ $("chat").addEventListener("click",e=>{
   const g=e.target.closest("[data-go]");if(g)return goItem(BYID[g.dataset.go]);
   const a=e.target.closest("[data-act]");
   if(a){chatClose();$("q").value="";
+    if(a.dataset.act==="calc"){calcOpen()}
     if(a.dataset.act==="veg"){fsel="v";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f==="v"));filter();scrollTo({top:0,behavior:"smooth"})}
     if(a.dataset.act==="togo"){fsel=null;document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();requestAnimationFrame(()=>scrollTo({top:document.getElementById("c-togo").getBoundingClientRect().top+scrollY-170}))}}
 });
@@ -742,7 +784,7 @@ const cartTotal=(lines=cartLines())=>lines.reduce((a,l)=>a+l.q*(lp(l)||0),0);
 const nameIn=it=>lang==="tr"?it.tr:it.t[LI[lang]-1];
 function ctl1(it,v){
   const k=keyOf(it.c,v),q=CART[k]||0,lbl=v?vLabel(v)+" · "+price(vPrice(it,v)):CL(CART_UI.add);
-  if(!q)return `<button class="addb${v?" sm":""}" type="button" data-inc="${k}">+ ${esc(lbl)}</button>`;
+  if(!q)return v?`<button class="addb sm" type="button" data-inc="${k}">+ ${esc(lbl)}</button>`:`<button class="addr" type="button" data-inc="${k}" aria-label="${esc(lbl)}">+</button>`;
   return `<span class="stepw">${v?`<small>${esc(vLabel(v))}</small>`:""}<span class="step"><button type="button" data-dec="${k}" aria-label="−">−</button><b>${q}</b><button type="button" data-inc="${k}" aria-label="+">+</button></span></span>`;
 }
 function ctl(it){
@@ -750,7 +792,7 @@ function ctl(it){
   return ["","a","t"].filter(v=>vOk(it,v)).map(v=>ctl1(it,v)).join("");
 }
 function cartPaint(){
-  document.querySelectorAll(".item").forEach(el=>{const it=BYID[el.dataset.id];const box=el.querySelector(".addbox");if(box)box.innerHTML=ctl(it)});
+  document.querySelectorAll("#calclist .crow").forEach(el=>{const it=BYID[el.dataset.id];el.querySelector(".addbox").innerHTML=ctl(it)});
   const n=cartCount();
   $("cartbar").classList.toggle("hide",!n);document.body.classList.toggle("hascart",!!n);
   $("cartbar").innerHTML=`<span>🧾 ${esc(CL(CART_UI.my))} · ${n}</span><b dir="ltr">${price(cartTotal())}</b>`;
@@ -784,7 +826,7 @@ function cartQR(){
 }
 function cartOpen(){chatClose();chefClose();cartSheet();$("cart").classList.add("open")}
 function cartClose(){$("cart").classList.remove("open")}
-$("menu").addEventListener("click",e=>{const i=e.target.closest("[data-inc]"),d=e.target.closest("[data-dec]");if(i)cartInc(i.dataset.inc,1);if(d)cartInc(d.dataset.dec,-1)});
+
 $("cartbar").addEventListener("click",cartOpen);
 $("cart").addEventListener("click",e=>{
   if(e.target===e.currentTarget)return cartClose();
@@ -795,7 +837,32 @@ $("cart").addEventListener("click",e=>{
   if(e.target.closest("#cclear")){CART={};cartSave();cartPaint();cartClose()}
   if(e.target.closest("#cartx"))cartClose();
 });
-addEventListener("keydown",e=>{if(e.key==="Escape")cartClose()});
+addEventListener("keydown",e=>{if(e.key==="Escape"){if($("cart").classList.contains("open"))cartClose();else calcClose()}});
+
+
+// ---- "Hesabımı hesapla" bölümü ----
+function calcRender(){
+  $("calctitle").textContent="🧾 "+CL(CHAT.calc);
+  $("calcback").textContent=(lang==="ar"?"→ ":"← ")+CL(OK_UI.menu);
+  $("cq").placeholder=CL(UI.search);
+  let nav="",html="";
+  for(const c of MENU){const its=c.items.filter(it=>it.p!=null);if(!its.length)continue;
+    nav+=`<a href="#k-${c.id}" data-k="${c.id}">${esc(L(CAT[c.id]))}</a>`;
+    html+=`<div class="cgrp" id="k-${c.id}"><h3 class="ccat">${esc(L(CAT[c.id]))}</h3>`+its.map(it=>`<div class="crow" data-id="${it.id}"><div class="cn"><b>${esc(nameIn(it))}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox"></div></div>`).join("")+`</div>`}
+  $("ccats").innerHTML=nav;$("calclist").innerHTML=html;$("cq").value="";
+  cartPaint();
+}
+function calcFilter(){const q=norm($("cq").value.trim());
+  document.querySelectorAll("#calclist .cgrp").forEach(g=>{let n=0;g.querySelectorAll(".crow").forEach(r=>{const it=BYID[r.dataset.id];const ok=!q||norm(it.tr+" "+(lang==="tr"?"":it.t[LI[lang]-1])+" "+it.t[0]).includes(q);r.classList.toggle("hide",!ok);if(ok)n++});g.classList.toggle("hide",!n)})}
+function calcOpen(){chatClose();chefClose();cartClose();calcRender();$("calc").classList.add("open");document.body.classList.add("calcopen");$("calc").scrollTop=0}
+function calcClose(){$("calc").classList.remove("open");document.body.classList.remove("calcopen")}
+$("calcbtn").addEventListener("click",calcOpen);
+$("calcback").addEventListener("click",calcClose);
+$("cq").addEventListener("input",calcFilter);
+$("calc").addEventListener("click",e=>{
+  const i=e.target.closest("[data-inc]"),d=e.target.closest("[data-dec]");if(i)return cartInc(i.dataset.inc,1);if(d)return cartInc(d.dataset.dec,-1);
+  const a=e.target.closest("[data-k]");if(a){e.preventDefault();const t=document.getElementById("k-"+a.dataset.k);$("calc").scrollTo({top:t.offsetTop-$("calc").querySelector(".calctop").offsetHeight+4})}
+});
 
 // ---- Garson görünümü: misafirin QR'ı okutulunca (#g=...) Türkçe adisyon ----
 function waiterView(payload){
