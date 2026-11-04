@@ -159,7 +159,7 @@ html[lang=ar] .chead b,html[lang=zh] .chead b,html[lang=ja] .chead b,html[lang=k
     <p id="t-hours"></p>
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
-    <p class="ver" dir="ltr">Sürüm 4 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 5 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -425,7 +425,7 @@ const CHEF_UI={title:["Şefin Tavsiyesi","Chef's Recommendation","توصية ا�
  show:["Menüde göster","Show in menu","عرض في القائمة","Показать в меню","Ver en el menú","Voir dans le menu","在菜单中查看","Im Menü zeigen","メニューで見る","메뉴에서 보기"],
  close:["Kapat","Close","إغلاق","Закрыть","Cerrar","Fermer","关闭","Schließen","閉じる","닫기"]};
 // Pazar=0 … Cumartesi=6
-const CHEF_DAYS=["Ayva Tatlısı (Kaymaklı)","Hünkar Beğendi","Elbasan Tava","Kadınbudu Köfte","Etli Yaprak Sarma","Karnıyarık","Kuzu Kaburga Dolması"];
+const CHEF_DAYS=["Zeytinyağlı Enginar","Hünkar Beğendi","Elbasan Tava","Kadınbudu Köfte","Kuzu Haşlama","Tas Kebabı","Kuzu Kaburga Dolması"];
 const CL=a=>a[LI[lang]];
 function chefItem(){const n=CHEF_DAYS[new Date().getDay()];for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
 function chefOpen(){
