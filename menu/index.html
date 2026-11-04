@@ -113,6 +113,36 @@ html[lang=ar] .chead b,html[lang=zh] .chead b,html[lang=ja] .chead b,html[lang=k
 .cfab img{width:100%;height:100%;object-fit:cover;display:block}
 .item.flash{animation:flash 1.6s ease}
 @keyframes flash{0%,40%{box-shadow:0 0 0 3px var(--green)}100%{box-shadow:var(--shadow)}}
+
+.chat{position:fixed;inset:0;z-index:30;background:rgba(20,15,10,.55);display:none;align-items:flex-end;justify-content:center}
+.chat.open{display:flex;animation:fade .2s ease}
+.cwin{background:var(--bg);width:100%;max-width:520px;height:min(86vh,720px);border-radius:20px 20px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:pop .25s ease}
+@media (min-width:600px){.chat{align-items:center}.cwin{border-radius:20px}}
+.cwin .chead{position:relative;flex:none}
+.cwin .chead img{width:48px;height:48px;border-width:2px}
+.chatlog{flex:1;overflow-y:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:86%;padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.45}
+.msg p{margin:0}
+.msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-start-start-radius:4px}
+.msg.me{align-self:flex-end;background:var(--green);color:#fff;border-end-end-radius:4px}
+@media (prefers-color-scheme:dark){.msg.me{color:#10241B}}
+.dots{display:inline-flex;gap:4px;padding:4px 0}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.dcard{display:flex;gap:10px;align-items:center;width:100%;margin-top:10px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);text-align:start;font:inherit;cursor:pointer}
+.dcard img{width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none}
+.dcard span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dcard b{font:700 15px "Noto Serif",Georgia,serif}
+.dcard small{color:var(--muted);font-size:13px}
+.dcard em{font-style:normal;font-weight:600}
+.dchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.dchips button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:4px 10px 4px 4px;font:600 13px inherit;cursor:pointer}
+html[dir=rtl] .dchips button{padding:4px 4px 4px 10px}
+.dchips img{width:26px;height:26px;border-radius:50%;object-fit:cover}
+.cact{display:inline-block;margin-top:10px;border:0;border-radius:10px;background:var(--green-soft);color:var(--green);font:600 14px inherit;padding:9px 12px;text-decoration:none;cursor:pointer}
+.chatq{flex:none;display:flex;flex-direction:column;gap:6px;padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);max-height:32%;overflow-y:auto;background:var(--card)}
+.chatq button{border:1px solid var(--green);background:transparent;color:var(--green);border-radius:999px;padding:7px 13px;font:600 13.5px inherit;flex:none;text-align:start;cursor:pointer}
 </style>
 </head>
 <body>
@@ -159,7 +189,7 @@ html[lang=ar] .chead b,html[lang=zh] .chead b,html[lang=ja] .chead b,html[lang=k
     <p id="t-hours"></p>
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
-    <p class="ver" dir="ltr">Sürüm 5 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 6 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -175,6 +205,14 @@ html[lang=ar] .chead b,html[lang=zh] .chead b,html[lang=ja] .chead b,html[lang=k
   </div>
 </div>
 <button class="cfab" id="cfab" type="button"><img src="img/sef.jpg" alt=""></button>
+<div class="chat" id="chat" role="dialog" aria-modal="true" aria-labelledby="chattitle">
+  <div class="cwin">
+    <div class="chead"><img src="img/sef.jpg" alt=""><div><b id="chattitle"></b><small id="chatsub"></small></div>
+      <button class="cx" id="chatx" type="button" aria-label="×">×</button></div>
+    <div class="chatlog" id="chatlog" aria-live="polite"></div>
+    <div class="chatq" id="chatq"></div>
+  </div>
+</div>
 <div class="ov photo" id="photov" role="dialog" aria-modal="true">
   <figure><img id="pimg" alt=""><figcaption><b id="pname"></b><span id="pdesc"></span></figcaption></figure>
 </div>
@@ -431,7 +469,7 @@ function chefItem(){const n=CHEF_DAYS[new Date().getDay()];for(const c of MENU)f
 function chefOpen(){
   const it=chefItem();if(!it)return;
   $("ctoday").textContent=CL(CHEF_UI.today);$("ctitle").textContent=CL(CHEF_UI.title);
-  $("cx").setAttribute("aria-label",CL(CHEF_UI.close));$("cfab").setAttribute("aria-label",CL(CHEF_UI.title));
+  $("cx").setAttribute("aria-label",CL(CHEF_UI.close));
   const d=$("cdish");
   if(it.img){d.classList.remove("hide");d.dataset.r=REMOTE+"images/"+encodeURIComponent(it.img);d.onerror=()=>{if(d.dataset.r){d.src=d.dataset.r;d.dataset.r=""}else d.classList.add("hide")};d.src="img/"+it.loc}else d.classList.add("hide");
   const notes=itemDesc(it);
@@ -445,11 +483,108 @@ function chefOpen(){
 function chefClose(){$("chef").classList.remove("open")}
 $("cx").addEventListener("click",chefClose);
 $("chef").addEventListener("click",e=>{if(e.target===e.currentTarget)chefClose()});
-$("cfab").addEventListener("click",chefOpen);
+$("cfab").addEventListener("click",()=>chatOpen());
 addEventListener("keydown",e=>{if(e.key==="Escape")chefClose()});
+// ---- Şefe sorun (hazır soru-cevap) ----  dil sırası: tr,en,ar,ru,es,fr,zh,de,ja,ko
+const CHAT={
+ title:["Şefe Sorun","Ask the Chef","اسأل الشيف","Спросите шефа","Pregunte al chef","Demandez au chef","问问主厨","Fragen Sie den Küchenchef","シェフに質問","셰프에게 물어보세요"],
+ sub:["Bir soru seçin","Pick a question","اختر سؤالًا","Выберите вопрос","Elija una pregunta","Choisissez une question","请选择一个问题","Wählen Sie eine Frage","質問を選んでください","질문을 선택하세요"],
+ hello:["Hoş geldiniz! Ben mutfağın ustasıyım. Size nasıl yardımcı olabilirim?","Welcome! I'm the chef here. How can I help you?","أهلًا وسهلًا! أنا الشيف هنا. كيف يمكنني مساعدتك؟","Добро пожаловать! Я шеф-повар. Чем могу помочь?","¡Bienvenido! Soy el chef. ¿En qué puedo ayudarle?","Bienvenue ! Je suis le chef. Comment puis-je vous aider ?","欢迎光临！我是这里的主厨。有什么可以帮您？","Willkommen! Ich bin der Küchenchef. Wie kann ich helfen?","いらっしゃいませ！料理長です。何かお手伝いしましょうか？","어서 오세요! 저는 이곳 셰프입니다. 무엇을 도와드릴까요?"],
+ story:["Hikâyemizin devamı","Read our full story","اقرأ قصتنا كاملة","Вся наша история","Lea nuestra historia","Lire notre histoire","阅读完整故事","Unsere ganze Geschichte","私たちの物語を読む","우리 이야기 더 보기"],
+ maps:["Haritada aç","Open in Maps","افتح في الخريطة","Открыть на карте","Abrir en el mapa","Ouvrir dans Plans","在地图中打开","In Karte öffnen","地図で開く","지도에서 열기"],
+ q:[
+  {id:"today",dishes:"TODAY",
+   q:["Bugün ne önerirsiniz?","What do you recommend today?","ماذا تنصح اليوم؟","Что вы посоветуете сегодня?","¿Qué recomienda hoy?","Que recommandez-vous aujourd'hui ?","今天推荐什么？","Was empfehlen Sie heute?","今日のおすすめは？","오늘의 추천은 무엇인가요?"],
+   a:["Bugün sizin için bunu öneriyorum, eminim çok beğeneceksiniz:","Today I recommend this one. I'm sure you'll love it:","أنصحك اليوم بهذا الطبق، وأنا متأكد أنه سيعجبك:","Сегодня советую вот это блюдо, уверен, вам понравится:","Hoy le recomiendo este plato, seguro que le encantará:","Aujourd'hui je vous recommande ce plat, il va vous plaire :","今天我推荐这道菜，相信您一定会喜欢：","Heute empfehle ich dieses Gericht. Es wird Ihnen schmecken:","本日のおすすめはこちらです。きっと気に入っていただけます：","오늘은 이 요리를 추천합니다. 분명 마음에 드실 거예요:"]},
+  {id:"first",dishes:["Mercimek Çorbası","Kuru Fasulye","Pilav","Zeytinyağlı Yaprak Sarma","Ayva Tatlısı (Kaymaklı)"],
+   q:["İlk kez geliyorum, ne denemeliyim?","It's my first time here. What should I try?","هذه أول زيارة لي، ماذا أجرّب؟","Я здесь впервые. Что попробовать?","Es mi primera vez. ¿Qué debería probar?","C'est ma première visite. Que dois-je goûter ?","我第一次来，应该尝尝什么？","Ich bin zum ersten Mal hier. Was soll ich probieren?","初めて来ました。何を食べればいいですか？","처음 왔어요. 무엇을 먹어 볼까요?"],
+   a:["Klasik bir lokanta sofrası için önce mercimek çorbası, sonra pilavla kuru fasulye, yanına bir zeytinyağlı, tatlıda da kaymaklı ayva tatlısı. Görmek için yemeğe dokunun:","For a classic Turkish lokanta meal: start with lentil soup, then white beans with rice pilaf, add an olive oil dish, and finish with quince dessert with clotted cream. Tap a dish to see it:","لوجبة تقليدية في اللوكانتا: ابدأ بشوربة العدس، ثم الفاصولياء البيضاء مع الأرز، وأضف طبقًا بزيت الزيتون، واختم بحلوى السفرجل مع القشطة. اضغط على أي طبق لرؤيته:","Классический обед в локанте: суп из чечевицы, затем белая фасоль с рисом, блюдо на оливковом масле, а на десерт айва с каймаком. Нажмите на блюдо, чтобы посмотреть:","Para una comida clásica de lokanta: sopa de lentejas, luego alubias blancas con arroz, un plato en aceite de oliva y, de postre, membrillo con nata. Toque un plato para verlo:","Pour un repas classique de lokanta : soupe de lentilles, puis haricots blancs avec riz pilaf, un plat à l'huile d'olive, et en dessert le coing à la crème. Touchez un plat pour le voir :","经典土耳其小馆套餐：先来红扁豆汤，再点白芸豆配米饭，加一道橄榄油菜，最后来一份配凝脂奶油的榅桲甜点。点击菜名即可查看：","Für ein klassisches Lokanta-Essen: zuerst Linsensuppe, dann weiße Bohnen mit Reis, dazu ein Olivenölgericht und zum Dessert Quitte mit Rahm. Tippen Sie auf ein Gericht:","定番のロカンタ料理なら、まずレンズ豆のスープ、次に白いんげん豆の煮込みとピラフ、オリーブオイル料理を一品、デザートはクリーム添えのマルメロ。料理をタップしてご覧ください：","전형적인 로칸타 식사라면 렌틸콩 수프로 시작해 흰 강낭콩 스튜와 필라프, 올리브유 요리 하나, 디저트로 크림을 곁들인 모과 디저트를 드셔 보세요. 요리를 눌러 확인하세요:"]},
+  {id:"story",act:"story",
+   q:["Lokantanın hikâyesi nedir?","What is the story of this place?","ما قصة هذا المطعم؟","Какова история этого места?","¿Cuál es la historia de este lugar?","Quelle est l'histoire de cette maison ?","这家店有什么故事？","Was ist die Geschichte dieses Lokals?","このお店の歴史は？","이 식당의 이야기가 궁금해요"],
+   a:["Lokantamız 1933'te Üsküdar'da, sütlü tatlı ve dondurmacılıkta köklü bir geleneği olan Kargılı Ailesi tarafından kuruldu. Bugün hâlâ bir aile işletmesiyiz; mutfakta 40 yılı aşkın tecrübeli ustalarımız var. Her gün 100'den fazla çeşidi taze hazırlıyoruz. New York Times, Le Monde ve Lonely Planet'te yer aldık; Gault&Millau Türkiye Rehberi'nde 2025 ve 2026'da Geleneksel Mutfak ödülü aldık.","Our lokanta was founded in 1933 in Üsküdar by the Kargılı family, who come from a long tradition of milk desserts and ice cream. We're still a family business, and some of our cooks have more than 40 years of experience. Every day we prepare over 100 dishes fresh. We've been featured in the New York Times, Le Monde and Lonely Planet, and won the Traditional Cuisine award in the Gault&Millau Turkey Guide in 2025 and 2026.","تأسست اللوكانتا عام 1933 في أسكودار على يد عائلة كارغيلي، وهي عائلة عريقة في صناعة الحلويات بالحليب والآيس كريم. ما زلنا مشروعًا عائليًا، ولدى بعض طهاتنا خبرة تزيد على 40 عامًا. نحضّر كل يوم أكثر من 100 صنف طازج. ظهرنا في نيويورك تايمز ولوموند ولونلي بلانيت، وفزنا بجائزة المطبخ التقليدي في دليل غو إي ميّو تركيا عامي 2025 و2026.","Наша локанта была основана в 1933 году в Ускюдаре семьёй Каргылы, давно известной своими молочными десертами и мороженым. Мы по-прежнему семейное заведение, а у некоторых наших поваров более 40 лет опыта. Каждый день мы готовим свыше 100 блюд. О нас писали New York Times, Le Monde и Lonely Planet, а в 2025 и 2026 годах мы получили награду в категории «Традиционная кухня» гида Gault&Millau Турция.","Nuestra lokanta fue fundada en 1933 en Üsküdar por la familia Kargılı, con una larga tradición en postres lácteos y helados. Seguimos siendo un negocio familiar y algunos de nuestros cocineros tienen más de 40 años de experiencia. Cada día preparamos más de 100 platos frescos. Hemos aparecido en el New York Times, Le Monde y Lonely Planet, y ganamos el premio de Cocina Tradicional de la Guía Gault&Millau Turquía en 2025 y 2026.","Notre lokanta a été fondée en 1933 à Üsküdar par la famille Kargılı, issue d'une longue tradition de desserts lactés et de glaces. Nous sommes toujours une maison familiale, et certains de nos cuisiniers ont plus de 40 ans d'expérience. Chaque jour, nous préparons plus de 100 plats frais. Nous avons été cités par le New York Times, Le Monde et le Lonely Planet, et récompensés dans la catégorie Cuisine traditionnelle du guide Gault&Millau Turquie en 2025 et 2026.","本店于1933年由卡尔格勒家族在于斯屈达尔创立，这个家族在奶制甜点和冰淇淋方面有着悠久传统。我们至今仍是家族经营，部分厨师拥有40多年经验。每天新鲜制作100多种菜品。我们曾被《纽约时报》、《世界报》和《孤独星球》介绍，并于2025年和2026年获得高特米鲁土耳其指南传统美食奖。","Unsere Lokanta wurde 1933 in Üsküdar von der Familie Kargılı gegründet, die eine lange Tradition in Milchdesserts und Eis hat. Wir sind bis heute ein Familienbetrieb, und manche unserer Köche haben über 40 Jahre Erfahrung. Täglich bereiten wir über 100 Gerichte frisch zu. Wir wurden in der New York Times, Le Monde und Lonely Planet vorgestellt und erhielten 2025 und 2026 die Auszeichnung für traditionelle Küche im Gault&Millau Türkei.","当店は1933年、ミルクデザートとアイスクリームの長い伝統を持つカルギル家によってユスキュダルで創業しました。今も家族経営で、40年以上の経験を持つ料理人もいます。毎日100種類以上の料理を手作りしています。ニューヨーク・タイムズ、ル・モンド、ロンリープラネットで紹介され、2025年と2026年にはゴ・エ・ミヨ トルコ版で伝統料理部門の賞を受賞しました。","저희 로칸타는 1933년 위스퀴다르에서 우유 디저트와 아이스크림의 오랜 전통을 지닌 카르기를르 가문이 세웠습니다. 지금도 가족이 운영하며, 40년 넘는 경력의 요리사도 있습니다. 매일 100가지가 넘는 요리를 신선하게 준비합니다. 뉴욕 타임스, 르 몽드, 론리 플래닛에 소개되었고, 2025년과 2026년 고 에 미요 터키 가이드에서 전통 요리 부문 상을 받았습니다."]},
+  {id:"veg",act:"veg",
+   q:["Vejetaryen ne var?","What can vegetarians eat?","ما الأطباق النباتية؟","Что есть для вегетарианцев?","¿Qué hay para vegetarianos?","Qu'y a-t-il pour les végétariens ?","有什么素食？","Was gibt es für Vegetarier?","ベジタリアン向けの料理は？","채식 메뉴가 있나요?"],
+   a:["Zeytinyağlılarımızın çoğu vegan, salatalar ve kompostolar da öyle. Aşağıdaki düğmeyle menüde sadece vejetaryen yemekleri görebilirsiniz. Not: sıcak sebze yemeklerimizin çoğu etle pişer.","Most of our olive oil dishes are vegan, and so are the salads and compotes. Use the button below to see only vegetarian dishes. Note: most of our hot vegetable dishes are cooked with meat.","معظم أطباقنا بزيت الزيتون نباتية صرفة، وكذلك السلطات والكومبوت. استخدم الزر أدناه لعرض الأطباق النباتية فقط. ملاحظة: معظم أطباق الخضار الساخنة تُطبخ مع اللحم.","Большинство наших блюд на оливковом масле веганские, как и салаты и компоты. Нажмите кнопку ниже, чтобы увидеть только вегетарианские блюда. Обратите внимание: большинство горячих овощных блюд готовится с мясом.","La mayoría de nuestros platos en aceite de oliva son veganos, igual que las ensaladas y compotas. Use el botón de abajo para ver solo platos vegetarianos. Nota: la mayoría de los platos calientes de verduras se cocinan con carne.","La plupart de nos plats à l'huile d'olive sont végans, tout comme les salades et compotes. Utilisez le bouton ci-dessous pour n'afficher que les plats végétariens. Attention : la plupart des plats chauds de légumes sont cuisinés avec de la viande.","我们大部分橄榄油菜都是纯素的，沙拉和糖水水果也是。点击下方按钮即可只看素食菜品。注意：大部分热蔬菜菜肴是与肉同煮的。","Die meisten unserer Olivenölgerichte sind vegan, ebenso Salate und Kompotte. Mit der Taste unten sehen Sie nur vegetarische Gerichte. Hinweis: Die meisten warmen Gemüsegerichte werden mit Fleisch gekocht.","オリーブオイル料理のほとんどはヴィーガンで、サラダやコンポートも同様です。下のボタンでベジタリアン料理だけを表示できます。なお、温かい野菜料理の多くは肉と一緒に煮込んでいます。","올리브유 요리는 대부분 비건이고, 샐러드와 콤포트도 마찬가지입니다. 아래 버튼을 누르면 채식 요리만 볼 수 있어요. 참고: 따뜻한 채소 요리는 대부분 고기와 함께 조리합니다."]},
+  {id:"olive",dishes:["Zeytinyağlı Yaprak Sarma","İmambayıldı","Zeytinyağlı Enginar"],
+   q:["Zeytinyağlı nedir?","What are “olive oil dishes”?","ما هي أطباق زيت الزيتون؟","Что такое блюда на оливковом масле?","¿Qué son los platos en aceite de oliva?","Que sont les plats à l'huile d'olive ?","什么是橄榄油菜？","Was sind Olivenölgerichte?","オリーブオイル料理とは？","올리브유 요리가 뭔가요?"],
+   a:["Sebzelerin zeytinyağıyla ağır ağır pişirilip soğuk servis edildiği, İstanbul mutfağının klasikleridir. Çoğu vegandır. Yaprak sarma veya imambayıldı ile başlayabilirsiniz:","Vegetables slowly cooked in olive oil and served cold, a classic of Istanbul cuisine. Most are vegan. Start with stuffed vine leaves or İmambayıldı:","خضار مطبوخة ببطء بزيت الزيتون وتُقدَّم باردة، وهي من كلاسيكيات مطبخ إسطنبول. معظمها نباتي صرف. ابدأ بورق العنب المحشي أو إمام بايلدي:","Овощи, томлёные в оливковом масле и подаваемые холодными, — классика стамбульской кухни. Большинство из них веганские. Начните с долмы из виноградных листьев или имам баялды:","Verduras cocinadas lentamente en aceite de oliva y servidas frías: un clásico de la cocina de Estambul. La mayoría son veganas. Empiece por las hojas de parra rellenas o el İmambayıldı:","Des légumes mijotés à l'huile d'olive et servis froids, un classique de la cuisine stambouliote. La plupart sont végans. Commencez par les feuilles de vigne farcies ou l'İmambayıldı :","用橄榄油慢煮、冷食的蔬菜，是伊斯坦布尔菜的经典。大多数是纯素的。可以先尝尝葡萄叶包饭或橄榄油茄子：","Gemüse, langsam in Olivenöl gegart und kalt serviert – ein Klassiker der Istanbuler Küche. Die meisten sind vegan. Probieren Sie gefüllte Weinblätter oder İmambayıldı:","野菜をオリーブオイルでじっくり煮て冷やして出す、イスタンブール料理の定番です。ほとんどがヴィーガンです。まずはぶどうの葉のご飯包みやイマム・バユルドゥをどうぞ：","채소를 올리브유에 천천히 익혀 차갑게 내는 이스탄불 요리의 고전입니다. 대부분 비건이에요. 포도잎 쌈이나 이맘 바일드부터 드셔 보세요:"]},
+  {id:"dessert",dishes:["Ayva Tatlısı (Kaymaklı)","Sütlaç","Ekmek Kadayıfı (Kaymaklı)","Kazandibi"],
+   q:["Tatlı olarak ne önerirsiniz?","Which dessert do you recommend?","أي حلوى تنصح بها؟","Какой десерт посоветуете?","¿Qué postre recomienda?","Quel dessert recommandez-vous ?","推荐什么甜点？","Welches Dessert empfehlen Sie?","おすすめのデザートは？","추천 디저트는요?"],
+   a:["Kaymaklı ayva tatlımız çok sevilir. Hafif bir şey isterseniz sütlaç, şerbetli isterseniz ekmek kadayıfı. Merak ediyorsanız kazandibini deneyin; içinde tavuk göğsü var ama tadı tatlıdır!","Our quince dessert with clotted cream is a favourite. For something light, rice pudding; for something syrupy, ekmek kadayıfı. If you're curious, try kazandibi: it's made with chicken breast, yet it tastes sweet!","حلوى السفرجل مع القشطة هي المفضلة لدى ضيوفنا. للخفيف: الأرز بالحليب، ولمحبي القطر: إكمك قطايف. وإن كنت تحب التجربة فجرّب قازان ديبي، فهي مصنوعة بصدر الدجاج لكن طعمها حلو!","Айва с каймаком — наш любимый десерт. Если хочется лёгкого — рисовый пудинг, если сиропного — экмек кадайыф. А любопытным советую казандиби: он готовится с куриной грудкой, но на вкус сладкий!","Nuestro membrillo con nata es el favorito. Si quiere algo ligero, arroz con leche; si le gusta el almíbar, ekmek kadayıfı. Si tiene curiosidad, pruebe el kazandibi: está hecho con pechuga de pollo, ¡pero sabe dulce!","Notre coing à la crème est un grand favori. Pour plus léger, le riz au lait ; pour un dessert au sirop, l'ekmek kadayıfı. Si vous êtes curieux, goûtez le kazandibi : il est préparé avec du blanc de poulet, mais il est sucré !","配凝脂奶油的榅桲甜点最受欢迎。想吃清淡的，可以点米布丁；喜欢糖浆类的，可以点糖浆面包甜点。如果您好奇，试试焦底牛奶布丁——它用鸡胸肉制作，但味道是甜的！","Unsere Quitte mit Rahm ist ein Favorit. Leichter: Milchreis; mit Sirup: Ekmek Kadayıfı. Wenn Sie neugierig sind, probieren Sie Kazandibi – mit Hähnchenbrust zubereitet und trotzdem süß!","クリーム添えのマルメロが一番人気です。軽めならライスプディング、シロップ系ならエキメッキ・カダユフ。興味があればカザンディビをどうぞ。鶏むね肉入りですが、甘いデザートです！","크림을 곁들인 모과 디저트가 가장 인기예요. 가볍게 드시려면 쌀 푸딩, 시럽 디저트를 원하시면 에크멕 카다이프. 궁금하시다면 카잔디비를 드셔 보세요. 닭가슴살로 만들지만 맛은 달콤해요!"]},
+  {id:"allergy",
+   q:["Alerjim var, ne yapmalıyım?","I have an allergy. What should I do?","لديّ حساسية، ماذا أفعل؟","У меня аллергия. Что делать?","Tengo una alergia. ¿Qué hago?","J'ai une allergie. Que faire ?","我有过敏，该怎么办？","Ich habe eine Allergie. Was soll ich tun?","アレルギーがあります。どうすればいいですか？","알레르기가 있어요. 어떻게 해야 하나요?"],
+   a:["Lütfen sipariş vermeden önce garsonumuza söyleyin, mutfağa iletir. Her yemeğin altındaki turuncu etiketler alerjenleri gösterir: gluten, süt, yumurta, kuruyemiş, kereviz ve balık. Etiketler yol göstericidir, kesin bilgi için garsonumuza danışın.","Please tell your waiter before ordering; they will let the kitchen know. The orange labels under each dish show allergens: gluten, milk, egg, nuts, celery and fish. The labels are a guide, so please check with your waiter to be sure.","يرجى إبلاغ النادل قبل الطلب، وسيُعلم المطبخ. تشير الملصقات البرتقالية تحت كل طبق إلى مسببات الحساسية: الغلوتين، الحليب، البيض، المكسرات، الكرفس والسمك. هذه الملصقات للإرشاد فقط، فيُرجى التأكد من النادل.","Пожалуйста, сообщите официанту перед заказом — он передаст на кухню. Оранжевые метки под каждым блюдом показывают аллергены: глютен, молоко, яйцо, орехи, сельдерей и рыба. Метки носят справочный характер, поэтому уточните у официанта.","Por favor, avise a su camarero antes de pedir; él informará a la cocina. Las etiquetas naranjas bajo cada plato indican alérgenos: gluten, leche, huevo, frutos secos, apio y pescado. Son orientativas; confírmelo con su camarero.","Merci de prévenir votre serveur avant de commander, il informera la cuisine. Les étiquettes orange sous chaque plat indiquent les allergènes : gluten, lait, œuf, fruits à coque, céleri et poisson. Elles sont indicatives ; vérifiez auprès de votre serveur.","请在点餐前告诉服务员，他会转告厨房。每道菜下方的橙色标签标示过敏原：麸质、奶、蛋、坚果、芹菜和鱼。标签仅供参考，请向服务员确认。","Bitte sagen Sie es vor der Bestellung Ihrem Kellner – er informiert die Küche. Die orangefarbenen Hinweise unter jedem Gericht zeigen Allergene: Gluten, Milch, Ei, Schalenfrüchte, Sellerie und Fisch. Sie dienen nur zur Orientierung; bitte fragen Sie beim Kellner nach.","ご注文の前に係員にお知らせください。厨房に伝えます。各料理の下のオレンジ色の表示はアレルゲン（グルテン、乳、卵、ナッツ、セロリ、魚）です。表示は目安ですので、必ず係員にご確認ください。","주문 전에 직원에게 알려 주세요. 주방에 전달해 드립니다. 각 요리 아래 주황색 표시는 알레르기 유발 성분(글루텐, 우유, 달걀, 견과류, 셀러리, 생선)을 나타냅니다. 표시는 참고용이니 직원에게 꼭 확인해 주세요."]},
+  {id:"togo",act:"togo",
+   q:["Paket alabilir miyim?","Can I take something away?","هل يمكنني أخذ طلب سفري؟","Можно взять с собой?","¿Puedo pedir para llevar?","Puis-je emporter quelque chose ?","可以外带吗？","Kann ich etwas mitnehmen?","持ち帰りはできますか？","포장할 수 있나요?"],
+   a:["Elbette! Tatlılarımızı kiloyla, koyun yoğurdumuzu çömlekte ve ev yapımı reçellerimizi kavanozda paket alabilirsiniz. İstanbul'dan tatlı bir hatıra olur.","Of course! You can take our desserts by the kilo, sheep's milk yoghurt in a clay pot, and our homemade jams. A sweet souvenir from Istanbul.","بالتأكيد! يمكنك أخذ حلوياتنا بالكيلو، ولبن الغنم في وعاء فخاري، ومربياتنا المنزلية. هدية حلوة من إسطنبول.","Конечно! Десерты можно взять на вес, овечий йогурт — в глиняном горшке, а также наше домашнее варенье. Сладкий сувенир из Стамбула.","¡Por supuesto! Puede llevarse nuestros postres por kilo, yogur de oveja en olla de barro y nuestras mermeladas caseras. Un dulce recuerdo de Estambul.","Bien sûr ! Vous pouvez emporter nos desserts au kilo, du yaourt de brebis en pot de terre et nos confitures maison. Un doux souvenir d'Istanbul.","当然可以！甜点可按公斤外带，还有陶罐装绵羊奶酸奶和自制果酱。是来自伊斯坦布尔的甜蜜纪念品。","Natürlich! Unsere Desserts gibt es pro Kilo, Schafsmilchjoghurt im Tontopf und hausgemachte Konfitüren zum Mitnehmen. Ein süßes Souvenir aus Istanbul.","もちろんです！デザートはキロ単位で、羊乳ヨーグルトは土鍋入りで、自家製ジャムもお持ち帰りいただけます。イスタンブールの甘いお土産にどうぞ。","물론이죠! 디저트는 킬로 단위로, 양젖 요구르트는 토기에 담아, 수제 잼도 포장해 가실 수 있어요. 이스탄불의 달콤한 기념품이 될 거예요."]},
+  {id:"hours",act:"map",
+   q:["Çalışma saatleriniz ve adresiniz?","Opening hours and address?","ما مواعيد العمل والعنوان؟","Часы работы и адрес?","¿Horario y dirección?","Horaires et adresse ?","营业时间和地址？","Öffnungszeiten und Adresse?","営業時間と住所は？","영업시간과 주소는요?"]}
+ ]
+};
+const MAP_URL="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul";
+const ADDR="Selmanipak Cad. No:9, Üsküdar, İstanbul";
+function findByName(n){for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
+function goItem(it){
+  chefClose();chatClose();fsel=null;$("q").value="";
+  document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
+  const el=document.querySelector(`.item[data-id="${it.id}"]`);
+  if(el){el.scrollIntoView({block:"center",behavior:"smooth"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")}
+}
+function thumb(it){return it.img?`<img src="img/${esc(it.loc)}" data-r="${esc(REMOTE+"images/"+encodeURIComponent(it.img))}" onerror="if(this.dataset.r){this.src=this.dataset.r;this.dataset.r=''}else{this.remove()}" alt="">`:""}
+let asked=new Set();
+function chatMsg(html,me){
+  const d=document.createElement("div");d.className="msg "+(me?"me":"bot");d.innerHTML=html;
+  $("chatlog").appendChild(d);d.scrollIntoView({block:"end",behavior:"smooth"});return d;
+}
+function chatChoices(){
+  const left=CHAT.q.filter(q=>!asked.has(q.id));
+  const list=left.length?left:CHAT.q;
+  $("chatq").innerHTML=list.map(q=>`<button type="button" data-q="${q.id}">${esc(CL(q.q))}</button>`).join("");
+}
+function chatAnswer(q){
+  let html="";
+  if(q.id==="hours"){html=`<p>${esc(CL(UI.hours))}.<br>${esc(ADDR)}</p>`}
+  else html=`<p>${esc(CL(q.a))}</p>`;
+  const dishes=q.dishes==="TODAY"?[chefItem()]:(q.dishes||[]).map(findByName);
+  const ds=dishes.filter(Boolean);
+  if(q.dishes==="TODAY"&&ds[0]){const it=ds[0];
+    html+=`<button class="dcard" type="button" data-go="${it.id}">${thumb(it)}<span><b lang="tr">${esc(it.tr)}</b><small>${esc(lang==="tr"?(it.trn||""):it.t[LI[lang]-1])}</small><em dir="ltr">${price(it.p)}</em></span></button>`}
+  else if(ds.length)html+=`<div class="dchips">${ds.map(it=>`<button type="button" data-go="${it.id}">${thumb(it)}<span lang="tr">${esc(it.tr)}</span></button>`).join("")}</div>`;
+  if(q.act==="veg")html+=`<button class="cact" type="button" data-act="veg">${DIET.v[0]} ${esc(Lt(DIET.v))}</button>`;
+  if(q.act==="togo")html+=`<button class="cact" type="button" data-act="togo">${esc(CL(CHEF_UI.show))}</button>`;
+  if(q.act==="story")html+=`<a class="cact" href="https://www.kanaatlokantasi.com.tr/hakkimizda" target="_blank" rel="noopener">📖 ${esc(CL(CHAT.story))}</a>`;
+  if(q.act==="map")html+=`<a class="cact" href="${MAP_URL}" target="_blank" rel="noopener">📍 ${esc(CL(CHAT.maps))}</a>`;
+  return html;
+}
+function chatAsk(id){
+  const q=CHAT.q.find(x=>x.id===id);if(!q)return;
+  asked.add(id);chatMsg(`<p>${esc(CL(q.q))}</p>`,true);$("chatq").innerHTML="";
+  const t=chatMsg(`<span class="dots"><i></i><i></i><i></i></span>`,false);
+  setTimeout(()=>{t.innerHTML=chatAnswer(q);chatChoices();$("chatq").scrollTop=0;const L=$("chatlog");L.scrollTo({top:Math.max(0,t.offsetTop-L.offsetTop-60),behavior:"smooth"})},700);
+}
+function chatStart(){
+  asked=new Set();$("chatlog").innerHTML="";
+  $("chattitle").textContent=CL(CHAT.title);$("chatsub").textContent=CL(CHAT.sub);
+  $("chatx").setAttribute("aria-label",CL(CHEF_UI.close));
+  chatMsg(`<p>${esc(CL(CHAT.hello))}</p>`,false);chatChoices();
+}
+function chatOpen(){chefClose();if(!$("chatlog").children.length||$("chat").dataset.lang!==lang){chatStart();$("chat").dataset.lang=lang}$("chat").classList.add("open")}
+function chatClose(){$("chat").classList.remove("open")}
+$("chatx").addEventListener("click",chatClose);
+$("chat").addEventListener("click",e=>{
+  if(e.target===e.currentTarget)return chatClose();
+  const b=e.target.closest("[data-q]");if(b)return chatAsk(b.dataset.q);
+  const g=e.target.closest("[data-go]");if(g)return goItem(BYID[g.dataset.go]);
+  const a=e.target.closest("[data-act]");
+  if(a){chatClose();$("q").value="";
+    if(a.dataset.act==="veg"){fsel="v";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f==="v"));filter();scrollTo({top:0,behavior:"smooth"})}
+    if(a.dataset.act==="togo"){fsel=null;document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();document.getElementById("c-togo").scrollIntoView({behavior:"smooth"})}}
+});
+addEventListener("keydown",e=>{if(e.key==="Escape")chatClose()});
+
 lang=pickLang();
 render();
-$("cfab").setAttribute("aria-label",CL(CHEF_UI.title));
+$("cfab").setAttribute("aria-label",CL(CHAT.title));
 let seen=false;try{seen=sessionStorage.getItem("kanaat-chef")==="1"}catch(_){}
 if(!seen&&chefItem()){setTimeout(()=>{chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},1500)}
 </script>
