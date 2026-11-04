@@ -118,8 +118,8 @@ html[lang=ar] .chead b,html[lang=zh] .chead b,html[lang=ja] .chead b,html[lang=k
 @media (prefers-color-scheme:dark){.cbtn{color:#10241B}}
 .cfab{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));inset-inline-end:16px;z-index:15;width:58px;height:58px;border-radius:50%;padding:0;border:3px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,.25);overflow:hidden;cursor:pointer;background:#fff}
 .cfab img{width:100%;height:100%;object-fit:cover;display:block}
-.item.flash{animation:flash 1.6s ease}
-@keyframes flash{0%,40%{box-shadow:0 0 0 3px var(--green)}100%{box-shadow:var(--shadow)}}
+.item.flash{animation:flash 1s ease-in-out 4}
+@keyframes flash{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:0 0 0 4px var(--green);background:var(--green-soft)}}
 
 .chat{position:fixed;inset:0;z-index:30;background:rgba(20,15,10,.55);display:none;align-items:flex-end;justify-content:center}
 .chat.open{display:flex;animation:fade .2s ease}
@@ -283,7 +283,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 25 · 05.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 26 · 05.11.2026</p>
   </div>
 </footer>
 
