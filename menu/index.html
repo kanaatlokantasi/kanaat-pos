@@ -178,6 +178,7 @@ html[lang=ar] .ctitle,html[lang=zh] .ctitle,html[lang=ja] .ctitle,html[lang=ko] 
 .ctot{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0 6px;font-size:18px}
 .ctot b{font-size:20px}
 .cnote{color:var(--muted);font-size:13.5px;margin:6px 0 0}
+.cbtn.sec{background:var(--green-soft);color:var(--green);margin-top:8px}
 .clink{display:block;width:100%;margin-top:8px;border:0;background:none;color:var(--muted);font:600 14px inherit;padding:10px;text-align:center;text-decoration:underline;cursor:pointer}
 .qrbig{background:#fff;border-radius:14px;padding:10px;margin:12px auto;max-width:300px}
 .qrbig svg{display:block;width:100%;height:auto}
@@ -265,7 +266,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 16 · 04.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 17 · 04.11.2026</p>
   </div>
 </footer>
 
@@ -808,6 +809,7 @@ function cartSheet(){
    <div class="ctot"><span>${esc(CL(CART_UI.total))}</span><b dir="ltr">${price(cartTotal(L))}</b></div>
    <p class="cnote">${esc(CL(CART_UI.note))}</p>
    <button class="cbtn" type="button" id="cshowqr">${esc(CL(CART_UI.show))}</button>
+   <button class="cbtn sec" type="button" id="csave">💾 ${esc(CL(OK_UI.save))}</button>
    <button class="clink" type="button" id="cclear">${esc(CL(CART_UI.clear))}</button>`;
 }
 function cartPayload(){
@@ -833,6 +835,7 @@ $("cart").addEventListener("click",e=>{
   const i=e.target.closest("[data-inc]"),d=e.target.closest("[data-dec]");
   if(i)return cartInc(i.dataset.inc,1);if(d)return cartInc(d.dataset.dec,-1);
   if(e.target.closest("#cshowqr"))return cartQR();
+  if(e.target.closest("#csave")){const L=cartLines();document.fonts.ready.then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft)}),"kanaat-hesabim.png"));return}
   if(e.target.closest("#cback"))return cartSheet();
   if(e.target.closest("#cclear")){CART={};cartSave();cartPaint();cartClose()}
   if(e.target.closest("#cartx"))cartClose();
@@ -908,6 +911,7 @@ const OK_UI={
  info:["Bilgi amaçlıdır.","For information only.","للعلم فقط.","Только для информации.","Solo informativo.","À titre informatif.","仅供参考。","Nur zur Information.","参考用です。","참고용입니다."],
  save:["Kaydet / Paylaş","Save / Share","حفظ / مشاركة","Сохранить / Поделиться","Guardar / Compartir","Enregistrer / Partager","保存 / 分享","Speichern / Teilen","保存 / 共有","저장 / 공유"],
  menu:["Menüye dön","Back to menu","العودة إلى القائمة","Вернуться в меню","Volver al menú","Retour au menu","返回菜单","Zurück zur Speisekarte","メニューに戻る","메뉴로 돌아가기"],
+ draft:["Kendi hesaplamanız (garson onayı yok)", "Your own calculation (not confirmed by waiter)", "حسابك الخاص (غير مؤكد من النادل)", "Ваш собственный расчёт (не подтверждён официантом)", "Su propio cálculo (no confirmado por el camarero)", "Votre propre calcul (non confirmé par le serveur)", "您自己的计算（未经服务员确认）", "Ihre eigene Berechnung (nicht vom Kellner bestätigt)", "ご自身での計算（係員未確認）", "직접 계산한 내역 (직원 미확인)"],
  hold:["Görüntüye basılı tutarak da kaydedebilirsiniz.","You can also press and hold the image to save it.","يمكنك أيضًا الضغط مطولًا على الصورة لحفظها.","Можно также нажать и удерживать изображение, чтобы сохранить его.","También puede mantener pulsada la imagen para guardarla.","Vous pouvez aussi appuyer longuement sur l’image pour l’enregistrer.","您也可以长按图片保存。","Sie können das Bild auch gedrückt halten, um es zu speichern.","画像を長押しして保存することもできます。","이미지를 길게 눌러 저장할 수도 있습니다."]
 };
 function parsePayload(p){
@@ -916,15 +920,15 @@ function parsePayload(p){
   return {g,at:isFinite(at)&&at>0?at:Date.now(),W};
 }
 function makePayload(g,at,W){return g+"."+Math.round(at/6e4).toString(36)+"."+W.filter(l=>l.q>0).map(l=>l.it.c+(l.v||"")+(l.q>1?l.q:"")).join(".")}
-function billCanvas(lines,g,at){
+function billCanvas(lines,g,at,opt){opt=opt||{};
   const li=LI[g],rtl=g==="ar",W=720,pad=36,rowH=58;
   const c=document.createElement("canvas");const H=240+lines.length*rowH+120;c.width=W;c.height=H;
   const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,W,H);x.fillStyle="#1D5A46";x.fillRect(0,0,W,96);
   const F='"Noto Sans","Noto Sans Arabic","Noto Sans SC","Noto Sans JP","Noto Sans KR",system-ui,sans-serif';
   x.fillStyle="#fff";x.font='700 34px "Noto Serif",Georgia,serif';x.textAlign="center";x.fillText("Kanaat Lokantası",W/2,60);
-  x.fillStyle="#2A2620";x.font="600 26px "+F;x.direction=rtl?"rtl":"ltr";x.fillText(OK_UI.title[li],W/2,146);
+  x.fillStyle="#2A2620";x.font="600 26px "+F;x.direction=rtl?"rtl":"ltr";x.fillText(opt.title||OK_UI.title[li],W/2,146);
   x.fillStyle="#6F675B";x.font="400 20px "+F;
-  x.fillText(OK_UI.sub[li]+" · "+new Date(at).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),W/2,178);
+  x.fillText((opt.sub||OK_UI.sub[li])+" · "+new Date(at).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),W/2,178);
   let y=220;x.strokeStyle="#E6DDCC";x.beginPath();x.moveTo(pad,y-14);x.lineTo(W-pad,y-14);x.stroke();
   const start=rtl?W-pad:pad,end=rtl?pad:W-pad;
   for(const l of lines){const vl=l.v?" ("+(l.v==="a"?CART_UI.az[li]:CART_UI.tek[li])+")":"";const nm=g==="tr"?l.it.tr:l.it.t[li-1];
@@ -939,6 +943,9 @@ function billCanvas(lines,g,at){
   x.direction=rtl?"rtl":"ltr";x.textAlign="center";x.fillStyle="#6F675B";x.font="400 18px "+F;x.fillText(OK_UI.info[li],W/2,y+76);
   return c;
 }
+function shareCanvas(c,fname){c.toBlob(async b=>{const f=new File([b],fname||"kanaat-hesap.png",{type:"image/png"});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"Kanaat Lokantası"});return}}catch(e){if(e.name==="AbortError")return}
+  const url=c.toDataURL("image/png");const w=document.createElement("a");w.href=url;w.download=fname||"kanaat-hesap.png";document.body.appendChild(w);w.click();w.remove()})}
 function approvedView(payload){
   const {g,at,W}=parsePayload(payload);
   lang=g;document.documentElement.lang=g;document.documentElement.dir=g==="ar"?"rtl":"ltr";
