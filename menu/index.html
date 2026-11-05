@@ -185,6 +185,8 @@ html[lang=ar] .ctitle,html[lang=zh] .ctitle,html[lang=ja] .ctitle,html[lang=ko] 
 .cnote{color:var(--muted);font-size:13.5px;margin:6px 0 0}
 .cbtn.sec{background:var(--green-soft);color:var(--green);margin-top:8px}
 .tipbox{margin-top:14px;padding:12px;border-radius:14px;background:var(--green-soft)}
+.tipbox.glow{animation:tipglow 1s ease-in-out 6}
+@keyframes tipglow{0%,100%{box-shadow:0 0 0 0 rgba(29,90,70,0)}50%{box-shadow:0 0 0 5px rgba(29,90,70,.55),0 0 18px rgba(29,90,70,.45);background:#cfe6da}}
 .tiph{font-weight:700;color:var(--green);margin-bottom:8px}
 .tipopts{display:flex;flex-wrap:wrap;gap:6px}
 .tipopts button{border:1px solid var(--green);background:var(--card);color:var(--green);font:600 14px/1 inherit;padding:9px 13px;border-radius:999px;cursor:pointer}
@@ -294,7 +296,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 41 · 05.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 42 · 05.11.2026</p>
   </div>
 </footer>
 
@@ -834,7 +836,7 @@ const tipOf=(sub,t)=>!t?0:t.k==="p"?Math.round(sub*t.v)/100:t.v/100;
 const cartTotal=(lines=cartLines())=>{const s=subOf(lines);return s+tipOf(s,TIP)};
 const nameIn=it=>lang==="tr"?it.tr:it.t[LI[lang]-1];
 const hasDrink=L=>L.some(l=>MENU.find(c=>c.id==="drink").items.includes(l.it));
-let drinkAsked=false,cartView="sheet",tipCustom=false;
+let drinkAsked=false,cartView="sheet",tipCustom=false,tipGlow=false;
 function ctl1(it,v){
   const k=keyOf(it.c,v),q=CART[k]||0,lbl=v?vLabel(v)+" · "+price(vPrice(it,v)):CL(CART_UI.add);
   if(!q)return v?`<button class="addb sm" type="button" data-inc="${k}">+ ${esc(lbl)}</button>`:`<button class="addr" type="button" data-inc="${k}" aria-label="${esc(lbl)}">+</button>`;
@@ -856,7 +858,8 @@ function tipBox(sub){
   const opts=[["0",CL(TIP_UI.none)],["p5","%5"],["p10","%10"],["p15","%15"],["m",CL(TIP_UI.custom)]].map(([k,t])=>[k,lang==="tr"?t:t.replace(/^%(\d+)$/,"$1%")]);
   const cur=!TIP?"0":TIP.k==="p"?"p"+TIP.v:"m";
   const showIn=cur==="m"||tipCustom;
-  return `<div class="tipbox"><div class="tiph">${esc(CL(TIP_UI.title))}</div>
+  const g=tipGlow;tipGlow=false;
+  return `<div class="tipbox${g?" glow":""}"><div class="tiph">${esc(CL(TIP_UI.title))}</div>
    <div class="tipopts">${opts.map(([k,t])=>`<button type="button" data-tip="${k}" aria-pressed="${k===cur||(k==="m"&&tipCustom)}">${esc(t)}</button>`).join("")}</div>
    ${showIn?`<label class="tipin"><input id="tipamt" type="text" inputmode="decimal" autocomplete="off" placeholder="${esc(CL(TIP_UI.amount))}" value="${TIP&&TIP.k==="m"?TIP.v/100:""}"><span>₺</span></label>`:""}
    <p class="cnote">${esc(CL(TIP_UI.note))}</p></div>`;
@@ -912,7 +915,7 @@ function cartQR(){
    <button class="clink" type="button" id="cback">${esc(CL(CART_UI.back))}</button>`;
 }
 function cartSaveImg(){const L=cartLines();const s=subOf(L);Promise.all([document.fonts.ready,logoReady]).then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft),tip:tipOf(s,TIP),split:SPLIT}),"kanaat-hesabim.png"))}
-function cartOpen(){chatClose();chefClose();tipCustom=false;cartSheet();$("cart").classList.add("open")}
+function cartOpen(){chatClose();chefClose();tipCustom=false;tipGlow=true;cartSheet();$("cart").classList.add("open")}
 function cartClose(){$("cart").classList.remove("open")}
 
 $("cartbar").addEventListener("click",cartOpen);
