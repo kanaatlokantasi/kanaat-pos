@@ -198,6 +198,8 @@ html[lang=ar] .ctitle,html[lang=zh] .ctitle,html[lang=ja] .ctitle,html[lang=ko] 
 .tipbox .cnote{margin-top:8px}
 .csub{display:flex;justify-content:space-between;padding:6px 0 0;color:var(--muted)}
 .cart .crow .addbox{flex-direction:row;align-items:center}
+.avail{margin:12px 0 2px;background:var(--amber-soft);color:var(--ink);border-radius:10px;padding:9px 12px;font-size:13.5px;line-height:1.4}
+.cfine{margin:8px 0 0;text-align:center;color:var(--muted);font-size:12px}
 .fwarn{margin:8px 0 0;background:var(--amber-soft);color:var(--amber);border-radius:10px;padding:8px 10px;font-size:13px;font-weight:600}
 .fx{display:flex;justify-content:flex-end;gap:4px;color:var(--muted);font-size:13.5px;padding:2px 0 0}
 .fxnote{text-align:end;color:var(--muted);font-size:11.5px;margin:2px 0 0}
@@ -297,7 +299,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 46 · 05.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 47 · 05.11.2026</p>
   </div>
 </footer>
 
@@ -472,6 +474,7 @@ addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")
 addEventListener("pagehide",ST.flush);
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href*="instagram.com"]');if(a){ST.add("ig");ST.flush()}},true);
 
+const AVAIL_UI={menu:["Bu, geniş kapsamlı menümüzdür. Bazı yemekler o gün mevcut olmayabilir; lütfen garsonunuza sorun.", "This is our full menu. Some dishes may not be available today; please ask your waiter.", "هذه قائمتنا الكاملة. قد لا تتوفر بعض الأطباق اليوم؛ يرجى سؤال النادل.", "Это наше полное меню. Некоторых блюд сегодня может не быть — пожалуйста, уточните у официанта.", "Esta es nuestra carta completa. Puede que algunos platos no estén disponibles hoy; pregunte a su camarero.", "Voici notre carte complète. Certains plats peuvent ne pas être disponibles aujourd'hui ; demandez à votre serveur.", "这是我们的完整菜单。部分菜品今天可能没有供应，请询问服务员。", "Dies ist unsere vollständige Speisekarte. Manche Gerichte sind heute eventuell nicht verfügbar – bitte fragen Sie Ihren Kellner.", "こちらは全メニューです。本日ご用意できない料理もございますので、係員にお尋ねください。", "전체 메뉴입니다. 오늘 제공되지 않는 요리가 있을 수 있으니 직원에게 문의해 주세요.", "Šī ir mūsu pilnā ēdienkarte. Daži ēdieni šodien var nebūt pieejami — lūdzu, jautājiet viesmīlim.", "Tämä on koko ruokalistamme. Kaikkia ruokia ei välttämättä ole tänään saatavilla – kysykää tarjoilijalta.", "Este é o nosso menu completo. Alguns pratos podem não estar disponíveis hoje; pergunte ao seu empregado de mesa.", "Questo è il nostro menù completo. Alcuni piatti potrebbero non essere disponibili oggi; chieda al cameriere."],chef:["Tükenmiş olabilir, garsonunuza sorun.", "It may have sold out; please ask your waiter.", "قد يكون قد نفد؛ يرجى سؤال النادل.", "Блюдо может закончиться — уточните у официанта.", "Puede que se haya agotado; pregunte a su camarero.", "Il est peut-être épuisé ; demandez à votre serveur.", "可能已售完，请询问服务员。", "Es könnte bereits ausverkauft sein – bitte fragen Sie Ihren Kellner.", "売り切れの場合もございます。係員にお尋ねください。", "품절되었을 수 있으니 직원에게 문의해 주세요.", "Tas var būt jau beidzies — lūdzu, jautājiet viesmīlim.", "Se voi olla jo loppunut – kysykää tarjoilijalta.", "Pode já ter esgotado; pergunte ao seu empregado de mesa.", "Potrebbe essere esaurito; chieda al cameriere."]};
 function pickLang(){
   const u=new URLSearchParams(location.search).get("lang");
   if(u&&LI[u]!==undefined)return u;
@@ -542,7 +545,7 @@ function render(){
     html+=`</div></section>`;
   }
   $("cats").innerHTML=nav;
-  $("menu").innerHTML=html;
+  $("menu").innerHTML=`<p class="avail">ℹ️ ${esc(L(AVAIL_UI.menu))}</p>`+html;
   $("langsheet").innerHTML=`<h3>${esc(L(UI.lang))}</h3>`+LANGS.map(([c,n,e])=>`<button type="button" data-lang="${c}" aria-current="${c===lang}"><span><span class="flag" aria-hidden="true">${FLAG[c]}</span>${n}</span>${c===lang?"✓":`<span class="en">${e}</span>`}</button>`).join("");
   filter();
   spy();
@@ -625,7 +628,7 @@ function chefOpen(){
   if(it.img){d.classList.remove("hide");d.dataset.r=REMOTE+"images/"+encodeURIComponent(it.img);d.onerror=()=>{if(d.dataset.r){d.src=d.dataset.r;d.dataset.r=""}else d.classList.add("hide")};d.src="img/"+it.loc}else d.classList.add("hide");
   const notes=itemDesc(it);
   $("cbody").innerHTML=headHTML(it)+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
-    `<button class="cbtn" id="cshow" type="button">${esc(CL(CHEF_UI.show))}</button>`;
+    `<button class="cbtn" id="cshow" type="button">${esc(CL(CHEF_UI.show))}</button><p class="cfine">${esc(CL(AVAIL_UI.chef))}</p>`;
   $("cshow").onclick=()=>{ST.add("chefGo");chefClose();fsel=null;$("q").value="";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
     jumpTo(document.querySelector(`.item[data-id="${it.id}"]`))};
   $("chef").classList.add("open");ST.add("chefShow");
@@ -971,7 +974,7 @@ function calcRender(){
   for(const c of MENU){const its=c.items.filter(it=>it.p!=null);if(!its.length)continue;
     nav+=`<a href="#k-${c.id}" data-k="${c.id}">${esc(L(CAT[c.id]))}</a>`;
     html+=`<div class="cgrp" id="k-${c.id}"><h3 class="ccat">${esc(L(CAT[c.id]))}</h3>`+its.map(it=>`<div class="crow" data-id="${it.id}"><div class="cn"><b>${esc(nameIn(it))}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox"></div></div>`).join("")+`</div>`}
-  $("ccats").innerHTML=nav;$("calclist").innerHTML=html;$("cq").value="";
+  $("ccats").innerHTML=nav;$("calclist").innerHTML=`<p class="avail">ℹ️ ${esc(CL(AVAIL_UI.menu))}</p>`+html;$("cq").value="";
   cartPaint();
 }
 function calcFilter(){const q=norm($("cq").value.trim());
