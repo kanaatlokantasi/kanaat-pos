@@ -72,7 +72,7 @@ input,select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--li
     <div class="dates"><input type="date" id="from"> – <input type="date" id="to"></div>
     <div id="out2"><p class="empty">Yükleniyor…</p></div>
   </section>
-  <p class="ver">Kişisel veri tutulmaz: isim, IP, konum, cihaz bilgisi yok. Sadece günlük toplam sayılar. · 48 · 05.11.2026</p>
+  <p class="ver">Kişisel veri tutulmaz: isim, telefon, IP, konum, cihaz bilgisi yok. Sayaçlar günlük toplamdır; görüşlerde sadece puan, yorum ve dil saklanır. · 49 · 05.11.2026</p>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -103,7 +103,8 @@ async function load(){const my=++seq;const f=$("from").value,t=$("to").value;if(
     const snap=await db.collection("menuStats").where(id,">=",f).where(id,"<=",t).get();
     if(my!==seq)return;const days=[];const S={};
     snap.forEach(d=>{const x=d.data();days.push([d.id,x.open||0]);for(const k in x)if(typeof x[k]==="number")S[k]=(S[k]||0)+x[k]});
-    draw(S,days,f,t)}catch(e){$("out2").innerHTML='<p class="err">'+(e.code==="permission-denied"?"Bu hesabın raporu görme izni yok. Firebase kurallarındaki e-posta ile giriş yapın.":"Veri okunamadı: "+esc(e.message))+'</p>'}}
+    let FBK=[];try{const fs=await db.collection("feedback").where("at",">=",new Date(f+"T00:00:00+03:00")).where("at","<",new Date(shift(t,1)+"T00:00:00+03:00")).orderBy("at","desc").get();fs.forEach(d=>FBK.push(d.data()))}catch(e){FBK=null}
+    if(my!==seq)return;draw(S,days,f,t);drawFb(FBK)}catch(e){$("out2").innerHTML='<p class="err">'+(e.code==="permission-denied"?"Bu hesabın raporu görme izni yok. Firebase kurallarındaki e-posta ile giriş yapın.":"Veri okunamadı: "+esc(e.message))+'</p>'}}
 
 function pre(S,p){const o=[];for(const k in S)if(k.startsWith(p)&&S[k]>0)o.push([k.slice(p.length),S[k]]);return o.sort((a,b)=>b[1]-a[1])}
 function list(rows,label,limit){if(!rows.length)return '<p class="empty">Henüz veri yok.</p>';const mx=rows[0][1]||1;limit=limit||10;
@@ -114,7 +115,7 @@ const kv=rows=>rows.map(([a,b])=>`<div class="kv"><span>${a}</span><b>${b}</b></
 const dish=c=>NAMES[c]||("? "+c);
 const pct=(a,b)=>b?"%"+Math.round(a/b*100):"–";
 
-function draw(S,days,f,t){const g=k=>S[k]||0;
+function draw(S,days,f,t){window._S=S;const g=k=>S[k]||0;
   const open=g("open"),qr=g("qrShow");
   // languages: auto + saved + url
   const L={};for(const p of ["auto_","saved_","url_"])for(const [k,v] of pre(S,p))L[k]=(L[k]||0)+v;
@@ -157,6 +158,18 @@ function draw(S,days,f,t){const g=k=>S[k]||0;
   </div>`;
   $("out2").innerHTML=open||qr||Object.keys(S).length?html:'<p class="empty">Bu tarih aralığında veri yok.</p>';
 }
+function drawFb(F){const box=document.createElement("div");box.className="grid";box.style.marginTop="12px";
+  if(F===null){box.innerHTML=card("Misafir görüşleri","",'<p class="err">Görüşler okunamadı. Firestore kurallarına feedback bölümü eklenmeli.</p>');$("out2").appendChild(box);return}
+  const av=k=>{const v=F.filter(x=>x[k]).map(x=>x[k]);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):0};
+  const st=v=>v?"★".repeat(Math.round(v))+"☆".repeat(5-Math.round(v)):"–";
+  const lowOf=x=>{const v=["y","s","t"].filter(k=>x[k]).map(k=>x[k]);const a=v.reduce((p,q)=>p+q,0)/v.length;return a<=3||Math.min(...v)<=2};
+  const L=[...F].sort((a,b)=>(lowOf(b)-lowOf(a))||0);
+  const fmt=x=>x.at&&x.at.toDate?x.at.toDate().toLocaleString("tr-TR",{timeZone:"Europe/Istanbul",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+  const one=x=>`<div style="border-top:1px solid var(--line);padding:8px 0;${lowOf(x)?"border-left:3px solid #c0392b;padding-left:8px;":""}"><div style="font-size:12px;color:var(--mute)">${esc(fmt(x))} · ${esc(LN[x.l]||x.l||"")}${lowOf(x)?' · <b style="color:#c0392b">düşük puan</b>':""}</div><div style="font-size:13px">Yemek ${x.y||"–"} · Servis ${x.s||"–"} · Temizlik ${x.t||"–"}</div>${x.c?`<div style="margin-top:3px">${esc(x.c)}</div>`:""}</div>`;
+  box.innerHTML=card("Misafir görüşleri",`${F.length} görüş · ${F.filter(lowOf).length} düşük puan · Google düğmesine ${nf(window._S&&_S.fbG||0)} tıklama`,
+    F.length?kv([["Yemek",`<span style="color:#E8A317">${st(av("y"))}</span> ${av("y").toLocaleString("tr-TR",{maximumFractionDigits:1})}`],["Servis",`<span style="color:#E8A317">${st(av("s"))}</span> ${av("s").toLocaleString("tr-TR",{maximumFractionDigits:1})}`],["Temizlik ve ortam",`<span style="color:#E8A317">${st(av("t"))}</span> ${av("t").toLocaleString("tr-TR",{maximumFractionDigits:1})}`]])+L.map(one).join(""):'<p class="empty">Bu tarih aralığında görüş yok.</p>');
+  box.firstElementChild.style.gridColumn="1/-1";
+  if(!$("out2").querySelector(".kpis"))$("out2").innerHTML="";const k=$("out2").querySelector(".kpis");k?k.after(box):$("out2").appendChild(box);box.style.marginBottom="12px"}
 auth.onAuthStateChanged(u=>{try{u?localStorage.setItem("kanaat-rapor","1"):localStorage.removeItem("kanaat-rapor")}catch(_){}$("login").classList.toggle("hide",!!u);$("app").classList.toggle("hide",!u);$("out").classList.toggle("hide",!u);if(u)setRange("7")});
 $("login").onsubmit=async e=>{e.preventDefault();$("lerr").textContent="";try{await auth.signInWithEmailAndPassword($("em").value.trim(),$("pw").value)}catch(err){$("lerr").textContent="Giriş başarısız: "+(err.code||err.message)}};
 $("out").onclick=()=>auth.signOut();
