@@ -297,7 +297,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 43 · 05.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 44 · 05.11.2026</p>
   </div>
 </footer>
 
@@ -457,11 +457,27 @@ const LEGEND_ALG=["G","M","E","N","C","F"];
 
 let lang="en", fsel=null;
 const $=id=>document.getElementById(id);
+// ---- Anonim sayaç (kişisel veri yok): günlük toplamlar Firestore'a, sadece "artır" ----
+const ST={buf:{},t:0,
+  day(){const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Istanbul",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date());const g=k=>p.find(x=>x.type===k).value;return {d:g("year")+"-"+g("month")+"-"+g("day"),h:g("hour")}},
+  key(k){return String(k).replace(/[`\\]/g,"").slice(0,60)},
+  add(k,n=1){if(!k)return;k=ST.key(k);ST.buf[k]=(ST.buf[k]||0)+n;clearTimeout(ST.t);ST.t=setTimeout(ST.flush,4000)},
+  flush(){const ks=Object.keys(ST.buf);if(!ks.length)return;const b=ST.buf;ST.buf={};
+    const doc="projects/kanaat-pos/databases/(default)/documents/menuStats/"+ST.day().d;
+    const body={writes:[{update:{name:doc,fields:{}},updateMask:{fieldPaths:[]},updateTransforms:ks.slice(0,40).map(k=>({fieldPath:"`"+k+"`",increment:{integerValue:String(Math.round(b[k]))}}))}]};
+    if(ks.length>40){for(const k of ks.slice(40))ST.buf[k]=b[k];setTimeout(ST.flush,500)}
+    try{fetch("https://firestore.googleapis.com/v1/projects/kanaat-pos/databases/(default)/documents:commit?key=AIzaSyAClzgK945RPjPwY7xKTH5f4RzwzfxEI2M",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).catch(()=>{})}catch(_){}}
+};
+addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")ST.flush()});
+addEventListener("pagehide",ST.flush);
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href*="instagram.com"]');if(a){ST.add("ig");ST.flush()}},true);
+
 function pickLang(){
   const u=new URLSearchParams(location.search).get("lang");
   if(u&&LI[u]!==undefined)return u;
-  try{const s=localStorage.getItem("kanaat-menu-lang");if(s&&LI[s]!==undefined)return s}catch(e){}
-  for(const l of (navigator.languages||[navigator.language||"en"])){const p=String(l).toLowerCase().slice(0,2);if(LI[p]!==undefined)return p}
+  try{const s=localStorage.getItem("kanaat-menu-lang");if(s&&LI[s]!==undefined){ST.src="saved";return s}}catch(e){}
+  for(const l of (navigator.languages||[navigator.language||"en"])){const p=String(l).toLowerCase().slice(0,2);if(LI[p]!==undefined){ST.src="auto";return p}}
+  ST.other=String(navigator.language||"?").toLowerCase().slice(0,2);ST.src="other";
   return "en";
 }
 const L=a=>a[LI[lang]];
@@ -567,16 +583,17 @@ function spy(){
   });
 }
 let raf=0;addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;spy()})},{passive:true});
-$("q").addEventListener("input",filter);
+let qT=0;$("q").addEventListener("input",()=>{filter();clearTimeout(qT);qT=setTimeout(()=>{const v=$("q").value.trim().toLocaleLowerCase("tr");if(v.length<3)return;ST.add("search");
+  if(!document.querySelector(".item:not(.hide)"))ST.add("miss_"+v.replace(/[^\p{L}\p{N} ]/gu,"").slice(0,30))},1500)});
 document.querySelectorAll(".fbtn").forEach(b=>b.addEventListener("click",()=>{
-  fsel=fsel===b.dataset.f?null:b.dataset.f;
+  fsel=fsel===b.dataset.f?null:b.dataset.f;if(fsel)ST.add("filter_"+fsel);
   document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===fsel));
   filter(); if(fsel){const f=document.querySelector("section.cat:not(.hide)");if(f&&scrollY>f.offsetTop)scrollTo({top:f.offsetTop-170})}
 }));
 $("langbtn").addEventListener("click",()=>$("langov").classList.add("open"));
 $("langov").addEventListener("click",e=>{
   const b=e.target.closest("button[data-lang]");
-  if(b){lang=b.dataset.lang;try{localStorage.setItem("kanaat-menu-lang",lang)}catch(_){ }
+  if(b){lang=b.dataset.lang;ST.add("pick_"+lang);try{localStorage.setItem("kanaat-menu-lang",lang)}catch(_){ }
     const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render();chefClose();setTimeout(()=>{if(chefItem())chefOpen()},350)}
   if(b||e.target===e.currentTarget)$("langov").classList.remove("open");
 });
@@ -588,7 +605,7 @@ $("menu").addEventListener("click",e=>{
   $("pimg").src=b.querySelector("img").currentSrc||b.querySelector("img").src;
   $("pname").textContent=lang==="tr"?it.tr:it.t[LI[lang]-1];
   $("pdesc").textContent=lang==="tr"?(it.trn||""):it.tr;
-  $("photov").classList.add("open");
+  $("photov").classList.add("open");ST.add("photo_"+it.c);
 });
 $("photov").addEventListener("click",()=>$("photov").classList.remove("open"));
 addEventListener("keydown",e=>{if(e.key==="Escape"){$("photov").classList.remove("open");$("langov").classList.remove("open")}});
@@ -609,9 +626,9 @@ function chefOpen(){
   const notes=itemDesc(it);
   $("cbody").innerHTML=headHTML(it)+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
     `<button class="cbtn" id="cshow" type="button">${esc(CL(CHEF_UI.show))}</button>`;
-  $("cshow").onclick=()=>{chefClose();fsel=null;$("q").value="";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
+  $("cshow").onclick=()=>{ST.add("chefGo");chefClose();fsel=null;$("q").value="";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
     jumpTo(document.querySelector(`.item[data-id="${it.id}"]`))};
-  $("chef").classList.add("open");
+  $("chef").classList.add("open");ST.add("chefShow");
 }
 function chefClose(){$("chef").classList.remove("open")}
 $("cx").addEventListener("click",chefClose);
@@ -629,6 +646,9 @@ const CHAT={
  calc:["Hesabımı hesapla", "Calculate my bill", "احسب فاتورتي", "Посчитать мой счёт", "Calcular mi cuenta", "Calculer mon addition", "计算我的账单", "Meine Rechnung berechnen", "お会計を計算する", "내 계산서 계산하기"],
  maps:["Haritada aç","Open in Maps","افتح في الخريطة","Открыть на карте","Abrir en el mapa","Ouvrir dans Plans","在地图中打开","In Karte öffnen","地図で開く","지도에서 열기"],
  q:[
+  {id:"selam",
+   q:["Selamın Aleyküm ya Hacı Muhammed Efendi", "As-salamu alaykum, Hajji Muhammad Efendi!", "السلام عليكم يا حاج محمد أفندي", "Ас-саляму алейкум, Хаджи Мухаммед-эфенди!", "¡As-salamu alaykum, Hajji Muhammad Efendi!", "As-salamu alaykum, Hadji Mohammed Efendi !", "愿你平安，哈吉·穆罕默德·埃芬迪！", "As-salamu alaikum, Hadschi Muhammed Efendi!", "アッサラーム・アライクム、ハッジ・ムハンマド・エフェンディ！", "앗살라무 알라이쿰, 하지 무함마드 에펜디!", "As-salamu alaikum, hadži Muhammad efendi!", "As-salamu alaikum, hajji Muhammad Efendi!", "As-salamu alaykum, Hajji Muhammad Efendi!", "As-salamu alaykum, Hajji Muhammad Efendi!"],
+   a:["Hoş geldin, şeref verdin bize ma aile.", "Welcome! You honour us, you and your family.", "أهلًا وسهلًا! شرّفتنا أنت والعائلة.", "Добро пожаловать! Для нас честь видеть вас с семьёй.", "¡Bienvenido! Es un honor recibirle a usted y a su familia.", "Bienvenue ! Vous nous faites honneur, vous et votre famille.", "欢迎光临！您和家人的到来是我们的荣幸。", "Willkommen! Es ist uns eine Ehre, Sie und Ihre Familie bei uns zu haben.", "ようこそ！ご家族でお越しいただき光栄です。", "어서 오세요! 가족과 함께 와 주셔서 영광입니다.", "Laipni lūdzam! Jūs un jūsu ģimene mums dariet godu.", "Tervetuloa! On kunnia saada teidät ja perheenne vieraiksemme.", "Bem-vindo! É uma honra recebê-lo a si e à sua família.", "Benvenuto! È un onore avere qui lei e la sua famiglia."]},
   {id:"today",dishes:"TODAY",
    q:["Bugün ne önerirsiniz?","What do you recommend today?","ماذا تنصح اليوم؟","Что вы посоветуете сегодня?","¿Qué recomienda hoy?","Que recommandez-vous aujourd'hui ?","今天推荐什么？","Was empfehlen Sie heute?","今日のおすすめは？","오늘의 추천은 무엇인가요?"],
    a:["Bugün sizin için bunu öneriyorum, eminim çok beğeneceksiniz:","Today I recommend this one. I'm sure you'll love it:","أنصحك اليوم بهذا الطبق، وأنا متأكد أنه سيعجبك:","Сегодня советую вот это блюдо, уверен, вам понравится:","Hoy le recomiendo este plato, seguro que le encantará:","Aujourd'hui je vous recommande ce plat, il va vous plaire :","今天我推荐这道菜，相信您一定会喜欢：","Heute empfehle ich dieses Gericht. Es wird Ihnen schmecken:","本日のおすすめはこちらです。きっと気に入っていただけます：","오늘은 이 요리를 추천합니다. 분명 마음에 드실 거예요:"]},
@@ -709,7 +729,7 @@ function chatAnswer(q){
 }
 function chatAsk(id){
   const q=CHAT.q.find(x=>x.id===id);if(!q)return;
-  asked.add(id);chatMsg(`<p>${esc(CL(q.q))}</p>`,true);$("chatq").innerHTML="";
+  asked.add(id);ST.add("q_"+id);chatMsg(`<p>${esc(CL(q.q))}</p>`,true);$("chatq").innerHTML="";
   const t=chatMsg(`<span class="dots"><i></i><i></i><i></i></span>`,false);
   setTimeout(()=>{t.innerHTML=chatAnswer(q);chatChoices();if(asked.size===4&&!invited){invited=true;setTimeout(()=>{chatMsg(`<p>${esc(CL(CHAT.insta))}</p><a class="igbtn" href="${IG_URL}" target="_blank" rel="noopener">${IG_SVG}<span>${esc(CL(CHAT.follow))}</span></a><small class="ighandle" dir="ltr">@kanaatlokantasi1933</small>`,false)},900)}$("chatq").scrollTop=0;const L=$("chatlog");L.scrollTo({top:Math.max(0,t.offsetTop-L.offsetTop-60),behavior:"smooth"})},700);
 }
@@ -719,7 +739,7 @@ function chatStart(){
   $("chatx").setAttribute("aria-label",CL(CHEF_UI.close));
   chatMsg(`<p>${esc(CL(CHAT.hello))}</p>`,false);chatChoices();
 }
-function chatOpen(){chefClose();if(!$("chatlog").children.length||$("chat").dataset.lang!==lang){chatStart();$("chat").dataset.lang=lang}$("chat").classList.add("open")}
+function chatOpen(){ST.add("chat");chefClose();if(!$("chatlog").children.length||$("chat").dataset.lang!==lang){chatStart();$("chat").dataset.lang=lang}$("chat").classList.add("open")}
 function chatClose(){$("chat").classList.remove("open")}
 $("chatx").addEventListener("click",chatClose);
 $("chat").addEventListener("click",e=>{
@@ -854,7 +874,7 @@ function cartPaint(){
   $("cartbar").innerHTML=`<span>🧾 ${esc(CL(CART_UI.my))} · ${n}</span><b dir="ltr">${price(cartTotal())}</b>`;
   if($("cart").classList.contains("open")){if(cartView==="drinks")drinkStep(drinkNext);else if(cartView==="sheet")cartSheet()}
 }
-function cartInc(c,d){const q=Math.max(0,Math.min(99,(CART[c]||0)+d));if(q)CART[c]=q;else delete CART[c];cartSave();cartPaint()}
+function cartInc(c,d){if(d>0){ST.add("add_"+c);if(cartView==="drinks"&&$("cart").classList.contains("open"))ST.add("drinkAdd")}const q=Math.max(0,Math.min(99,(CART[c]||0)+d));if(q)CART[c]=q;else delete CART[c];cartSave();cartPaint()}
 function tipBox(sub){
   const opts=[["0",CL(TIP_UI.none)],["p5","%5"],["p10","%10"],["p15","%15"],["m",CL(TIP_UI.custom)]].map(([k,t])=>[k,lang==="tr"?t:t.replace(/^%(\d+)$/,"$1%")]);
   const cur=!TIP?"0":TIP.k==="p"?"p"+TIP.v:"m";
@@ -896,7 +916,7 @@ function drinkStep(next){
    <div class="clines">${D.map(it=>`<div class="crow" data-id="${it.id}"><div class="cn"><b>${esc(nameIn(it))}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox">${ctl(it)}</div></div>`).join("")}</div>
    <button class="cbtn" type="button" id="dcont">${esc(CL(DRINK_UI.cont))}</button>`;
 }
-function guardDrinks(next){drinkStep(next);return true}
+function guardDrinks(next){ST.add("drinkStep");drinkStep(next);return true}
 function tipToken(){return (!TIP?"":TIP.k==="p"?"._p"+TIP.v:"._m"+TIP.v)+(SPLIT>1?"._s"+SPLIT:"")}
 function cartPayload(){
   const t=Math.round(Date.now()/6e4).toString(36);
@@ -906,6 +926,7 @@ const bi=(arr,suf)=>lang==="tr"?"":`<small dir="auto">${esc(CL(arr)+(suf||""))}<
 function cartQR(){
   cartView="qr";
   const L=cartLines();
+  {const s0=subOf(L),t0=tipOf(s0,TIP);ST.add("qrShow");ST.add("qrSum",Math.round((s0+t0)*100));ST.add(!TIP?"tip_none":TIP.k==="p"?"tip_p"+TIP.v:"tip_m");if(t0>0)ST.add("tipSum",Math.round(t0*100));if(SPLIT>1){ST.add("split");ST.add("splitPeople",SPLIT)}}
   const url=location.origin+location.pathname+"#g="+cartPayload();
   const svg=qrSvg(url);const s=subOf(L),t=tipOf(s,TIP);
   $("cartbody").innerHTML=`<h3 class="ctitle">${esc(CL(CART_UI.show))}</h3>
@@ -915,7 +936,7 @@ function cartQR(){
      <div class="trt"><span class="tl2"><b>Toplam</b>${bi(CART_UI.total)}</span><b>${price(s+t)}</b></div>${SPLIT>1?`<div><span class="tl2"><b>Kişi başı (${SPLIT} kişi)</b>${bi(SPLIT_UI.each,` (${SPLIT})`)}</span><b>${price(Math.round((s+t)*100/SPLIT)/100)}</b></div>`:""}</div>
    <button class="clink" type="button" id="cback">${esc(CL(CART_UI.back))}</button>`;
 }
-function cartSaveImg(){const L=cartLines();const s=subOf(L);Promise.all([document.fonts.ready,logoReady]).then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft),tip:tipOf(s,TIP),split:SPLIT}),"kanaat-hesabim.png"))}
+function cartSaveImg(){ST.add("saveDraft");const L=cartLines();const s=subOf(L);Promise.all([document.fonts.ready,logoReady]).then(()=>shareCanvas(billCanvas(L,lang,Date.now(),{title:CL(CART_UI.my),sub:CL(OK_UI.draft),tip:tipOf(s,TIP),split:SPLIT}),"kanaat-hesabim.png"))}
 function cartOpen(){chatClose();chefClose();tipCustom=false;tipGlow=true;cartSheet();$("cart").classList.add("open")}
 function cartClose(){$("cart").classList.remove("open")}
 
@@ -958,7 +979,7 @@ function calcRender(){
 }
 function calcFilter(){const q=norm($("cq").value.trim());
   document.querySelectorAll("#calclist .cgrp").forEach(g=>{let n=0;g.querySelectorAll(".crow").forEach(r=>{const it=BYID[r.dataset.id];const ok=!q||norm(it.tr+" "+(lang==="tr"?"":it.t[LI[lang]-1])+" "+it.t[0]).includes(q);r.classList.toggle("hide",!ok);if(ok)n++});g.classList.toggle("hide",!n)})}
-function calcOpen(){chatClose();chefClose();cartClose();calcRender();$("calc").classList.add("open");document.body.classList.add("calcopen");$("calc").scrollTop=0}
+function calcOpen(){ST.add("calc");chatClose();chefClose();cartClose();calcRender();$("calc").classList.add("open");document.body.classList.add("calcopen");$("calc").scrollTop=0}
 function calcClose(){$("calc").classList.remove("open");document.body.classList.remove("calcopen")}
 $("calcbtn").addEventListener("click",calcOpen);
 $("calcback").addEventListener("click",calcClose);
@@ -1000,7 +1021,7 @@ function waiterView(payload){
   box.onclick=e=>{const i=e.target.closest("[data-wi]"),d=e.target.closest("[data-wd]");
     if(i){W[+i.dataset.wi].q=Math.min(99,W[+i.dataset.wi].q+1);paint()}
     if(d){W[+d.dataset.wd].q=Math.max(0,W[+d.dataset.wd].q-1);paint()}
-    if(e.target.closest("#wok"))showQR();
+    if(e.target.closest("#wok")){ST.add("wOk");showQR()}
     if(e.target.closest("#wedit"))paint()};
   paint();
 }
@@ -1081,6 +1102,7 @@ function shareCanvas(c,fname){c.toBlob(async b=>{const f=new File([b],fname||"ka
   const url=c.toDataURL("image/png");const w=document.createElement("a");w.href=url;w.download=fname||"kanaat-hesap.png";document.body.appendChild(w);w.click();w.remove()})}
 function approvedView(payload){
   const {g,at,W,tip,split}=parsePayload(payload);
+  try{if(sessionStorage.getItem("kanaat-ok")!==payload){sessionStorage.setItem("kanaat-ok",payload);ST.add("okOpen")}}catch(_){}
   lang=g;document.documentElement.lang=g;document.documentElement.dir=g==="ar"?"rtl":"ltr";
   document.body.classList.add("waiter");
   const box=$("waiter");box.classList.remove("hide");
@@ -1092,7 +1114,7 @@ function approvedView(payload){
      <button class="cbtn" type="button" id="oksave">${esc(CL(OK_UI.save))}</button>
      <p class="cnote">${esc(CL(OK_UI.hold))}</p>
      <a class="clink" href="${location.pathname}?lang=${g}">${esc(CL(OK_UI.menu))}</a></div>`;
-    $("oksave").onclick=()=>c.toBlob(async b=>{const f=new File([b],"kanaat-hesap.png",{type:"image/png"});
+    $("oksave").onclick=()=>(ST.add("saveOk"),ST.flush(),c).toBlob(async b=>{const f=new File([b],"kanaat-hesap.png",{type:"image/png"});
       try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"Kanaat Lokantası"});return}}catch(e){if(e.name==="AbortError")return}
       const a=document.createElement("a");a.href=url;a.download="kanaat-hesap.png";document.body.appendChild(a);a.click();a.remove()});
   });
@@ -1111,6 +1133,8 @@ else if(HASH.startsWith("#o=")){approvedView(decodeURIComponent(HASH.slice(3)))}
 else{
 lang=pickLang();
 render();
+try{if(sessionStorage.getItem("kanaat-open")!=="1"){sessionStorage.setItem("kanaat-open","1");ST.add("open");ST.add("h"+ST.day().h);
+  if(ST.src==="auto")ST.add("auto_"+lang);else if(ST.src==="other")ST.add("other_"+ST.other);else if(ST.src==="saved")ST.add("saved_"+lang);else ST.add("url_"+lang)}}catch(_){ST.add("open")}
 $("cfab").setAttribute("aria-label",CL(CHAT.title));
 let seen=false;try{seen=sessionStorage.getItem("kanaat-chef")==="1"}catch(_){}
 if(!seen&&chefItem()){setTimeout(()=>{chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},1500)}
