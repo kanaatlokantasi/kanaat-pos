@@ -56,11 +56,11 @@ input,select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--li
 </style>
 </head>
 <body>
-<header><h1>Kanaat QR Menü · İstatistik</h1><button id="out" class="hide" type="button">Çıkış</button></header>
+<header><a href="../" style="color:#fff;text-decoration:none;font-size:20px" aria-label="Menüye dön">←</a><h1>Kanaat QR Menü · İstatistik</h1><button id="out" class="hide" type="button">Çıkış</button></header>
 <main>
   <form class="login hide" id="login">
     <h2>Giriş</h2>
-    <input id="em" type="email" autocomplete="username" placeholder="E-posta" value="info@kanaatlokantasi.com.tr">
+    <input id="em" type="email" autocomplete="username" placeholder="E-posta" value="bahadirkargili@gmail.com">
     <input id="pw" type="password" autocomplete="current-password" placeholder="Şifre">
     <div class="err" id="lerr"></div>
     <button class="btn" type="submit">Giriş yap</button>
@@ -72,7 +72,7 @@ input,select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--li
     <div class="dates"><input type="date" id="from"> – <input type="date" id="to"></div>
     <div id="out2"><p class="empty">Yükleniyor…</p></div>
   </section>
-  <p class="ver">Kişisel veri tutulmaz: isim, IP, konum, cihaz bilgisi yok. Sadece günlük toplam sayılar. · 47 · 05.11.2026</p>
+  <p class="ver">Kişisel veri tutulmaz: isim, IP, konum, cihaz bilgisi yok. Sadece günlük toplam sayılar. · 48 · 05.11.2026</p>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -82,7 +82,7 @@ const NAMES={"64f2":"Mercimek Çorbası","jhyt":"Ezogelin Çorbası","60y8":"Ter
 const LN={tr:"Türkçe",en:"İngilizce",ar:"Arapça",ru:"Rusça",es:"İspanyolca",fr:"Fransızca",zh:"Çince",de:"Almanca",ja:"Japonca",ko:"Korece",lv:"Letonca",fi:"Fince",pt:"Portekizce",it:"İtalyanca",nl:"Felemenkçe",pl:"Lehçe",sv:"İsveççe",no:"Norveççe",nb:"Norveççe",da:"Danca",el:"Yunanca",he:"İbranice",fa:"Farsça",hi:"Hintçe",id:"Endonezce",ms:"Malayca",th:"Tayca",vi:"Vietnamca",uk:"Ukraynaca",ro:"Romence",hu:"Macarca",cs:"Çekçe",sk:"Slovakça",bg:"Bulgarca",sr:"Sırpça",hr:"Hırvatça",ka:"Gürcüce",az:"Azerice",kk:"Kazakça",uz:"Özbekçe",et:"Estonca",lt:"Litvanca",sq:"Arnavutça",bs:"Boşnakça",ur:"Urduca",bn:"Bengalce",ta:"Tamilce",tl:"Filipince",ca:"Katalanca",eu:"Baskça",is:"İzlandaca",mk:"Makedonca",sl:"Slovence",hy:"Ermenice",mn:"Moğolca"};
 const FL={l:"🐑 Kuzu",b:"🐄 Dana",c:"🐔 Tavuk",v:"🥕 Vejetaryen",V:"🌱 Vegan",xG:"Glutensiz",xN:"Kuruyemişsiz",xM:"Sütsüz"};
 const QN={today:"Bugün ne önerirsiniz?",first:"İlk kez geliyorum",story:"Hikâyeniz",veg:"Vejetaryen",olive:"Zeytinyağlılar",dessert:"Tatlı",allergy:"Alerji",togo:"Paket / yanıma alma",cater:"Toplu sipariş / catering",calc:"Hesabımı hesapla",hours:"Çalışma saatleri"};
-firebase.initializeApp({apiKey:"AIzaSyAClzgK945RPjPwY7xKTH5f4RzwzfxEI2M",authDomain:"kanaat-pos.firebaseapp.com",projectId:"kanaat-pos",storageBucket:"kanaat-pos.firebasestorage.app",messagingSenderId:"115307541152",appId:"1:115307541152:web:566b27d3cad0008dc4cfc5"});
+firebase.initializeApp({apiKey:"AIzaSyA86Pe-CM-mkAWzJKtNikJFAM-z3LTgtx0",authDomain:"kanaat-qr-menu.firebaseapp.com",projectId:"kanaat-qr-menu",storageBucket:"kanaat-qr-menu.firebasestorage.app",messagingSenderId:"767859552454",appId:"1:767859552454:web:25c3325f1967fc693fe7c7"});
 const auth=firebase.auth(),db=firebase.firestore();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -103,7 +103,7 @@ async function load(){const my=++seq;const f=$("from").value,t=$("to").value;if(
     const snap=await db.collection("menuStats").where(id,">=",f).where(id,"<=",t).get();
     if(my!==seq)return;const days=[];const S={};
     snap.forEach(d=>{const x=d.data();days.push([d.id,x.open||0]);for(const k in x)if(typeof x[k]==="number")S[k]=(S[k]||0)+x[k]});
-    draw(S,days,f,t)}catch(e){$("out2").innerHTML='<p class="err">Veri okunamadı: '+esc(e.message)+'</p>'}}
+    draw(S,days,f,t)}catch(e){$("out2").innerHTML='<p class="err">'+(e.code==="permission-denied"?"Bu hesabın raporu görme izni yok. Firebase kurallarındaki e-posta ile giriş yapın.":"Veri okunamadı: "+esc(e.message))+'</p>'}}
 
 function pre(S,p){const o=[];for(const k in S)if(k.startsWith(p)&&S[k]>0)o.push([k.slice(p.length),S[k]]);return o.sort((a,b)=>b[1]-a[1])}
 function list(rows,label,limit){if(!rows.length)return '<p class="empty">Henüz veri yok.</p>';const mx=rows[0][1]||1;limit=limit||10;
@@ -157,7 +157,7 @@ function draw(S,days,f,t){const g=k=>S[k]||0;
   </div>`;
   $("out2").innerHTML=open||qr||Object.keys(S).length?html:'<p class="empty">Bu tarih aralığında veri yok.</p>';
 }
-auth.onAuthStateChanged(u=>{$("login").classList.toggle("hide",!!u);$("app").classList.toggle("hide",!u);$("out").classList.toggle("hide",!u);if(u)setRange("7")});
+auth.onAuthStateChanged(u=>{try{u?localStorage.setItem("kanaat-rapor","1"):localStorage.removeItem("kanaat-rapor")}catch(_){}$("login").classList.toggle("hide",!!u);$("app").classList.toggle("hide",!u);$("out").classList.toggle("hide",!u);if(u)setRange("7")});
 $("login").onsubmit=async e=>{e.preventDefault();$("lerr").textContent="";try{await auth.signInWithEmailAndPassword($("em").value.trim(),$("pw").value)}catch(err){$("lerr").textContent="Giriş başarısız: "+(err.code||err.message)}};
 $("out").onclick=()=>auth.signOut();
 </script>
