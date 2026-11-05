@@ -309,7 +309,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 49 · 05.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 50 · 05.11.2026</p>
   </div>
 </footer>
 
@@ -638,10 +638,11 @@ const CHEF_UI={title:["Şefin Tavsiyesi","Chef's Recommendation","توصية ا�
 // Pazar=0 … Cumartesi=6
 const CHEF_DAYS=["Zeytinyağlı Enginar","Hünkar Beğendi","Elbasan Tava","Kadınbudu Köfte","Kuzu Haşlama","Tas Kebabı","Kuzu Kaburga Dolması"];
 const CL=a=>a[LI[lang]];
-function chefItem(){const n=CHEF_DAYS[new Date().getDay()];for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
+const CHEF_LATE={4:{h:17,n:"Hünkar Beğendi"}}; // Perşembe 17:00'den sonra Kuzu Haşlama bitmiş olur
+function chefItem(){const t=ST.day(),wd=new Date(t.d+"T12:00:00Z").getUTCDay(),late=CHEF_LATE[wd];const n=late&&+t.h>=late.h?late.n:CHEF_DAYS[wd];for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
 function chefOpen(){
   const it=chefItem();if(!it)return;
-  let wd=new Date().toLocaleDateString(lang==="zh"?"zh-CN":lang,{weekday:"long"});if(lang==="lv")wd=wd.toLocaleLowerCase("lv");$("ctoday").textContent=CL(CHEF_UI.today).replace("{d}",wd);$("ctitle").textContent=CL(CHEF_UI.title);
+  let wd=new Date(ST.day().d+"T12:00:00Z").toLocaleDateString(lang==="zh"?"zh-CN":lang,{weekday:"long",timeZone:"UTC"});if(lang==="lv")wd=wd.toLocaleLowerCase("lv");$("ctoday").textContent=CL(CHEF_UI.today).replace("{d}",wd);$("ctitle").textContent=CL(CHEF_UI.title);
   $("cx").setAttribute("aria-label",CL(CHEF_UI.close));
   const d=$("cdish");
   if(it.img){d.classList.remove("hide");d.dataset.r=REMOTE+"images/"+encodeURIComponent(it.img);d.onerror=()=>{if(d.dataset.r){d.src=d.dataset.r;d.dataset.r=""}else d.classList.add("hide")};d.src="img/"+it.loc}else d.classList.add("hide");
