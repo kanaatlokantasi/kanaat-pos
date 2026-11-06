@@ -328,7 +328,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 66 · 06.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 67 · 06.11.2026</p>
   </div>
 </footer>
 
@@ -653,7 +653,7 @@ $("menu").addEventListener("click",e=>{
   $("pimg").src=b.querySelector("img").currentSrc||b.querySelector("img").src;
   $("pname").textContent=lang==="tr"?it.tr:it.t[LI[lang]-1];
   $("pdesc").textContent=lang==="tr"?(it.trn||""):it.tr;
-  const ps=$("psay");if(CAN_SAY){ps.dataset.say=it.tr;ps.setAttribute("aria-label","🔊 "+it.tr);ps.classList.remove("hide")}
+  const ps=$("psay");ps.classList.add("hide");if(CAN_SAY&&lang!=="tr"){ps.dataset.say=it.tr;ps.setAttribute("aria-label","🔊 "+it.tr);ps.classList.remove("hide")}
   $("photov").classList.add("open");ST.add("photo_"+it.c);
 });
 $("photov").addEventListener("click",()=>$("photov").classList.remove("open"));
@@ -685,7 +685,7 @@ function chefOpen(){
   const d=$("cdish");
   if(it.img){d.classList.remove("hide");d.dataset.r=REMOTE+"images/"+encodeURIComponent(it.img);d.onerror=()=>{if(d.dataset.r){d.src=d.dataset.r;d.dataset.r=""}else d.classList.add("hide")};d.src="img/"+it.loc}else d.classList.add("hide");
   const notes=itemDesc(it);
-  $("cbody").innerHTML=`<div class="row crow1"><h3 class="name">${esc(lang==="tr"?it.tr:it.t[LI[lang]-1])}</h3>${CAN_SAY?`<button class="say csay" type="button" id="csay" aria-label="🔊"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18.3 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>`:""}<span class="price" dir="ltr">${price(it.p)}</span></div>${lang!=="tr"?`<p class="trname" lang="tr" dir="ltr">${esc(it.tr)}</p>`:""}`+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
+  $("cbody").innerHTML=`<div class="row crow1"><h3 class="name">${esc(lang==="tr"?it.tr:it.t[LI[lang]-1])}</h3>${CAN_SAY&&lang!=="tr"?`<button class="say csay" type="button" id="csay" aria-label="🔊"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18.3 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>`:""}<span class="price" dir="ltr">${price(it.p)}</span></div>${lang!=="tr"?`<p class="trname" lang="tr" dir="ltr">${esc(it.tr)}</p>`:""}`+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
     `<button class="cbtn" id="cshow" type="button">${esc(CL(CHEF_UI.show))}</button><p class="cfine">${esc(CL(AVAIL_UI.chef))}</p>`;
   $("cshow").onclick=()=>{ST.add("chefGo");chefClose();fsel=null;$("q").value="";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
     jumpTo(document.querySelector(`.item[data-id="${it.id}"]`))};
