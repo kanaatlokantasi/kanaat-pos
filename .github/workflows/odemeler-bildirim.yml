@@ -9,6 +9,10 @@ on:
         description: 'Kayıtlı bütün telefonlara test bildirimi gönder'
         type: boolean
         default: true
+      sadece_tutar:
+        description: 'Yalnızca tutar hatırlatmasını gönder'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency: odemeler-bildirim
@@ -25,3 +29,4 @@ jobs:
         env:
           FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
           TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.test && '1' || '' }}
+          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.sadece_tutar && 'tutar' || '' }}

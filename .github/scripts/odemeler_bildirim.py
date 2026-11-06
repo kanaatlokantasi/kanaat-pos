@@ -95,6 +95,7 @@ def main():
     tokens = [(t, d) for t, d in docs("tokens")]
 
     msgs = []
+    reminder_info = {"reminder": None, "uids": set(), "count": 0}
     make = None  # telefona özel bildirim (olay modunda: kişinin kendi yaptığı değişiklik ona gönderilmez)
     if mode == "olay" and not test:
         # ---- ödendi işaretlenen ve yeni eklenen ödemeler (her 5 dakikada bir) ----
@@ -195,9 +196,14 @@ def main():
         lab = lambda t: TUR.get(t) or custom.get(t) or t
         open_p = [p for i, p in pays.items() if i not in SKIP_DOCS and not p.get("paid")]
         due = [p for p in open_p if p.get("vade") == tomorrow]
-        # tutarı girilmemiş, son günü 1-2 gün sonra olan ödemeler (tutar hatırlatması açık kişilere)
-        missing = sorted([p for p in open_p if p.get("tutar") is None and tomorrow <= (p.get("vade") or "") <= last_rem],
-                         key=lambda p: p.get("vade"))
+        # tutarı girilmemiş ödemeler (tutar hatırlatması açık kişilere): son günü 2 gün içinde olanlar,
+        # tarihi geçmiş olanlar ve ödendi işaretlenip tutarı boş kalanlar
+        all_p = [p for i, p in pays.items() if i not in SKIP_DOCS]
+        missing = sorted([p for p in all_p if p.get("tutar") is None
+                          and ((p.get("vade") and p.get("vade") <= last_rem) or (p.get("paid") and not p.get("vade")))],
+                         key=lambda p: p.get("vade") or "")
+        if mode == "tutar":
+            due = []  # yalnızca tutar hatırlatması
         remind_uids = {uid for uid, u in users_d.items() if u.get("tutarHatirlat")}
         print(f"Yarın son günü olan bekleyen ödeme: {len(due)} · tutarı eksik ödeme: {len(missing)} · hatırlatılacak kişi: {len(remind_uids)}")
         general = None
@@ -212,16 +218,27 @@ def main():
             general = (t, b[:227] + "…" if len(b) > 230 else b, APP_URL + "?gun=" + tomorrow, "odeme-" + tomorrow)
         reminder = None
         if missing and remind_uids:
+            def one(p):
+                w = f"son ödeme {ddmm(p.get('vade'))}" if p.get("vade") else ""
+                if p.get("paid"):
+                    w = (w + " · " if w else "") + "ödendi, tutar boş"
+                elif p.get("vade") and p.get("vade") < today_d.isoformat():
+                    w += " (tarihi geçti)"
+                return w
             if len(missing) == 1:
                 p = missing[0]
                 t = f"Tutar girilmedi: {lab(p.get('tur'))}"
-                b = " · ".join(x for x in [p.get("acik"), f"son ödeme {ddmm(p.get('vade'))}", "Tutarı girmeyi unutmayın."] if x)
+                b = " · ".join(x for x in [p.get("acik"), one(p), "Tutarı girmeyi unutmayın."] if x)
+                u = APP_URL + ("?gun=" + p["vade"] if p.get("vade") else "")
             else:
                 t = f"{len(missing)} ödemenin tutarı girilmedi"
-                b = "; ".join(f"{lab(p.get('tur'))} · son ödeme {ddmm(p.get('vade'))}" for p in missing) + ". Tutarları girmeyi unutmayın."
-            reminder = (t, b[:227] + "…" if len(b) > 230 else b, APP_URL + "?gun=" + missing[0]["vade"], "tutar-" + today_d.isoformat())
+                b = "; ".join(f"{lab(p.get('tur'))} · {one(p)}" for p in missing) + ". Tutarları girmeyi unutmayın."
+                u = APP_URL
+            reminder = (t, b[:227] + "…" if len(b) > 230 else b, u, "tutar-" + today_d.isoformat())
         if not general and not reminder:
             return 0
+
+        reminder_info.update(reminder=reminder, uids=remind_uids, count=len(missing))
 
         def make(d):
             out = [general] if general else []
@@ -231,6 +248,7 @@ def main():
 
     sent = removed = failed = 0
     pushed_msgs = set()
+    rem_sent = {}
     for tok, d in tokens:
         if d.get("uid") not in users:  # erişimi kaldırılmış kişi
             s.delete(f"{base}/tokens/{tok}", timeout=30)
@@ -248,6 +266,8 @@ def main():
           r = s.post(f"https://fcm.googleapis.com/v1/projects/{pid}/messages:send", json=msg, timeout=30)
           if r.ok:
               sent += 1
+              if tag.startswith("tutar-"):
+                  rem_sent[d.get("uid")] = rem_sent.get(d.get("uid"), 0) + 1
               if mode == "olay":
                   for e in events:
                       if e[0] == "msj" and e[1].get("to") in ("*", d.get("uid")) and e[3] != d.get("uid"):
@@ -272,6 +292,17 @@ def main():
             if m["_id"] in pushed_msgs:
                 s.patch(f"{base}/msgs/{m['_id']}", params={"updateMask.fieldPaths": "pushedAt"}, timeout=30,
                         json={"fields": {"pushedAt": {"timestampValue": stamp_ts}}})
+    # tutar hatırlatmasının kime gidip gitmediğini kaydet (yönetici Ayarlar'da görür)
+    if mode not in ("olay",) and not test and reminder_info["reminder"]:
+        now_ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        for uid in reminder_info["uids"]:
+            devs = sum(1 for _, d in tokens if d.get("uid") == uid)
+            ok = rem_sent.get(uid, 0)
+            s.post(f"{base}/hatirlat", timeout=30, json={"fields": {
+                "to": {"stringValue": uid}, "toName": {"stringValue": (users_d.get(uid) or {}).get("name", "")},
+                "at": {"timestampValue": now_ts}, "count": {"integerValue": str(reminder_info["count"])},
+                "devices": {"integerValue": str(devs)}, "sent": {"integerValue": str(ok)}}})
+            print(f"Tutar hatırlatması: {ok}/{devs} cihaza gönderildi")
     print(f"Gönderilen: {sent} · geçersiz olduğu için silinen: {removed} · hata: {failed} · kayıtlı telefon: {len(tokens)}")
     return 1 if failed and not sent else 0
 
