@@ -72,7 +72,7 @@ input,select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--li
     <div class="dates"><input type="date" id="from"> – <input type="date" id="to"></div>
     <div id="out2"><p class="empty">Yükleniyor…</p></div>
   </section>
-  <p class="ver">Kişisel veri tutulmaz: isim, telefon, IP, konum, cihaz bilgisi yok. Sayaçlar günlük toplamdır; görüşlerde sadece puan, yorum ve dil saklanır. · 63 · 06.11.2026</p>
+  <p class="ver">Kişisel veri tutulmaz: isim, telefon, IP, konum, cihaz bilgisi yok. Sayaçlar günlük toplamdır; görüşlerde sadece puan, yorum ve dil saklanır. · 64 · 06.11.2026</p>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -151,7 +151,7 @@ function draw(S,days,f,t){window._S=S;const g=k=>S[k]||0;
   ${card("En çok bakılan fotoğraflar","",list(pre(S,"photo_"),dish,12))}
   ${card("Filtreler","",list(pre(S,"filter_"),k=>FL[k]||k))}
   ${card("Arama",`${nf(g("search"))} arama · bulunamayanlar aşağıda`,list(pre(S,"miss_"),null,12))}
-  ${card("Şefin önerisi","",kv([["Gösterildi",nf(g("chefShow"))],["“Menüde göster” tıklandı",nf(g("chefGo"))+" · "+pct(g("chefGo"),g("chefShow"))]]))}
+  ${card("Şefin önerisi","",kv([["Gösterildi",nf(g("chefShow"))],["“Menüde göster” tıklandı",nf(g("chefGo"))+" · "+pct(g("chefGo"),g("chefShow"))],["🔊 Dinlendi",nf(g("chefSay"))]]))}
   ${card("Şefe sor",`${nf(g("chat"))} kez açıldı`,list(pre(S,"q_"),k=>QN[k]||k,12))}
   ${card("Hesap akışı","",kv([["Hesabımı hesapla açıldı",nf(g("calc"))],["İçecek hatırlatması",nf(g("drinkStep"))],["Hatırlatmadan sonra eklenen içecek",nf(g("drinkAdd"))],["Garsona gösterilen hesap",nf(qr)],["Garson onayladı",nf(g("wOk"))],["Onaylı hesap misafirde açıldı",nf(g("okOpen"))],["Taslak kaydedildi",nf(g("saveDraft"))],["Onaylı hesap kaydedildi",nf(g("saveOk"))]]))}
   ${card("Bahşiş ve bölüşme","",kv([["Bahşişsiz",nf(g("tip_none"))],["%5",nf(g("tip_p5"))],["%10",nf(g("tip_p10"))],["%15",nf(g("tip_p15"))],["Tutar girilen",nf(g("tip_m"))],["Ortalama bahşiş",tipN?tl(g("tipSum")/tipN):"–"],["Hesabı bölen",nf(g("split"))],["Ortalama kişi",g("split")?(g("splitPeople")/g("split")).toLocaleString("tr-TR",{maximumFractionDigits:1}):"–"]]))}

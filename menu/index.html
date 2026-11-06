@@ -122,6 +122,11 @@ html[lang=ar] .chead b,html[lang=zh] .chead b,html[lang=ja] .chead b,html[lang=k
 .cdish{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--chip)}
 .cbody{padding:14px 16px 16px}
 .cbody .row{margin-bottom:2px}
+.crow1{display:grid!important;grid-template-columns:1fr auto 1fr;align-items:center!important;gap:8px}
+.crow1 .name{min-width:0}
+.crow1 .price{justify-self:end}
+.csay{width:56px;height:56px;flex:none;animation:sayPulse 1.2s ease-in-out infinite}
+.csay.on{animation:none}
 .cbtn{display:block;width:100%;margin-top:14px;border:0;border-radius:12px;background:var(--green);color:#fff;font:600 16px/1 inherit;padding:14px;cursor:pointer}
 @media (prefers-color-scheme:dark){.cbtn{color:#10241B}}
 .cfab{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom));inset-inline-end:16px;z-index:15;width:58px;height:58px;border-radius:50%;padding:0;border:3px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,.25);overflow:hidden;cursor:pointer;background:#fff}
@@ -319,7 +324,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 63 · 06.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 64 · 06.11.2026</p>
   </div>
 </footer>
 
@@ -657,17 +662,29 @@ const CHEF_DAYS=["Zeytinyağlı Enginar","Hünkar Beğendi","Elbasan Tava","Kad�
 const CL=a=>a[LI[lang]];
 const CHEF_LATE={4:{h:17,n:"Hünkar Beğendi"}}; // Perşembe 17:00'den sonra Kuzu Haşlama bitmiş olur
 function chefItem(){const t=ST.day(),wd=new Date(t.d+"T12:00:00Z").getUTCDay(),late=CHEF_LATE[wd];const n=late&&+t.h>=late.h?late.n:CHEF_DAYS[wd];for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
+const CHEF_REC=["Bu {d} şefin tavsiyesi", "This {d}, the chef recommends", "توصية الشيف ليوم {d}", "Рекомендация шефа на {d}", "Este {d}, el chef recomienda", "Ce {d}, le chef vous recommande", "本{d}主厨推荐", "Empfehlung des Küchenchefs für diesen {d}", "今週{d}のシェフのおすすめ", "이번 {d} 셰프 추천", "Šefpavāra ieteikums {d}", "Keittiömestarin suositus {d}", "Sugestão do chef para {d}", "Il consiglio dello chef per {d}"];
+const CHEF_WD={"ru": ["воскресенье", "понедельник", "вторник", "среду", "четверг", "пятницу", "субботу"], "lv": ["svētdienā", "pirmdienā", "otrdienā", "trešdienā", "ceturtdienā", "piektdienā", "sestdienā"], "fi": ["sunnuntaina", "maanantaina", "tiistaina", "keskiviikkona", "torstaina", "perjantaina", "lauantaina"]};
+const VOICE_LANG={tr:"tr-TR",en:"en-GB",ar:"ar-SA",ru:"ru-RU",es:"es-ES",fr:"fr-FR",zh:"zh-CN",de:"de-DE",ja:"ja-JP",ko:"ko-KR",lv:"lv-LV",fi:"fi-FI",pt:"pt-PT",it:"it-IT"};
+function chefLine(){const t=new Date(ST.day().d+"T12:00:00Z");let wd=CHEF_WD[lang]?CHEF_WD[lang][t.getUTCDay()]:t.toLocaleDateString(lang==="zh"?"zh-CN":lang,{weekday:"long",timeZone:"UTC"});return CL(CHEF_REC).replace("{d}",wd)}
+function sayChef(it,btn){try{const vs=speechSynthesis.getVoices(),q=[];
+  const mk=(t,l)=>{const u=new SpeechSynthesisUtterance(t);u.lang=VOICE_LANG[l];u.rate=l==="tr"?.8:.9;const v=vs.find(v=>v.lang&&v.lang.toLowerCase().startsWith(l));if(v)u.voice=v;return u};
+  const hasL=!vs.length||vs.some(v=>v.lang&&v.lang.toLowerCase().startsWith(lang));
+  if(lang==="tr")q.push(mk(chefLine()+": "+it.tr,"tr"));
+  else{if(hasL)q.push(mk(chefLine()+": "+it.t[LI[lang]-1]+".",lang));q.push(mk(it.tr,"tr"))}
+  speechSynthesis.cancel();btn.classList.add("on");const last=q[q.length-1];last.onend=last.onerror=()=>btn.classList.remove("on");
+  q.forEach(u=>speechSynthesis.speak(u));ST.add("chefSay")}catch(_){}}
 function chefOpen(){
   const it=chefItem();if(!it)return;
-  let wd=new Date(ST.day().d+"T12:00:00Z").toLocaleDateString(lang==="zh"?"zh-CN":lang,{weekday:"long",timeZone:"UTC"});if(lang==="lv")wd=wd.toLocaleLowerCase("lv");$("ctoday").textContent=CL(CHEF_UI.today).replace("{d}",wd);$("ctitle").textContent=CL(CHEF_UI.title);
+  let wd=new Date(ST.day().d+"T12:00:00Z").toLocaleDateString(lang==="zh"?"zh-CN":lang,{weekday:"long",timeZone:"UTC"});if(lang==="lv")wd=wd.toLocaleLowerCase("lv");$("ctoday").textContent="Kanaat Lokantası";$("ctitle").textContent=chefLine();
   $("cx").setAttribute("aria-label",CL(CHEF_UI.close));
   const d=$("cdish");
   if(it.img){d.classList.remove("hide");d.dataset.r=REMOTE+"images/"+encodeURIComponent(it.img);d.onerror=()=>{if(d.dataset.r){d.src=d.dataset.r;d.dataset.r=""}else d.classList.add("hide")};d.src="img/"+it.loc}else d.classList.add("hide");
   const notes=itemDesc(it);
-  $("cbody").innerHTML=headHTML(it)+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
+  $("cbody").innerHTML=`<div class="row crow1"><h3 class="name">${esc(lang==="tr"?it.tr:it.t[LI[lang]-1])}</h3>${CAN_SAY?`<button class="say csay" type="button" id="csay" aria-label="🔊"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18.3 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>`:""}<span class="price" dir="ltr">${price(it.p)}</span></div>${lang!=="tr"?`<p class="trname" lang="tr" dir="ltr">${esc(it.tr)}</p>`:""}`+(notes.length?`<p class="sub">${notes.map(esc).join(" · ")}</p>`:"")+tags(it)+
     `<button class="cbtn" id="cshow" type="button">${esc(CL(CHEF_UI.show))}</button><p class="cfine">${esc(CL(AVAIL_UI.chef))}</p>`;
   $("cshow").onclick=()=>{ST.add("chefGo");chefClose();fsel=null;$("q").value="";document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
     jumpTo(document.querySelector(`.item[data-id="${it.id}"]`))};
+  if($("csay"))$("csay").onclick=e=>{e.stopPropagation();sayChef(it,$("csay"))};
   $("chef").classList.add("open");ST.add("chefShow");
 }
 function availBlink(){document.querySelectorAll(".avail").forEach(e=>{e.classList.remove("blink");void e.offsetWidth;e.classList.add("blink")})}
