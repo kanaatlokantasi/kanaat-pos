@@ -313,7 +313,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 58 · 06.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 59 · 06.11.2026</p>
   </div>
 </footer>
 
@@ -620,7 +620,7 @@ $("langbtn").addEventListener("click",()=>$("langov").classList.add("open"));
 $("langov").addEventListener("click",e=>{
   const b=e.target.closest("button[data-lang]");
   if(b){lang=b.dataset.lang;ST.add("pick_"+lang);try{localStorage.setItem("kanaat-menu-lang",lang)}catch(_){ }
-    const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render();chefClose();setTimeout(()=>{if(chefItem())chefOpen();else availBlink()},350)}
+    const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render();chefClose();availBlink();clearTimeout(window._chefT);window._chefT=setTimeout(()=>{if(chefItem()&&!document.querySelector(".chat.open,.calc.open,.cart.open"))chefOpen()},5300)}
   if(b||e.target===e.currentTarget)$("langov").classList.remove("open");
 });
 $("menu").addEventListener("click",e=>{
@@ -658,7 +658,7 @@ function chefOpen(){
   $("chef").classList.add("open");ST.add("chefShow");
 }
 function availBlink(){document.querySelectorAll(".avail").forEach(e=>{e.classList.remove("blink");void e.offsetWidth;e.classList.add("blink")})}
-function chefClose(){const was=$("chef").classList.contains("open");$("chef").classList.remove("open");if(was)setTimeout(availBlink,250)}
+function chefClose(){$("chef").classList.remove("open")}
 $("cx").addEventListener("click",chefClose);
 $("chef").addEventListener("click",e=>{if(e.target===e.currentTarget)chefClose()});
 $("cfab").addEventListener("click",()=>chatOpen());
@@ -1185,7 +1185,7 @@ try{if(sessionStorage.getItem("kanaat-open")!=="1"){sessionStorage.setItem("kana
   if(ST.src==="auto")ST.add("auto_"+lang);else if(ST.src==="other")ST.add("other_"+ST.other);else if(ST.src==="saved")ST.add("saved_"+lang);else ST.add("url_"+lang)}}catch(_){ST.add("open")}
 $("cfab").setAttribute("aria-label",CL(CHAT.title));
 let seen=false;try{seen=sessionStorage.getItem("kanaat-chef")==="1"}catch(_){}
-if(!seen&&chefItem()){setTimeout(()=>{chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},1500)}else availBlink();
+availBlink();if(!seen&&chefItem()){window._chefT=setTimeout(()=>{if(document.querySelector(".chat.open,.calc.open,.cart.open"))return;chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},5300)}
 }
 </script>
 </body>
