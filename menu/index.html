@@ -68,8 +68,9 @@ html[dir=rtl] section.cat h2{font-family:"Noto Sans Arabic",serif}
 .price{flex:none;font-weight:600;font-size:15.5px;white-space:nowrap}
 .desc{margin:3px 0 0;font-size:14px}
 .name.tl{font:600 16px/1.3 inherit}
-.say{border:0;background:var(--green-soft);color:var(--green);border-radius:999px;font-size:13px;line-height:1;padding:4px 7px;margin-inline-start:6px;vertical-align:1px;cursor:pointer;font-style:normal}
-.say.on{background:var(--green);color:#fff}
+.say{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:2px solid #1D5A46;background:#E3EEE8;color:#1D5A46;border-radius:50%;font-size:18px;line-height:1;padding:0;margin-inline-start:8px;vertical-align:middle;cursor:pointer;font-style:normal;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.say.on{background:#1D5A46;color:#fff;transform:scale(1.08)}
+@media (prefers-color-scheme:dark){.say{background:#1F3229;border-color:#7FC2A4;color:#7FC2A4}}
 .trname{margin:2px 0 0;color:var(--muted);font:600 13.5px/1.3 "Noto Serif",Georgia,serif;font-style:italic}
 html[dir=rtl] .trname{text-align:right}
 .sub{margin:3px 0 0;color:var(--muted);font-size:13px}
@@ -315,7 +316,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 60 · 06.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 61 · 06.11.2026</p>
   </div>
 </footer>
 
