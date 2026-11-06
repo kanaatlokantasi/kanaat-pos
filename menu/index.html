@@ -207,7 +207,8 @@ html[lang=ar] .ctitle,html[lang=zh] .ctitle,html[lang=ja] .ctitle,html[lang=ko] 
 .tipbox .cnote{margin-top:8px}
 .csub{display:flex;justify-content:space-between;padding:6px 0 0;color:var(--muted)}
 .cart .crow .addbox{flex-direction:row;align-items:center}
-.avail{margin:12px 0 2px;background:#1D5A46;color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;font-weight:600;line-height:1.4;animation:availBlink 1s ease-in-out 5}
+.avail{margin:12px 0 2px;background:#1D5A46;color:#fff;border-radius:10px;padding:10px 12px;font-size:15px;font-weight:600;line-height:1.4}
+.avail.blink{animation:availBlink 1s ease-in-out 5}
 @keyframes availBlink{0%,100%{background:#1D5A46;box-shadow:0 0 0 0 rgba(29,90,70,0)}50%{background:#2E8A6A;box-shadow:0 0 0 5px rgba(29,90,70,.35)}}
 @media (prefers-reduced-motion:reduce){.avail{animation:none}}
 @media (prefers-color-scheme:dark){.avail{background:#12392C}}
@@ -312,7 +313,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 56 · 06.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 57 · 06.11.2026</p>
   </div>
 </footer>
 
@@ -619,7 +620,7 @@ $("langbtn").addEventListener("click",()=>$("langov").classList.add("open"));
 $("langov").addEventListener("click",e=>{
   const b=e.target.closest("button[data-lang]");
   if(b){lang=b.dataset.lang;ST.add("pick_"+lang);try{localStorage.setItem("kanaat-menu-lang",lang)}catch(_){ }
-    const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render();chefClose();setTimeout(()=>{if(chefItem())chefOpen()},350)}
+    const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render();chefClose();setTimeout(()=>{if(chefItem())chefOpen();else availBlink()},350)}
   if(b||e.target===e.currentTarget)$("langov").classList.remove("open");
 });
 $("menu").addEventListener("click",e=>{
@@ -656,7 +657,8 @@ function chefOpen(){
     jumpTo(document.querySelector(`.item[data-id="${it.id}"]`))};
   $("chef").classList.add("open");ST.add("chefShow");
 }
-function chefClose(){$("chef").classList.remove("open")}
+function availBlink(){document.querySelectorAll(".avail").forEach(e=>{e.classList.remove("blink");void e.offsetWidth;e.classList.add("blink")})}
+function chefClose(){const was=$("chef").classList.contains("open");$("chef").classList.remove("open");if(was)setTimeout(availBlink,250)}
 $("cx").addEventListener("click",chefClose);
 $("chef").addEventListener("click",e=>{if(e.target===e.currentTarget)chefClose()});
 $("cfab").addEventListener("click",()=>chatOpen());
@@ -1020,7 +1022,7 @@ function calcRender(){
   for(const c of MENU){const its=c.items.filter(it=>it.p!=null);if(!its.length)continue;
     nav+=`<a href="#k-${c.id}" data-k="${c.id}">${esc(L(CAT[c.id]))}</a>`;
     html+=`<div class="cgrp" id="k-${c.id}"><h3 class="ccat">${esc(L(CAT[c.id]))}</h3>`+its.map(it=>`<div class="crow" data-id="${it.id}"><div class="cn"><b>${esc(nameIn(it))}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox"></div></div>`).join("")+`</div>`}
-  $("ccats").innerHTML=nav;$("calclist").innerHTML=`<p class="avail">ℹ️ ${esc(CL(AVAIL_UI.menu))}</p>`+html;$("cq").value="";
+  $("ccats").innerHTML=nav;$("calclist").innerHTML=`<p class="avail blink">ℹ️ ${esc(CL(AVAIL_UI.menu))}</p>`+html;$("cq").value="";
   cartPaint();
 }
 function calcFilter(){const q=norm($("cq").value.trim());
@@ -1183,7 +1185,7 @@ try{if(sessionStorage.getItem("kanaat-open")!=="1"){sessionStorage.setItem("kana
   if(ST.src==="auto")ST.add("auto_"+lang);else if(ST.src==="other")ST.add("other_"+ST.other);else if(ST.src==="saved")ST.add("saved_"+lang);else ST.add("url_"+lang)}}catch(_){ST.add("open")}
 $("cfab").setAttribute("aria-label",CL(CHAT.title));
 let seen=false;try{seen=sessionStorage.getItem("kanaat-chef")==="1"}catch(_){}
-if(!seen&&chefItem()){setTimeout(()=>{chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},1500)}
+if(!seen&&chefItem()){setTimeout(()=>{chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},1500)}else availBlink();
 }
 </script>
 </body>
