@@ -18,6 +18,7 @@ cevizli-samsa-tatlisi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-
 ciftlik-kebabi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/ciftlik-kebabi.jpg
 coban-salata.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/coban-salata.jpg
 cola-sise-550x550.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/COLA%20%C5%9E%C4%B0%C5%9EE-550x550.jpg
+comlek-kebabi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/comlek-kebabi.jpg
 dalyan-kofte-edit-kare.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/dalyan-k%C3%B6fte-edit-kare.jpeg
 deva-300-ml-ayran-1-1959.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/deva-300-ml-ayran-1-1959.jpg
 ekmek-kadayifi-kaymakli.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/ekmek-kadayifi-kaymakli.jpg
