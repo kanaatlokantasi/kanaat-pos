@@ -68,9 +68,11 @@ html[dir=rtl] section.cat h2{font-family:"Noto Sans Arabic",serif}
 .price{flex:none;font-weight:600;font-size:15.5px;white-space:nowrap}
 .desc{margin:3px 0 0;font-size:14px}
 .name.tl{font:600 16px/1.3 inherit}
-.say{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:2px solid #1D5A46;background:#E3EEE8;color:#1D5A46;border-radius:50%;font-size:18px;line-height:1;padding:0;margin-inline-start:8px;vertical-align:middle;cursor:pointer;font-style:normal;box-shadow:0 1px 3px rgba(0,0,0,.18)}
-.say.on{background:#1D5A46;color:#fff;transform:scale(1.08)}
-@media (prefers-color-scheme:dark){.say{background:#1F3229;border-color:#7FC2A4;color:#7FC2A4}}
+.say{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;background:#1D5A46;color:#fff;border-radius:50%;font-size:22px;line-height:1;padding:0;margin-inline-start:8px;vertical-align:middle;cursor:pointer;font-style:normal;box-shadow:0 2px 6px rgba(29,90,70,.45);animation:sayPulse 1.2s ease-in-out 4}
+.say.on{background:#E8731F;transform:scale(1.1);animation:none}
+@keyframes sayPulse{0%,100%{transform:scale(1);box-shadow:0 2px 6px rgba(29,90,70,.45)}50%{transform:scale(1.14);box-shadow:0 0 0 7px rgba(29,90,70,.22)}}
+@media (prefers-reduced-motion:reduce){.say{animation:none}}
+@media (prefers-color-scheme:dark){.say{background:#2E8A6A}}
 .trname{margin:2px 0 0;color:var(--muted);font:600 13.5px/1.3 "Noto Serif",Georgia,serif;font-style:italic}
 html[dir=rtl] .trname{text-align:right}
 .sub{margin:3px 0 0;color:var(--muted);font-size:13px}
@@ -316,7 +318,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 61 · 06.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 62 · 06.11.2026</p>
   </div>
 </footer>
 
@@ -535,7 +537,7 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
 function headHTML(it){
   const pr=`<span class="price" dir="ltr">${price(it.p)}</span>`;
   if(lang==="tr")return `<div class="row"><h3 class="name" lang="tr">${esc(it.tr)}</h3>${pr}</div>`;
-  return `<div class="row"><h3 class="name tl">${esc(it.t[LI[lang]-1])}</h3>${pr}</div><p class="trname" lang="tr" dir="ltr">${esc(it.tr)}${CAN_SAY?`<button class="say" type="button" data-say="${esc(it.tr)}" aria-label="🔊 ${esc(it.tr)}">🔊</button>`:""}</p>`;
+  return `<div class="row"><h3 class="name tl">${esc(it.t[LI[lang]-1])}</h3>${pr}</div><p class="trname" lang="tr" dir="ltr">${esc(it.tr)}${CAN_SAY?`<button class="say" type="button" data-say="${esc(it.tr)}" aria-label="🔊 ${esc(it.tr)}"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18.3 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>`:""}</p>`;
 }
 function itemDesc(it){
   const parts=[];
