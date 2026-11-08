@@ -254,6 +254,22 @@ footer{padding-block:30px 90px;color:var(--muted);font-size:13px}
 .lb-view.pdfframe iframe{width:100%;height:100%;border:0;background:#fff}
 .pdfbar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:#0b0e0d}
 
+/* zoomable viewers */
+.lb-view{touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+.lb-view.zoomed{display:block;place-items:initial}
+.lb-view.pdf .pdfpage{width:calc((100% - 0px) * var(--z,1));max-width:none}
+.lb-view.pdf:not(.zoomed) .pdfpage{max-width:1100px}
+.lb-view.pdf.zoomed{text-align:left}
+.lb-view.pdf.zoomed .pdfpage{margin:0}
+.lb-view.pdf.zoomed .pgno{text-align:left}
+.zbar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:2;display:flex;align-items:center;gap:2px;background:rgba(20,26,23,.92);border:1px solid #3a443f;border-radius:999px;padding:4px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.zbar button{background:transparent;border:0;color:#fff;font:600 15px/1 var(--f-ui);min-width:44px;height:40px;border-radius:999px;padding:0 12px}
+.zbar button:active{background:#2c3531}
+.zbar [data-z="in"],.zbar [data-z="out"]{font-size:22px}
+.zpct{color:#c9d2cd;font:600 13px/1 var(--f-mono);min-width:48px;text-align:center}
+.lb{position:fixed}
+.lb-view.pdf{padding-bottom:90px}
+
 </style>
 </head>
 <body>
@@ -429,7 +445,7 @@ function render(){
   document.body.classList.toggle("placing",!!placing);
   spy();
 }
-function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 8</div></footer>`}
+function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 9</div></footer>`}
 function countByType(){const st=META.stations||[];return Object.keys(TYPES).map(t=>[t,st.filter(s=>s.type===t).length]).filter(x=>x[1]).map(([t,n])=>`${n} ${TYPES[t].kisa}`).join(" · ")}
 function stationsSorted(){const o=Object.keys(TYPES);return (META.stations||[]).slice().sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)||(parseInt(a.no)||0)-(parseInt(b.no)||0))}
 function popHtml(){
@@ -543,24 +559,56 @@ function viewer(title,extra){
   document.body.appendChild(lb);const v={el:lb};viewers.push(v);
   try{history.pushState({hkViewer:viewers.length},"")}catch(e){}
   lb.addEventListener("click",ev=>{const b=ev.target.closest("[data-lb]");if(!b)return;
-    if(b.dataset.lb==="back"){if(history.state&&history.state.hkViewer)history.back();else closeTopViewer()}
-    else if(b.dataset.lb==="zoom"){const z=lb.querySelector(".lb-view").classList.toggle("zoom");b.textContent=z?"Küçült":"Yakınlaştır"}});
+    if(b.dataset.lb==="back"){if(history.state&&history.state.hkViewer)history.back();else closeTopViewer()}});
   return v}
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&viewers.length){if(history.state&&history.state.hkViewer)history.back();else closeTopViewer()}});
 const setTitle=(v,t)=>{v.el.querySelector(".lb-title").textContent=t};
 const viewBody=v=>v.el.querySelector(".lb-view");
-function showImage(url,title,extra){const v=viewer(title,(extra||"")+`<button class="btn sm" data-lb="zoom">Yakınlaştır</button>`);
-  viewBody(v).innerHTML=`<img alt="">`;const img=viewBody(v).querySelector("img");img.src=url;img.alt=title;return v}
+function showImage(url,title,extra){const v=viewer(title,extra||"");
+  viewBody(v).innerHTML=`<img alt="">`;const img=viewBody(v).querySelector("img");img.src=url;img.alt=title;addZoom(v,"img");return v}
+/* zoom: − / Sığdır / + buttons, two-finger pinch and double tap. 1 = fit to screen. */
+function addZoom(v,kind){
+  const body=viewBody(v);let z=1,fitW=0;
+  const bar=document.createElement("div");bar.className="zbar";
+  bar.innerHTML=`<button type="button" data-z="out" aria-label="Uzaklaştır">−</button><button type="button" data-z="fit">Sığdır</button><span class="zpct" aria-live="polite">100%</span><button type="button" data-z="in" aria-label="Yakınlaştır">+</button>`;
+  v.el.appendChild(bar);
+  const img=kind==="img"?body.querySelector("img"):null;
+  function apply(nz,px,py){
+    nz=Math.max(1,Math.min(6,nz));const r=body.getBoundingClientRect();
+    if(px==null)px=r.width/2;if(py==null)py=r.height/2;
+    if(img&&z===1){fitW=img.getBoundingClientRect().width||r.width}
+    const fx=(body.scrollLeft+px)/z,fy=(body.scrollTop+py)/z;
+    z=nz;body.classList.toggle("zoomed",z>1.001);
+    if(img){if(z>1.001){img.style.maxWidth="none";img.style.maxHeight="none";img.style.width=Math.round(fitW*z)+"px"}else{img.style.width="";img.style.maxWidth="";img.style.maxHeight=""}}
+    else body.style.setProperty("--z",z);
+    body.scrollLeft=fx*z-px;body.scrollTop=fy*z-py;
+    bar.querySelector(".zpct").textContent=Math.round(z*100)+"%";
+  }
+  v.zoom=apply;
+  bar.addEventListener("click",e=>{const b=e.target.closest("[data-z]");if(!b)return;const k=b.dataset.z;apply(k==="in"?z*1.5:k==="out"?z/1.5:1)});
+  let pinch=null,lastTap=0;
+  body.addEventListener("touchstart",e=>{
+    if(e.touches.length===2){const[a,b]=e.touches;const r=body.getBoundingClientRect();
+      pinch={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z,x:(a.clientX+b.clientX)/2-r.left,y:(a.clientY+b.clientY)/2-r.top};e.preventDefault()}
+    else if(e.touches.length===1){const now=Date.now();if(now-lastTap<300){const t=e.touches[0],r=body.getBoundingClientRect();apply(z>1.001?1:2.5,t.clientX-r.left,t.clientY-r.top);e.preventDefault();lastTap=0}else lastTap=now}
+  },{passive:false});
+  body.addEventListener("touchmove",e=>{if(pinch&&e.touches.length===2){const[a,b]=e.touches;const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);apply(pinch.z*d/pinch.d,pinch.x,pinch.y);e.preventDefault()}},{passive:false});
+  body.addEventListener("touchend",e=>{if(e.touches.length<2)pinch=null});
+  body.addEventListener("wheel",e=>{if(e.ctrlKey){e.preventDefault();const r=body.getBoundingClientRect();apply(z*Math.exp(-e.deltaY/200),e.clientX-r.left,e.clientY-r.top)}},{passive:false});
+  return apply}
+/* stop Safari's own page zoom while a viewer is open, so only the document zooms */
+document.addEventListener("gesturestart",e=>{if(viewers.length)e.preventDefault()});
 /* PDF pages are drawn with pdf.js. Two CDNs are tried; the worker is loaded as a same-origin blob so no browser blocks it. */
-const PDFJS=[["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"],
-             ["https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js","https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"]];
+const PDFJS=[["https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js","https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"],
+             ["https://unpkg.com/pdfjs-dist@3.11.174/legacy/build/pdf.min.js","https://unpkg.com/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"],
+             ["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"]];
 let pdfjsP=null;
 const withTimeout=(p,ms,what)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error(what+" zaman aşımı")),ms))]);
 function loadPdfJs(){
   if(!pdfjsP)pdfjsP=(async()=>{let last;
     for(const [lib,worker] of PDFJS){
       try{
-        if(!window.pdfjsLib)await withTimeout(loadScript(lib),15000,"pdf.js");
+        if(!window.pdfjsLib)await withTimeout(loadScript(lib),20000,"pdf.js");
         const L=window.pdfjsLib;if(!L)throw new Error("pdf.js yüklenmedi");
         try{const t=await withTimeout(fetch(worker).then(r=>{if(!r.ok)throw new Error("worker "+r.status);return r.text()}),15000,"worker");
           L.GlobalWorkerOptions.workerPort=new Worker(URL.createObjectURL(new Blob([t],{type:"text/javascript"})));}
@@ -574,14 +622,14 @@ function pdfFallback(body,f,title,reason){
   body.innerHTML=`<iframe title="${esc(title)}" src="${f.url}"></iframe>
     <div class="pdfbar"><a class="btn primary" href="${f.url}" download="${esc(fname)}">Tam ekran aç / kaydet</a><span class="muted" style="font-size:12px">${esc(reason||"")}</span></div>`}
 async function showPdf(f,title){
-  const v=viewer(title,`<button class="btn sm" data-lb="zoom">Yakınlaştır</button>`);const body=viewBody(v);body.classList.add("pdf");
+  const v=viewer(title);const body=viewBody(v);body.classList.add("pdf");
   body.innerHTML=`<p class="lb-msg">Belge hazırlanıyor…</p>`;
   let lib;
   try{lib=await loadPdfJs()}catch(e){if(v.el.isConnected)pdfFallback(body,f,title,"Sayfa görüntüleyici yüklenemedi ("+(e&&e.message||e)+")");return}
   try{
     const doc=await withTimeout(lib.getDocument({data:new Uint8Array(await f.blob.arrayBuffer())}).promise,30000,"PDF");
     if(!v.el.isConnected)return;
-    body.innerHTML="";const W=Math.min(body.clientWidth||window.innerWidth,1100);const dpr=Math.min(window.devicePixelRatio||1,2);
+    body.innerHTML="";addZoom(v,"pdf");const W=Math.min(body.clientWidth||window.innerWidth,1100);const dpr=Math.min(window.devicePixelRatio||1,2)*2;
     for(let i=1;i<=doc.numPages;i++){if(!v.el.isConnected)return;
       const page=await doc.getPage(i);const vp0=page.getViewport({scale:1});
       let scale=(W-16)/vp0.width*dpr; if(vp0.width*scale*vp0.height*scale>8e6)scale=Math.sqrt(8e6/(vp0.width*vp0.height));
@@ -867,7 +915,7 @@ async function runSetup(){
 
 /* ---------- toast & update ---------- */
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;t.setAttribute("role","status");document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
-const MY_VER=8;
+const MY_VER=9;
 async function checkUpdate(){if(!/^https?:/.test(location.protocol))return;
   try{const r=await fetch(location.pathname+"?ver="+Date.now(),{cache:"no-store"});if(!r.ok)return;const m=(await r.text()).match(/const MY_VER=(\d+);/);const v=m?parseInt(m[1]):0;
     if(v>MY_VER&&!$(".updbar")){const d=document.createElement("div");d.className="updbar";d.innerHTML=`<span>Yeni sürüm hazır.</span><button type="button">Yenile</button>`;d.querySelector("button").onclick=()=>location.replace(location.pathname+"?v="+v);document.body.appendChild(d)}}catch(e){}}
