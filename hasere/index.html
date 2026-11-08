@@ -257,8 +257,7 @@ footer{padding-block:30px 90px;color:var(--muted);font-size:13px}
 /* zoomable viewers */
 .lb-view{touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
 .lb-view.zoomed{display:block;place-items:initial}
-.lb-view.pdf .pdfpage{width:calc((100% - 0px) * var(--z,1));max-width:none}
-.lb-view.pdf:not(.zoomed) .pdfpage{max-width:1100px}
+.lb-view.pdf .pdfpage{width:calc(var(--fw,100%) * var(--z,1));max-width:none}
 .lb-view.pdf.zoomed{text-align:left}
 .lb-view.pdf.zoomed .pdfpage{margin:0}
 .lb-view.pdf.zoomed .pgno{text-align:left}
@@ -269,6 +268,13 @@ footer{padding-block:30px 90px;color:var(--muted);font-size:13px}
 .zpct{color:#c9d2cd;font:600 13px/1 var(--f-mono);min-width:48px;text-align:center}
 .lb{position:fixed}
 .lb-view.pdf{padding-bottom:90px}
+
+.lb-view.pdf.small .pdfpage{display:inline-block;vertical-align:top;margin:0 6px 4px}
+.lb-view.pdf.small .pgno{display:none}
+/* keep viewers exactly screen-wide even with long titles */
+.lb{grid-template-columns:minmax(0,1fr);width:100%;max-width:100vw;overflow:hidden}
+.lb-bar{min-width:0}
+.lb-view{min-width:0;width:100%}
 
 </style>
 </head>
@@ -445,7 +451,7 @@ function render(){
   document.body.classList.toggle("placing",!!placing);
   spy();
 }
-function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 9</div></footer>`}
+function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 10</div></footer>`}
 function countByType(){const st=META.stations||[];return Object.keys(TYPES).map(t=>[t,st.filter(s=>s.type===t).length]).filter(x=>x[1]).map(([t,n])=>`${n} ${TYPES[t].kisa}`).join(" · ")}
 function stationsSorted(){const o=Object.keys(TYPES);return (META.stations||[]).slice().sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)||(parseInt(a.no)||0)-(parseInt(b.no)||0))}
 function popHtml(){
@@ -552,7 +558,9 @@ document.addEventListener("click",async e=>{
 const viewers=[];
 function closeTopViewer(){const v=viewers.pop();if(v){v.el.remove();v.onClose&&v.onClose()}}
 window.addEventListener("popstate",()=>{if(viewers.length)closeTopViewer()});
-function viewer(title,extra){
+function resetPageZoom(){const m=document.querySelector('meta[name=viewport]');if(!m)return;const orig=m.getAttribute("content");
+  if(window.visualViewport&&window.visualViewport.scale>1.01){m.setAttribute("content",orig.replace(/,?\s*maximum-scale=[^,]*/,"")+",maximum-scale=1");setTimeout(()=>m.setAttribute("content",orig),400)}}
+function viewer(title,extra){resetPageZoom();
   const lb=document.createElement("div");lb.className="lb";lb.setAttribute("role","dialog");lb.setAttribute("aria-label",title);
   lb.innerHTML=`<div class="lb-bar"><button class="btn sm" data-lb="back">← Geri</button><div class="lb-title"></div><div style="display:flex;gap:6px">${extra||""}</div></div><div class="lb-view"></div>`;
   lb.querySelector(".lb-title").textContent=title;
@@ -574,12 +582,12 @@ function addZoom(v,kind){
   v.el.appendChild(bar);
   const img=kind==="img"?body.querySelector("img"):null;
   function apply(nz,px,py){
-    nz=Math.max(1,Math.min(6,nz));const r=body.getBoundingClientRect();
+    nz=Math.max(0.3,Math.min(6,nz));const r=body.getBoundingClientRect();
     if(px==null)px=r.width/2;if(py==null)py=r.height/2;
     if(img&&z===1){fitW=img.getBoundingClientRect().width||r.width}
     const fx=(body.scrollLeft+px)/z,fy=(body.scrollTop+py)/z;
-    z=nz;body.classList.toggle("zoomed",z>1.001);
-    if(img){if(z>1.001){img.style.maxWidth="none";img.style.maxHeight="none";img.style.width=Math.round(fitW*z)+"px"}else{img.style.width="";img.style.maxWidth="";img.style.maxHeight=""}}
+    z=nz;body.classList.toggle("zoomed",z>1.001);body.classList.toggle("small",z<0.999);
+    if(img){if(Math.abs(z-1)>0.001){img.style.maxWidth="none";img.style.maxHeight="none";img.style.width=Math.round(fitW*z)+"px"}else{img.style.width="";img.style.maxWidth="";img.style.maxHeight=""}}
     else body.style.setProperty("--z",z);
     body.scrollLeft=fx*z-px;body.scrollTop=fy*z-py;
     bar.querySelector(".zpct").textContent=Math.round(z*100)+"%";
@@ -590,7 +598,7 @@ function addZoom(v,kind){
   body.addEventListener("touchstart",e=>{
     if(e.touches.length===2){const[a,b]=e.touches;const r=body.getBoundingClientRect();
       pinch={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),z,x:(a.clientX+b.clientX)/2-r.left,y:(a.clientY+b.clientY)/2-r.top};e.preventDefault()}
-    else if(e.touches.length===1){const now=Date.now();if(now-lastTap<300){const t=e.touches[0],r=body.getBoundingClientRect();apply(z>1.001?1:2.5,t.clientX-r.left,t.clientY-r.top);e.preventDefault();lastTap=0}else lastTap=now}
+    else if(e.touches.length===1){const now=Date.now();if(now-lastTap<300){const t=e.touches[0],r=body.getBoundingClientRect();apply(Math.abs(z-1)>0.001?1:2.5,t.clientX-r.left,t.clientY-r.top);e.preventDefault();lastTap=0}else lastTap=now}
   },{passive:false});
   body.addEventListener("touchmove",e=>{if(pinch&&e.touches.length===2){const[a,b]=e.touches;const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);apply(pinch.z*d/pinch.d,pinch.x,pinch.y);e.preventDefault()}},{passive:false});
   body.addEventListener("touchend",e=>{if(e.touches.length<2)pinch=null});
@@ -621,6 +629,11 @@ function pdfFallback(body,f,title,reason){
   body.classList.remove("pdf");body.classList.add("pdfframe");
   body.innerHTML=`<iframe title="${esc(title)}" src="${f.url}"></iframe>
     <div class="pdfbar"><a class="btn primary" href="${f.url}" download="${esc(fname)}">Tam ekran aç / kaydet</a><span class="muted" style="font-size:12px">${esc(reason||"")}</span></div>`}
+/* the width at which a whole page fits the visible area (minus the bars) */
+function fitPage(c,body){const r=body.getBoundingClientRect();const vv=window.visualViewport;
+  const cw=Math.min(r.width,vv?vv.width:r.width)-16,ch=Math.min(r.height,vv?vv.height-r.top:r.height)-96;
+  const ar=+c.dataset.ar||0.707;c.style.setProperty("--fw",Math.max(120,Math.min(cw,ch*ar,1100))+"px")}
+window.addEventListener("resize",()=>{document.querySelectorAll(".lb-view.pdf .pdfpage").forEach(c=>fitPage(c,c.parentElement))});
 async function showPdf(f,title){
   const v=viewer(title);const body=viewBody(v);body.classList.add("pdf");
   body.innerHTML=`<p class="lb-msg">Belge hazırlanıyor…</p>`;
@@ -635,6 +648,7 @@ async function showPdf(f,title){
       let scale=(W-16)/vp0.width*dpr; if(vp0.width*scale*vp0.height*scale>8e6)scale=Math.sqrt(8e6/(vp0.width*vp0.height));
       const vp=page.getViewport({scale});
       const c=document.createElement("canvas");c.width=Math.floor(vp.width);c.height=Math.floor(vp.height);c.className="pdfpage";c.setAttribute("aria-label",`Sayfa ${i}`);
+      c.dataset.ar=vp0.width/vp0.height;fitPage(c,body);
       const lab=document.createElement("div");lab.className="pgno";lab.textContent=`Sayfa ${i} / ${doc.numPages}`;
       body.appendChild(c);body.appendChild(lab);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;page.cleanup()}
   }catch(e){if(v.el.isConnected)pdfFallback(body,f,title,"("+(e&&e.message||e)+")")}
@@ -915,7 +929,7 @@ async function runSetup(){
 
 /* ---------- toast & update ---------- */
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;t.setAttribute("role","status");document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
-const MY_VER=9;
+const MY_VER=10;
 async function checkUpdate(){if(!/^https?:/.test(location.protocol))return;
   try{const r=await fetch(location.pathname+"?ver="+Date.now(),{cache:"no-store"});if(!r.ok)return;const m=(await r.text()).match(/const MY_VER=(\d+);/);const v=m?parseInt(m[1]):0;
     if(v>MY_VER&&!$(".updbar")){const d=document.createElement("div");d.className="updbar";d.innerHTML=`<span>Yeni sürüm hazır.</span><button type="button">Yenile</button>`;d.querySelector("button").onclick=()=>location.replace(location.pathname+"?v="+v);document.body.appendChild(d)}}catch(e){}}
