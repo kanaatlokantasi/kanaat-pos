@@ -250,6 +250,10 @@ footer{padding-block:30px 90px;color:var(--muted);font-size:13px}
 .toprow .ver{color:var(--muted)}
 .logo{justify-self:center}
 
+.lb-view.pdfframe{display:grid;grid-template-rows:minmax(0,1fr) auto;place-items:stretch;padding:0;overflow:hidden}
+.lb-view.pdfframe iframe{width:100%;height:100%;border:0;background:#fff}
+.pdfbar{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:#0b0e0d}
+
 </style>
 </head>
 <body>
@@ -425,7 +429,7 @@ function render(){
   document.body.classList.toggle("placing",!!placing);
   spy();
 }
-function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 7</div></footer>`}
+function footer(){return`<footer class="wrap"><div>Bu sayfa ${esc(META&&META.business?META.business.legal:"Kanaat Lokantası")} tarafından tutulur.</div><div class="ver" id="ver">Haşere · Sürüm 8</div></footer>`}
 function countByType(){const st=META.stations||[];return Object.keys(TYPES).map(t=>[t,st.filter(s=>s.type===t).length]).filter(x=>x[1]).map(([t,n])=>`${n} ${TYPES[t].kisa}`).join(" · ")}
 function stationsSorted(){const o=Object.keys(TYPES);return (META.stations||[]).slice().sort((a,b)=>o.indexOf(a.type)-o.indexOf(b.type)||(parseInt(a.no)||0)-(parseInt(b.no)||0))}
 function popHtml(){
@@ -547,19 +551,45 @@ const setTitle=(v,t)=>{v.el.querySelector(".lb-title").textContent=t};
 const viewBody=v=>v.el.querySelector(".lb-view");
 function showImage(url,title,extra){const v=viewer(title,(extra||"")+`<button class="btn sm" data-lb="zoom">Yakınlaştır</button>`);
   viewBody(v).innerHTML=`<img alt="">`;const img=viewBody(v).querySelector("img");img.src=url;img.alt=title;return v}
+/* PDF pages are drawn with pdf.js. Two CDNs are tried; the worker is loaded as a same-origin blob so no browser blocks it. */
+const PDFJS=[["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"],
+             ["https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js","https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"]];
 let pdfjsP=null;
-function loadPdfJs(){if(!pdfjsP)pdfjsP=loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js").then(()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";return window.pdfjsLib});pdfjsP.catch(()=>{pdfjsP=null});return pdfjsP}
+const withTimeout=(p,ms,what)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error(what+" zaman aşımı")),ms))]);
+function loadPdfJs(){
+  if(!pdfjsP)pdfjsP=(async()=>{let last;
+    for(const [lib,worker] of PDFJS){
+      try{
+        if(!window.pdfjsLib)await withTimeout(loadScript(lib),15000,"pdf.js");
+        const L=window.pdfjsLib;if(!L)throw new Error("pdf.js yüklenmedi");
+        try{const t=await withTimeout(fetch(worker).then(r=>{if(!r.ok)throw new Error("worker "+r.status);return r.text()}),15000,"worker");
+          L.GlobalWorkerOptions.workerPort=new Worker(URL.createObjectURL(new Blob([t],{type:"text/javascript"})));}
+        catch(we){L.GlobalWorkerOptions.workerSrc=worker}
+        return L}catch(e){last=e}}
+    throw last||new Error("pdf.js")})();
+  pdfjsP.catch(()=>{pdfjsP=null});return pdfjsP}
+function pdfFallback(body,f,title,reason){
+  const fname=(title||"belge").replace(/[\\/:*?"<>|]+/g," ").trim()+".pdf";
+  body.classList.remove("pdf");body.classList.add("pdfframe");
+  body.innerHTML=`<iframe title="${esc(title)}" src="${f.url}"></iframe>
+    <div class="pdfbar"><a class="btn primary" href="${f.url}" download="${esc(fname)}">Tam ekran aç / kaydet</a><span class="muted" style="font-size:12px">${esc(reason||"")}</span></div>`}
 async function showPdf(f,title){
   const v=viewer(title,`<button class="btn sm" data-lb="zoom">Yakınlaştır</button>`);const body=viewBody(v);body.classList.add("pdf");
   body.innerHTML=`<p class="lb-msg">Belge hazırlanıyor…</p>`;
-  try{const lib=await loadPdfJs();const doc=await lib.getDocument({data:new Uint8Array(await f.blob.arrayBuffer())}).promise;
-    body.innerHTML="";const W=Math.min(body.clientWidth||window.innerWidth,1100);
+  let lib;
+  try{lib=await loadPdfJs()}catch(e){if(v.el.isConnected)pdfFallback(body,f,title,"Sayfa görüntüleyici yüklenemedi ("+(e&&e.message||e)+")");return}
+  try{
+    const doc=await withTimeout(lib.getDocument({data:new Uint8Array(await f.blob.arrayBuffer())}).promise,30000,"PDF");
+    if(!v.el.isConnected)return;
+    body.innerHTML="";const W=Math.min(body.clientWidth||window.innerWidth,1100);const dpr=Math.min(window.devicePixelRatio||1,2);
     for(let i=1;i<=doc.numPages;i++){if(!v.el.isConnected)return;
-      const page=await doc.getPage(i);const vp0=page.getViewport({scale:1});const scale=(W-16)/vp0.width*Math.min(window.devicePixelRatio||1,2);const vp=page.getViewport({scale});
-      const c=document.createElement("canvas");c.width=vp.width;c.height=vp.height;c.className="pdfpage";c.setAttribute("aria-label",`Sayfa ${i}`);
+      const page=await doc.getPage(i);const vp0=page.getViewport({scale:1});
+      let scale=(W-16)/vp0.width*dpr; if(vp0.width*scale*vp0.height*scale>8e6)scale=Math.sqrt(8e6/(vp0.width*vp0.height));
+      const vp=page.getViewport({scale});
+      const c=document.createElement("canvas");c.width=Math.floor(vp.width);c.height=Math.floor(vp.height);c.className="pdfpage";c.setAttribute("aria-label",`Sayfa ${i}`);
       const lab=document.createElement("div");lab.className="pgno";lab.textContent=`Sayfa ${i} / ${doc.numPages}`;
-      body.appendChild(c);body.appendChild(lab);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise}
-  }catch(e){body.innerHTML=`<div class="lb-msg"><p>Belge burada gösterilemedi.</p><a class="btn primary" href="${f.url}" target="_blank" rel="noopener">Belgeyi ayrı açın</a></div>`}
+      body.appendChild(c);body.appendChild(lab);await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;page.cleanup()}
+  }catch(e){if(v.el.isConnected)pdfFallback(body,f,title,"("+(e&&e.message||e)+")")}
 }
 async function openFile(id,priv){
   const v=viewer("Belge");viewBody(v).innerHTML=`<p class="lb-msg">Yükleniyor…</p>`;
@@ -837,7 +867,7 @@ async function runSetup(){
 
 /* ---------- toast & update ---------- */
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;t.setAttribute("role","status");document.body.appendChild(t);setTimeout(()=>t.remove(),3200)}
-const MY_VER=7;
+const MY_VER=8;
 async function checkUpdate(){if(!/^https?:/.test(location.protocol))return;
   try{const r=await fetch(location.pathname+"?ver="+Date.now(),{cache:"no-store"});if(!r.ok)return;const m=(await r.text()).match(/const MY_VER=(\d+);/);const v=m?parseInt(m[1]):0;
     if(v>MY_VER&&!$(".updbar")){const d=document.createElement("div");d.className="updbar";d.innerHTML=`<span>Yeni sürüm hazır.</span><button type="button">Yenile</button>`;d.querySelector("button").onclick=()=>location.replace(location.pathname+"?v="+v);document.body.appendChild(d)}}catch(e){}}
