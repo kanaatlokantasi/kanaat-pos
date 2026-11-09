@@ -23,7 +23,7 @@ jobs:
           pip install -q piper-tts==1.2.0
           command -v ffmpeg >/dev/null || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg >/dev/null)
           mkdir -p voice
-          base=https://huggingface.co/rhasspy/piper-voices/resolve/main/tr/tr_TR/fettah/medium
+          base=https://huggingface.co/rhasspy/piper-voices/resolve/6fb8245d6d27fef8988272e0c8e9f5018da1bbbf/tr/tr_TR/fettah/medium
           curl -fsSL --retry 3 -o voice/tr.onnx "$base/tr_TR-fettah-medium.onnx"
           curl -fsSL --retry 3 -o voice/tr.onnx.json "$base/tr_TR-fettah-medium.onnx.json"
       - name: Sesleri uret

@@ -551,8 +551,8 @@ let SAY_AU=null;
 function sayTr(t,btn){const h=SAYH[t];
   if(h){try{if(SAY_AU){SAY_AU.pause();SAY_AU=null}if(HAS_TTS)speechSynthesis.cancel();const a=new Audio("ses/"+h+".m4a");SAY_AU=a;
     if(btn)btn.classList.add("on");const done=()=>{if(btn)btn.classList.remove("on")};a.onended=done;
-    a.onerror=()=>{done();if(SAY_AU===a){SAY_AU=null;sayTts(t,btn)}};
-    const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{done();sayTts(t,btn)});ST.add("say");return}catch(_){}}
+    let fb=false;const fall=()=>{if(fb)return;fb=true;done();if(SAY_AU===a)SAY_AU=null;sayTts(t,btn)};
+    a.onerror=fall;const pr=a.play();if(pr&&pr.catch)pr.catch(fall);ST.add("say");return}catch(_){}}
   sayTts(t,btn)}
 function sayTts(t,btn){if(!HAS_TTS)return;try{const u=new SpeechSynthesisUtterance(t);u.lang="tr-TR";u.rate=.8;const v=speechSynthesis.getVoices().find(v=>/^tr/i.test(v.lang));if(v)u.voice=v;
   if(btn){btn.classList.add("on");u.onend=u.onerror=()=>btn.classList.remove("on")}speechSynthesis.cancel();speechSynthesis.speak(u);ST.add("say")}catch(_){}}
