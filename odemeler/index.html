@@ -224,6 +224,8 @@ textarea{font:16px var(--f-body);color:var(--ink);background:var(--panel);border
 .amtwarn{flex-basis:100%;font:600 12px var(--f-body);color:var(--warn);text-align:right;white-space:normal}
 .hstat{font-size:13px;margin-top:6px;padding:8px 10px;border-radius:8px;background:var(--soft);max-width:60ch}
 .hstat .ok{color:var(--down);font-weight:600}.hstat .bad{color:var(--up);font-weight:600}
+.sortrow{display:flex;gap:10px;align-items:center;margin:-2px 0 10px;font-size:13px;color:var(--muted)}
+.sortrow select{width:auto;max-width:100%}
 .x{border:0;background:none;color:var(--up);cursor:pointer;font-size:16px;line-height:1;padding:4px 8px;border-radius:6px}
 .confirm{display:inline-flex;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
 .confirm button{font:600 12px var(--f-body);border:1px solid var(--up);background:var(--up);color:var(--panel);border-radius:6px;padding:4px 8px;cursor:pointer}
@@ -288,7 +290,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     <div>
       <h1 id="homeT">Kanaat Ödemeler</h1>
       <div class="sub" id="who"></div>
-      <div class="ver"><span id="ver">Ödemeler · Sürüm 42</span> <span class="chip" id="conn" hidden></span></div>
+      <div class="ver"><span id="ver">Ödemeler · Sürüm 43</span> <span class="chip" id="conn" hidden></span></div>
     </div>
     <div class="hact"><button class="btn ghost" type="button" id="cal" aria-label="Takvime ekle"><span class="lg">Takvime ekle</span><span class="sm">Takvim</span></button><button class="btn ghost" type="button" id="helpBtn">Kılavuz</button><button class="btn ghost" type="button" id="pwBtn" aria-pressed="false">Ayarlar</button><button class="btn ghost" type="button" id="msgBtn" aria-pressed="false">Mesajlar<span class="badge" id="msgBadge" hidden></span></button><button class="btn ghost" type="button" id="logout">Çıkış</button></div>
   </header>
@@ -345,6 +347,7 @@ body.viewer .wrap{-webkit-user-select:none;user-select:none;-webkit-touch-callou
     </div>
     <div class="srch"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="q" placeholder="Ara: kalem, açıklama, tutar, tarih…" aria-label="Ödemelerde ara" autocomplete="off" enterkeyhint="search"><button class="x" type="button" id="qx" hidden aria-label="Aramayı temizle">×</button></div>
     <div class="sugg" id="sugg" hidden></div>
+    <div class="sortrow" id="sortRow" hidden><label for="srt">Sırala</label><select id="srt"><option value="yeni">En yeni ödeme önce</option><option value="eski">En eski ödeme önce</option><option value="tutarAz">Tutar: büyükten küçüğe</option><option value="tutarArt">Tutar: küçükten büyüğe</option></select></div>
     <div class="qinfo" id="qinfo" hidden></div>
     <div id="list"></div>
   </section>
@@ -608,7 +611,8 @@ function render(){
     L=L.filter(x=>{const h=hayW(x);return words.every(w=>h.some(t=>t.startsWith(w)))});
     $("qinfo").hidden=false;$("qinfo").textContent=L.length?`“${qRaw}” için ${L.length} ödeme bulundu (bekleyen ve ödenen).`:"";
   }else{$("qinfo").hidden=true;
-    if(filter==="open")L=L.filter(x=>!x.paid);else if(filter==="paid")L=L.filter(x=>x.paid).reverse();}
+    if(filter==="open")L=L.filter(x=>!x.paid);else if(filter==="paid")L=sortPaid(L.filter(x=>x.paid));}
+  $("sortRow").hidden=!(filter==="paid"&&!words.length&&!focusDay);
   document.querySelector(".seg").style.opacity=words.length||focusDay?".45":"";
   const msg=focusDay&&!words.length?`${dfmt(focusDay)} tarihli ödeme bulunamadı; silinmiş olabilir.`:words.length?`“${esc(qRaw)}” için sonuç yok. Kalem adını, açıklamadan bir kelimeyi, tutarı (ör. 516000) ya da tarihi (ör. 05.11) deneyin.`:{open:"Bekleyen ödeme yok.",paid:"Henüz ödendi olarak işaretlenen yok.",all:"Henüz ödeme girilmedi."}[filter];
   $("list").innerHTML=L.length?`<div class="tw"><table><thead><tr><th>Kalem</th><th class="hide-s">Dönem</th><th>Son ödeme</th><th class="n">Tutar</th><th class="n">Ödendi</th><th></th></tr></thead><tbody>${
@@ -694,6 +698,13 @@ $("pf").addEventListener("submit",e=>{e.preventDefault();
 function openAdd(){$("addPanel").hidden=false;$("addOpen").hidden=true;$("addOpen").setAttribute("aria-expanded","true");$("pt").focus()}
 function closeAdd(){$("addPanel").hidden=true;$("newK").hidden=true;if($("pt").value==="__new")$("pt").value=ptPrev;$("addOpen").hidden=false;$("addOpen").setAttribute("aria-expanded","false")}
 $("addOpen").onclick=openAdd;$("addClose").onclick=()=>{closeAdd();$("addOpen").focus()};
+/* ödenenler: varsayılan en yeni tarih önce (listede görünen ödeme tarihi; aynı günse en son işaretlenen önce); tutara göre de sıralanabilir */
+let srt="yeni";
+const paidKey=x=>(x.vade?new Date(x.vade+"T12:00:00").getTime()/1000:0)+(x.paidAt&&x.paidAt.seconds?x.paidAt.seconds/1e10:0);
+function sortPaid(L){const t=x=>x.tutar==null?null:x.tutar;
+  if(srt==="tutarAz"||srt==="tutarArt")return L.sort((a,b)=>{const A=t(a),B=t(b);if(A==null&&B==null)return paidKey(b)-paidKey(a);if(A==null)return 1;if(B==null)return -1;return srt==="tutarAz"?B-A:A-B});
+  return L.sort((a,b)=>srt==="eski"?paidKey(a)-paidKey(b):paidKey(b)-paidKey(a))}
+$("srt").onchange=()=>{srt=$("srt").value;render()};
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{filter=b.dataset.f;delAsk=null;focusDay=null;$("q").value="";$("qx").hidden=true;render();drawSugg()});
 /* search: Turkish-insensitive (İ/ı, ş/s, ç/c…), matches every word typed */
 const qn=t=>String(t??"").toLocaleLowerCase("tr-TR").replace(/[çğıöşüâîû]/g,c=>({"ç":"c","ğ":"g","ı":"i","ö":"o","ş":"s","ü":"u","â":"a","î":"i","û":"u"}[c])).normalize("NFD").replace(/[\u0300-\u036f]/g,"");
