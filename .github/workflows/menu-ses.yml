@@ -1,0 +1,49 @@
+name: Menu yemek adlari ses dosyalari
+# menu/ses.txt'teki Türkçe yemek adlarını açık lisanslı (CC0) Türkçe sesle okutup
+# menu/ses/<kod>.m4a olarak kaydeder. Var olan dosyalar yeniden üretilmez.
+on:
+  push:
+    paths:
+      - 'menu/ses.txt'
+      - '.github/workflows/menu-ses.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: menu-ses
+jobs:
+  ses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Piper ve ffmpeg kur
+        run: |
+          pip install -q piper-tts==1.2.0
+          command -v ffmpeg >/dev/null || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg >/dev/null)
+          mkdir -p voice
+          base=https://huggingface.co/rhasspy/piper-voices/resolve/main/tr/tr_TR/fettah/medium
+          curl -fsSL --retry 3 -o voice/tr.onnx "$base/tr_TR-fettah-medium.onnx"
+          curl -fsSL --retry 3 -o voice/tr.onnx.json "$base/tr_TR-fettah-medium.onnx.json"
+      - name: Sesleri uret
+        run: |
+          mkdir -p menu/ses
+          n=0
+          while IFS=$'\t' read -r h text; do
+            [ -z "$h" ] && continue
+            [ -s "menu/ses/$h.m4a" ] && continue
+            echo "$text" | piper --model voice/tr.onnx --length_scale 1.1 --sentence_silence 0.1 --output_file /tmp/s.wav >/dev/null 2>&1 || { echo "uretilemedi: $text"; continue; }
+            ffmpeg -loglevel error -y -i /tmp/s.wav -af "silenceremove=start_periods=1:start_threshold=-50dB,areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse" -ac 1 -ar 22050 -c:a aac -b:a 40k "menu/ses/$h.m4a" && n=$((n+1))
+          done < menu/ses.txt
+          echo "uretilen: $n"
+      - name: Degisiklik varsa kaydet
+        run: |
+          if [ -n "$(git status --porcelain menu/ses)" ]; then
+            git config user.name "menu-botu"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add menu/ses
+            git commit -m "Menu ses dosyalari"
+            git pull --rebase -q origin main
+            git push
+          fi
