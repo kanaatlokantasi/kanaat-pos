@@ -105,6 +105,10 @@ footer a{color:var(--green)}
 .photo img{width:100%;max-height:70vh;object-fit:cover;display:block}
 .photo figcaption{padding:12px 16px 16px;display:flex;align-items:center;gap:12px}
 .photo .ptxt{flex:1;min-width:0}
+.ppair{padding:0 16px 16px;border-top:1px solid var(--line)}
+.ppair p{margin:12px 0 0;font-weight:700;color:var(--green);font-size:14.5px}
+.ppair .dchips button{font-size:14px;padding:5px 12px 5px 5px}
+.ppair .dchips img{width:34px;height:34px}
 html[dir=rtl] .photo figcaption{flex-direction:row-reverse}
 .psay{width:54px;height:54px;flex:none;animation:sayPulse 1.2s ease-in-out infinite}
 .psay.on{animation:none}
@@ -328,7 +332,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 69 · 09.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 70 · 09.11.2026</p>
   </div>
 </footer>
 
@@ -364,7 +368,7 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
 <div class="cart" id="cart" role="dialog" aria-modal="true"><div class="csheet"><button class="cx" id="cartx" type="button" aria-label="×">×</button><div id="cartbody"></div></div></div>
 <div id="waiter" class="hide"></div>
 <div class="ov photo" id="photov" role="dialog" aria-modal="true">
-  <figure><img id="pimg" alt=""><figcaption><div class="ptxt"><b id="pname"></b><span id="pdesc"></span></div><button class="say psay hide" id="psay" type="button" aria-label="🔊"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18.3 6.5a7.5 7.5 0 0 1 0 11"/></svg></button></figcaption></figure>
+  <figure><img id="pimg" alt=""><figcaption><div class="ptxt"><b id="pname"></b><span id="pdesc"></span></div><button class="say psay hide" id="psay" type="button" aria-label="🔊"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18.3 6.5a7.5 7.5 0 0 1 0 11"/></svg></button></figcaption><div class="ppair hide" id="ppair"></div></figure>
 </div>
 
 <script>
@@ -654,10 +658,11 @@ $("menu").addEventListener("click",e=>{
   $("pimg").src=b.querySelector("img").currentSrc||b.querySelector("img").src;
   $("pname").textContent=lang==="tr"?it.tr:it.t[LI[lang]-1];
   $("pdesc").textContent=lang==="tr"?(it.trn||""):it.tr;
+  const pp=$("ppair"),pr=PAIRS[it.tr];if(pr&&pr.length){const ts=pr.map(findByName).filter(Boolean);ST.add("pairShow_"+it.c);pp.innerHTML=`<p>${esc(L(PAIR_UI))}</p><div class="dchips">${ts.map(t=>`<button type="button" data-pair="${t.id}" data-from="${it.c}">${thumb(t)}<span>${esc(lang==="tr"?t.tr:t.t[LI[lang]-1])}</span></button>`).join("")}</div>`;pp.classList.remove("hide")}else{pp.classList.add("hide");pp.innerHTML=""}
   const ps=$("psay");ps.classList.add("hide");if(CAN_SAY&&lang!=="tr"){ps.dataset.say=it.tr;ps.setAttribute("aria-label","🔊 "+it.tr);ps.classList.remove("hide")}
   $("photov").classList.add("open");ST.add("photo_"+it.c);
 });
-$("photov").addEventListener("click",()=>$("photov").classList.remove("open"));
+$("photov").addEventListener("click",e=>{const b=e.target.closest("[data-pair]");$("photov").classList.remove("open");if(b){const t=BYID[b.dataset.pair];ST.add("pr_"+b.dataset.from+t.c);goItem(t)}});
 addEventListener("keydown",e=>{if(e.key==="Escape"){$("photov").classList.remove("open");$("langov").classList.remove("open")}});
 const CHEF_UI={title:["Şefin Tavsiyesi","Chef's Recommendation","توصية الشيف","Рекомендация шефа","Recomendación del chef","La suggestion du chef","主厨推荐","Empfehlung des Küchenchefs","シェフのおすすめ","셰프 추천"],
  today:["Bugün {d}", "Today is {d}", "اليوم {d}", "Сегодня {d}", "Hoy es {d}", "Aujourd'hui, {d}", "今天是{d}", "Heute ist {d}", "本日 {d}", "오늘은 {d}"],
@@ -757,6 +762,8 @@ function jumpTo(el){
     el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash")});
 }
 function findByName(n){for(const c of MENU)for(const it of c.items)if(it.tr===n)return it;return null}
+const PAIRS={"Kuru Fasulye": ["Pilav", "Cacık", "Karışık Turşu"], "Nohut": ["Pilav", "Karışık Turşu"], "Özbek Pilavı": ["Zeytinyağlı Enginar", "İrmik Helvası"], "Izgara Köfte": ["Piyaz", "Ayran"], "Kadınbudu Köfte": ["Pilav", "Çoban Salata", "Ayran"], "İzmir Köfte": ["Pilav", "Çoban Salata", "Ayran"], "Fırın Köfte": ["Pilav", "Çoban Salata", "Ayran"], "Karnıyarık": ["Pilav", "Cacık"], "Patlıcan Musakka": ["Pilav", "Cacık"], "Etli Yaprak Sarma": ["Yoğurt"], "Etli Lahana Sarma": ["Yoğurt"], "Etli Biber Dolması": ["Yoğurt"], "Hünkar Beğendi": ["Çoban Salata", "Ayran"], "Tas Kebabı": ["Pilav", "Çoban Salata"], "Kuzu Haşlama": ["Pilav", "Çoban Salata"], "Kuzu Tandır": ["Çoban Salata", "Ayran"], "Talaş Kebabı": ["Çoban Salata", "Ayran"], "Döner Kebap": ["Pilav", "Ayran"], "Mercimek Çorbası": ["Kadınbudu Köfte", "Kuru Fasulye"], "Ezogelin Çorbası": ["Kadınbudu Köfte", "Kuru Fasulye"], "Kazandibi": ["İlave Dondurma"], "Tavukgöğsü": ["İlave Dondurma"], "Kaymaçina": ["İlave Dondurma"], "Keşkül": ["İlave Dondurma"], "Krem Şokola": ["İlave Dondurma"], "Sütlaç": ["İlave Dondurma"], "Su Muhallebisi": ["İlave Dondurma"], "Sakızlı Muhallebi": ["İlave Dondurma"], "Samsa Tatlısı": ["İlave Kaymak"], "Ekmek Kadayıfı (Sade)": ["İlave Kaymak"], "Gül Tatlısı (Cevizli)": ["İlave Kaymak"], "Kadayıf Dolma": ["İlave Kaymak"], "Kalburabastı": ["İlave Kaymak"], "Kemalpaşa": ["İlave Kaymak"], "Revani": ["İlave Kaymak"], "Şekerpare": ["İlave Kaymak"], "Tel Kadayıf": ["İlave Kaymak"], "Tulumba": ["İlave Kaymak"], "Yassı Kadayıf": ["İlave Kaymak"], "Ayva Tatlısı": ["İlave Kaymak"], "İncir Tatlısı (Kaymaksız)": ["İlave Kaymak"], "Cevizli Kabak Tatlısı": ["İlave Kaymak"]};
+const PAIR_UI=["👨‍🍳 Şefimiz yanına öneriyor:", "👨‍🍳 The chef suggests pairing it with:", "👨‍🍳 يقترح الشيف معه:", "👨‍🍳 Шеф советует к этому блюду:", "👨‍🍳 El chef recomienda acompañarlo con:", "👨‍🍳 Le chef suggère d'accompagner de :", "👨‍🍳 主厨建议搭配：", "👨‍🍳 Der Küchenchef empfiehlt dazu:", "👨‍🍳 シェフおすすめの組み合わせ：", "👨‍🍳 셰프 추천 곁들임:", "👨‍🍳 Šefpavārs iesaka kopā ar:", "👨‍🍳 Keittiömestari suosittelee kaveriksi:", "👨‍🍳 O chef sugere acompanhar com:", "👨‍🍳 Lo chef consiglia di abbinare:", "👨‍🍳 Ο σεφ προτείνει να το συνοδέψετε με:", "👨‍🍳 El xef recomana acompanyar-ho amb:", "👨‍🍳 سرآشپز پیشنهاد می‌کند در کنارش:", "👨‍🍳 De chef raadt erbij aan:"];
 function goItem(it){
   chefClose();chatClose();calcClose();fsel=null;$("q").value="";
   document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();

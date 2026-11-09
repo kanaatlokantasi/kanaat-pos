@@ -72,7 +72,7 @@ input,select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--li
     <div class="dates"><input type="date" id="from"> – <input type="date" id="to"></div>
     <div id="out2"><p class="empty">Yükleniyor…</p></div>
   </section>
-  <p class="ver">Kişisel veri tutulmaz: isim, telefon, IP, konum, cihaz bilgisi yok. Sayaçlar günlük toplamdır; görüşlerde sadece puan, yorum ve dil saklanır. · 69 · 09.11.2026</p>
+  <p class="ver">Kişisel veri tutulmaz: isim, telefon, IP, konum, cihaz bilgisi yok. Sayaçlar günlük toplamdır; görüşlerde sadece puan, yorum ve dil saklanır. · 70 · 09.11.2026</p>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
@@ -157,6 +157,7 @@ function draw(S,days,f,t){window._S=S;const g=k=>S[k]||0;
   ${card("Bahşiş ve bölüşme","",kv([["Bahşişsiz",nf(g("tip_none"))],["%5",nf(g("tip_p5"))],["%10",nf(g("tip_p10"))],["%15",nf(g("tip_p15"))],["Tutar girilen",nf(g("tip_m"))],["Ortalama bahşiş",tipN?tl(g("tipSum")/tipN):"–"],["Hesabı bölen",nf(g("split"))],["Ortalama kişi",g("split")?(g("splitPeople")/g("split")).toLocaleString("tr-TR",{maximumFractionDigits:1}):"–"]]))}
   ${card("Fotoğrafı olmayan yemekler",`${NOPHOTO.length} yemek · çekip gönderdikçe eklenir`,NOPHOTO.length?(()=>{const g={};NOPHOTO.forEach(([c,n])=>(g[c]=g[c]||[]).push(n));return Object.entries(g).map(([c,ns])=>`<div class="kv" style="display:block"><b style="font-size:12px;color:var(--mute)">${esc(c)}</b><div>${ns.map(esc).join(" · ")}</div></div>`).join("")})():'<p class="empty">Bütün yemeklerin fotoğrafı var.</p>')}
   ${card("Telaffuz (🔊)","Türkçe adını dinleme",kv([["Dinlenme",nf(g("say"))]]))}
+  ${card("Şefin eşleşme önerileri","Fotoğrafı açılan yemeğin altındaki “yanına öneriyor” düğmelerine tıklama",(()=>{const rows=pre(S,"pr_").map(([k,v])=>[k.slice(0,4),k.slice(4,8),v]).sort((a,b)=>b[2]-a[2]);if(!rows.length)return '<p class="empty">Henüz tıklama yok.</p>';const mx=rows[0][2];return rows.map((r,i)=>`<div class="row${i>=12?" x hide":""}"><div class="l"><div>${esc(dish(r[0]))} → <b>${esc(dish(r[1]))}</b> <small style="color:var(--mute)">(${nf(g("pairShow_"+r[0]))} gösterim)</small></div><div class="bar"><i style="width:${Math.max(2,r[2]/mx*100)}%"></i></div></div><b>${nf(r[2])}</b></div>`).join("")+(rows.length>12?`<button class="more" type="button" onclick="this.parentNode.querySelectorAll('.x').forEach(e=>e.classList.toggle('hide'))">Tümünü göster / gizle (${rows.length})</button>`:"")})())}
   ${card("Instagram","Instagram bağlantısına tıklama",kv([["Tıklama",nf(g("ig"))]]))}
   </div>`;
   $("out2").innerHTML=open||qr||Object.keys(S).length?html:'<p class="empty">Bu tarih aralığında veri yok.</p>';
