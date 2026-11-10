@@ -1,6 +1,5 @@
 00669c0955	Bakla
 01437ab9c0	Elma Komposto
-0158fe9de5	Rulo Kaymak, iki yüz elli gram
 018f9957d7	Zeytinyağlı Soğan Dolması
 05833b2612	Pilav
 05bbb97d04	Bir kiloluk kaymaksız incir tatlısı.
@@ -153,6 +152,7 @@ b7fd2d2738	Zeytinyağlı Enginar
 b967959d93	Özbek Pilavı
 b99ee773de	Cacık
 b9befc6312	Dörtlü kazandibi.
+ba664a238d	İki yüz elli gram rulo kaymak.
 bc2cd3e7ae	Yoğurtlu Pazı Salatası
 bd02bc5e8e	Ankara Köfte
 bdaf2dae82	Bir kiloluk kemalpaşa.
