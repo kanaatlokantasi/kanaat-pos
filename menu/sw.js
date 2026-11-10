@@ -1,5 +1,5 @@
 // Kanaat QR Menü – çevrimdışı/yavaş internette hızlı açılma
-const V="73 · 09.11.2026";const C="kanaat-menu-v1";
+const V="74 · 10.11.2026";const C="kanaat-menu-v1";
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(["./","img/logo.jpg","img/logo-lacivert.png","img/sef.jpg"]).catch(()=>{})));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("kanaat-menu-")&&k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 const timeout=(p,ms)=>new Promise((res,rej)=>{const t=setTimeout(()=>rej(0),ms);p.then(r=>{clearTimeout(t);res(r)},x=>{clearTimeout(t);rej(x)})});
