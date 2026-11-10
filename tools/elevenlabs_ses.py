@@ -26,6 +26,12 @@ if os.path.exists("menu/ses-ornek.txt"):
         for m, tag in [("eleven_multilingual_v2", "A"), ("eleven_turbo_v2_5", "B")]:
             out = f"menu/ses-ornek/{i}-{tag}.mp3"
             if not os.path.exists(out) and tts(name, m, out): n += 1
+if os.path.exists("menu/ses-dene.txt"):
+    os.makedirs("menu/ses-dene", exist_ok=True)
+    for i, l in enumerate([l.rstrip("\n") for l in open("menu/ses-dene.txt", encoding="utf-8") if l.strip()], 1):
+        m, text = l.split("\t", 1)
+        out = f"menu/ses-dene/{i}.mp3"
+        if not os.path.exists(out) and tts(text, m, out): n += 1
 if os.path.exists("menu/ses11.onay"):
     model = open("menu/ses11.onay", encoding="utf-8").read().strip() or "eleven_multilingual_v2"
     os.makedirs("menu/ses11", exist_ok=True)

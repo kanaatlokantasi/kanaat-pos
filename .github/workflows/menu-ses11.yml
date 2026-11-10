@@ -5,6 +5,7 @@ on:
       - 'menu/ses.txt'
       - 'menu/ses-ornek.txt'
       - 'menu/ses11.onay'
+      - 'menu/ses-dene.txt'
       - 'tools/elevenlabs_ses.py'
       - '.github/workflows/menu-ses11.yml'
   workflow_dispatch:
@@ -25,7 +26,7 @@ jobs:
           if [ -n "$(git status --porcelain menu)" ]; then
             git config user.name "menu-botu"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            for d in menu/ses-ornek menu/ses11; do [ -d "$d" ] && git add "$d"; done
+            for d in menu/ses-ornek menu/ses11 menu/ses-dene; do [ -d "$d" ] && git add "$d"; done
             git commit -m "Menu sesleri (ElevenLabs)"
             git pull --rebase -q origin main
             git push
