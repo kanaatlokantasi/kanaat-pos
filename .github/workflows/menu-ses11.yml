@@ -1,0 +1,32 @@
+name: Menu sesleri (ElevenLabs)
+on:
+  push:
+    paths:
+      - 'menu/ses.txt'
+      - 'menu/ses-ornek.txt'
+      - 'menu/ses11.onay'
+      - 'tools/elevenlabs_ses.py'
+      - '.github/workflows/menu-ses11.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: menu-ses11
+jobs:
+  ses:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sesleri uret
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+        run: python3 tools/elevenlabs_ses.py
+      - name: Degisiklik varsa kaydet
+        run: |
+          if [ -n "$(git status --porcelain menu)" ]; then
+            git config user.name "menu-botu"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add menu/ses-ornek menu/ses11 2>/dev/null || true
+            git commit -m "Menu sesleri (ElevenLabs)"
+            git pull --rebase -q origin main
+            git push
+          fi
