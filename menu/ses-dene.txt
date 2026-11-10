@@ -1,9 +1,0 @@
-eleven_turbo_v2_5	Kazandibi, dörtlü.
-eleven_turbo_v2_5	Dörtlü kazandibi.
-eleven_multilingual_v2	Kazandibi, dörtlü.
-eleven_turbo_v2_5	İrmik helvası, bir kilo.
-eleven_turbo_v2_5	Bir kiloluk irmik helvası.
-eleven_multilingual_v2	İrmik helvası, bir kilo.
-eleven_turbo_v2_5	Ayva tatlısı, bir kilo.
-eleven_turbo_v2_5	Bir kiloluk ayva tatlısı.
-eleven_multilingual_v2	Ayva tatlısı, bir kilo.

@@ -1,18 +1,18 @@
 00669c0955	Bakla
 01437ab9c0	Elma Komposto
+0158fe9de5	Rulo Kaymak, iki yüz elli gram
 018f9957d7	Zeytinyağlı Soğan Dolması
 05833b2612	Pilav
-06a2a0e419	Tel Kadayıf, bir kilo
+05bbb97d04	Bir kiloluk kaymaksız incir tatlısı.
 06c2f4869b	Kuzu Kızartma
 06efc3c5a0	Çılbır
 06fef8d3d3	Karışık Izgara
 0893c27317	Zeytinyağlı Yer Elması
-0c725190f7	Kadayıf Dolması, bir kilo
 0ef5e4afc6	Çoban Kavurma
 119fb7c2f4	Fanta
-11a9f106a8	Kazandibi, dörtlü
 1446a00870	Kapuska
 17b085fac8	Kaymaklı Cevizli İncir Tatlısı
+1a423e32b6	Tekke Pilavı, Kuzu Etli
 1a772fcd51	Patlıcan Musakka
 1e0567f019	Çilek Komposto
 1e3fa0005b	Kabak Kızartma
@@ -23,11 +23,13 @@
 22c0367319	Tavuk Suyu Şehriye Çorbası
 22ca8afcca	Tel Kadayıf
 2413d285bb	Ezogelin Çorbası
-259a832696	Ekmek Kadayıfı, bir kilo
+248304c15a	Ayva Tatlısı, Kaymaklı
 26251a1788	Etli Biber Dolması
 2640cfca71	Vişne Komposto
+2699c5f380	Bir kiloluk tavukgöğsü.
 27af6e5dca	Domatesli Pirinç Çorbası
 27fb55290d	Kuzu Ayak Paça Çorbası
+28d9f5223e	Bir kiloluk cevizli samsa tatlısı.
 29f698b7e4	Kemalpaşa
 2ab0801089	Kuzu Haşlama
 2be53875f2	Bardak Su
@@ -39,38 +41,37 @@
 365e16b95d	Yoğurtlu Kebap
 376abb5634	Samsa Tatlısı
 37fd00ac1a	Çömlek Kebabı
+3a1d9e157f	Bir kiloluk şekerpare.
 3a7244b62b	Zeytinyağlı Lahana Sarma
 3bf28d7e13	İmambayıldı
 3e1102fa53	Kereviz Dolma
+409e6bda80	Ayva tatlısı, bir kilo.	eleven_multilingual_v2
 41215fa5e1	Karışık Komposto
-417337d093	Ayva Tatlısı, bir kilo
 42384365a0	Orman Kebabı
 4322fdb272	Şehriyeli Tavuk
+44414539c8	Gül Tatlısı, Cevizli
 449e481459	Zerde
 45667cb342	Ekşili Köfte
 466b907ed8	Tulumba
-4675146bf5	Büyük Aşure, bir kilo
-4692f52520	Tekke Pilavı, Kuzu Etli
 470943f054	Zeytinyağlı Yaprak Sarma
 48281d4a73	Kuzu Kaburga Dolması
 4977482169	Kazandibi
 4a6c424407	Zeytinyağlı Pırasa
 4b27c8b99d	Armut Komposto
-4f44c1ed1a	Büyük Keşkül, bir kilo
-4f9ef14815	Büyük Zerde, bir kilo
 4ff798e8e7	İrmik Helvası
 5013b14467	Nohut
 5034584f1d	Sakızlı Muhallebi
 50f8e16f89	Mantarlı Tavuk
-51bd5be603	İrmik Helvası, bir kilo
 52bf7d0a6c	Yayla Çorbası
 536dbbc4ce	Zeytinyağlı Brüksel Lahanası
 53badad2f6	Fırın Köfte
 5449b01733	Şeftali Komposto
+55d6bec30a	Çiftlik Kebabı, Kuzu
 56560c1d6a	Hindi İç Pilavlı Kestaneli
 566f7114c5	Kuzu Fırın
 57549d77b2	Talaş Kebabı
-5df9ac168c	Çömlekte Koyun Yoğurdu, bir kilo
+5bfbee50a9	Bir kiloluk tulumba.
+60315f9bb3	Bir kiloluk büyük zerde.
 606770f93b	Çalı Fasulye
 60b8395ac5	Mevsim Salata
 60c121feb6	Ayva Tatlısı
@@ -82,7 +83,6 @@
 6513fdea82	Aşure
 66cc876308	Fava
 68caeaf09a	Ispanak
-69891e3a4b	Ekmek Kadayıfı, Sade
 6b9b155885	Sebzeli Köfte
 6cd2bef93b	Zeytinyağlı Enginar Dolma
 6d6231d224	Su Muhallebisi
@@ -91,32 +91,33 @@
 6e9758ac20	Zeytinyağlı Biber Dolma
 70473cf611	Terbiyeli İşkembe Çorbası
 71d10cea1b	Kuzu Tandır
-731a7c8d55	Gül Tatlısı, bir kilo
 73d521c957	Etli Yaprak Sarma
-73ee8bd6b7	Ayva Tatlısı, Kaymaklı
+78a5d2a63d	Bir kiloluk çömlekte koyun yoğurdu.
 794fade408	Reçel ve Kaymak
 795c7977bb	Tavukgöğsü
 7b0a0c4731	Püre
+7b0b63eaad	Vişneli Ekmek Kadayıfı, Kaymaklı
+7c260bf825	Bir kiloluk irmik helvası.
+7ef890f87a	Bir kiloluk büyük aşure.
 7f47ac2249	Barbunya Pilaki
 80f265bfe5	Erik Komposto
 814be4d5e0	Taze Fasulye
-82246219d8	Revani, bir kilo
 823ff2a692	Söğüş Salata
-841bc928f9	Kemalpaşa, bir kilo
 84e1fa461d	Ayva Komposto
 8526bf3163	Patates Püresi
+85534eb9bb	İncir Tatlısı, Kaymaksız
+8c167b4962	Bir kiloluk kabak tatlısı.
 8c932cd248	Şekerpare
 8cc17e08a1	Ispanak Kökü
 8d4820884c	Fasulye Pilaki
 8ebce7df12	Ayran
+8f67626318	Beğendi, etsiz
 8f91543164	Turunç Reçeli
-924b5e5f19	Kaymaklı İncir Tatlısı, bir kilo
 938a53ac9f	Nohut Pilaki
 939f7e0903	Porsiyon Dondurma
 944488bb6d	Fırında Tavuk Şiş
 95c402ea2d	Çerkez Tavuğu
 962161b377	İlave Kaymak
-9634e72eaf	Dondurma, bir kilo
 963a18c700	Patlıcan Salatası
 9669df08dd	Karışık Turşu
 98cf41ceae	Semizotu
@@ -126,6 +127,7 @@
 9e2eb5a030	Haydari
 9e35cf5188	Kuzu Kapama
 a065bbbee6	Maden Suyu
+a1018e5172	Bir kiloluk kalburabastı.
 a3c8c3c3cb	Elbasan Tava
 a457e9c0c2	İç Pilav
 a647c0cddf	Mızrak Köfte
@@ -146,58 +148,57 @@ b36742aa72	Kıymalı Yumurta
 b3ce961f91	Türlü
 b3f6dbe7c2	Zeytinyağlı Domates Dolması
 b67df035e0	Kuzu Ciğer Sarma
+b6b9d073f3	Bir kiloluk gül tatlısı.
 b7fd2d2738	Zeytinyağlı Enginar
 b967959d93	Özbek Pilavı
 b99ee773de	Cacık
+b9befc6312	Dörtlü kazandibi.
 bc2cd3e7ae	Yoğurtlu Pazı Salatası
 bd02bc5e8e	Ankara Köfte
+bdaf2dae82	Bir kiloluk kemalpaşa.
 bfe7a7573f	Fırın Makarna
-c042a6bd42	Ekmek Kadayıfı, Kaymaklı
-c0da56078d	İncir Tatlısı, Kaymaksız
-c147a02463	Tavukgöğsü, bir kilo
 c198b9ee19	Fırın Bonfile
 c1e8b7d6e6	Keşkül
 c2fa929f7c	Zeytinyağlı Bezelye
 c9fe1191b8	Bulgur Pilavı
-cb89c61cac	İncir Tatlısı, Kaymaksız, bir kilo
-ce4c6f4026	Gül Tatlısı, Cevizli
+cb2a0b9177	Ekmek Kadayıfı, Sade
+ccca8c2935	Bir kiloluk tel kadayıf.
+cd5b20a749	Bir kiloluk dondurma.
 cfe0cf0e35	Etli Lahana Sarma
 d05e8b8867	Pırasalı Kereviz
 d264dfe963	Kuru Fasulye
 d26c082d86	Yoğurt
-d31f25eaa4	Beğendi, etsiz
-d3c1d9772c	Şekerpare, bir kilo
-d3ccbb4232	Çiftlik Kebabı, Kuzu
+d293955c94	Ekmek Kadayıfı, Kaymaklı
 d4389b3f00	Kadayıf Dolma
 d4454e8591	Soğanlı Kebap
 d60dcec984	Kola
 d6638d16d7	Zeytinyağlı Karnıbahar
 d6ec7715cf	Kağıt Kebabı
-d911a76bf2	Vişneli Ekmek Kadayıfı, Kaymaklı
 d9b6a501cc	İzmir Köfte
 d9df28de23	Patlıcan Paça
 d9f2cacb04	Izgara Köfte
 daf7267363	Et Güveç
-dbe4891280	Kabak Tatlısı, bir kilo
 dc23d83ea8	Kola Zero Sugar
-dded101142	Izgara Kuzu Pirzola, iki kalem
+dda81525f1	Reçel ve Kaymak
 deb509f5cc	Arnavut Ciğeri
+deee8df647	Izgara Kuzu Pirzola, iki kalem
+df6e39d439	Bir kiloluk büyük keşkül.
 dfb5a920fd	İlave Dondurma
-e0869b793a	Kalburabastı, bir kilo
 e38ad683fd	Portakal Reçeli
 e4e7848e14	Dana Rosto
 e57b598df0	Kaymaçina
 e5b81c3348	Tas Kebabı
+e5bd8c6a5f	Bir kiloluk kadayıf dolması.
 e80526917f	Krem Şokola
 e9eb78be3b	Sultani Bezelye
-eb98026403	Rulo Kaymak, iki yüz elli gram
+ed66ce5f82	Bir kiloluk kaymaklı incir tatlısı.
 f278527de1	Hünkar Beğendi
 f2c0d65722	Kuzu Keşkek
 f3bf4dba10	Çoban Salata
+f43a5d1d9f	Bir kiloluk ekmek kadayıfı.
 f5ba404fb7	Izgara Bonfile
-f7a2119dfd	Tulumba, bir kilo
 f8bde1eebe	Sütlaç
 f960f33c86	Kuzu Etli Talaş Böreği
 fb1a7b54ba	Yassı Kadayıf
-fb45b0a2fb	Cevizli Samsa Tatlısı, bir kilo
+fe493fd671	Bir kiloluk revani.
 fe4e61d5a4	Kayseri Köfte

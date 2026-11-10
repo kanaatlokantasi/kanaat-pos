@@ -18,7 +18,6 @@ def tts(text, model, out):
         print("HATA", e.code, e.read()[:300].decode(errors="ignore")); return False
     open(out, "wb").write(data); return True
 lines = [l.rstrip("\n").split("\t") for l in open("menu/ses.txt", encoding="utf-8") if l.strip()]
-SP = {t: (h, t) for h, t in lines}
 n = 0
 if os.path.exists("menu/ses-ornek.txt"):
     os.makedirs("menu/ses-ornek", exist_ok=True)
@@ -35,8 +34,10 @@ if os.path.exists("menu/ses-dene.txt"):
 if os.path.exists("menu/ses11.onay"):
     model = open("menu/ses11.onay", encoding="utf-8").read().strip() or "eleven_multilingual_v2"
     os.makedirs("menu/ses11", exist_ok=True)
-    for h, text in lines:
+    for row in lines:
+        h, text = row[0], row[1]
+        m = row[2] if len(row) > 2 and row[2] else model
         out = f"menu/ses11/{h}.mp3"
         if os.path.exists(out) and os.path.getsize(out) > 0: continue
-        if tts(text, model, out): n += 1
+        if tts(text, m, out): n += 1
 print("uretilen:", n)
