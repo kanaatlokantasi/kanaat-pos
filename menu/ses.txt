@@ -45,7 +45,6 @@
 3a7244b62b	Zeytinyağlı Lahana Sarma
 3bf28d7e13	İmambayıldı
 3e1102fa53	Kereviz Dolma
-409e6bda80	Ayva tatlısı, bir kilo.	eleven_multilingual_v2
 41215fa5e1	Karışık Komposto
 42384365a0	Orman Kebabı
 4322fdb272	Şehriyeli Tavuk
@@ -70,6 +69,7 @@
 56560c1d6a	Hindi İç Pilavlı Kestaneli
 566f7114c5	Kuzu Fırın
 57549d77b2	Talaş Kebabı
+59e795e8af	Bir kiloluk ayva tatlısı.	eleven_multilingual_v2
 5bfbee50a9	Bir kiloluk tulumba.
 60315f9bb3	Bir kiloluk büyük zerde.
 606770f93b	Çalı Fasulye
