@@ -119,6 +119,7 @@ sutlac.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a
 talas-kebabi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/talas-kebabi.jpg
 tas-kebabi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/tas-kebabi.jpg
 tavuk-gogsu.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/tavuk-gogsu.jpg
+tavuk-suyu-sehriye-corbasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/tavuk-suyu-sehriye-corbasi.jpg
 taze-fasulye.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/taze-fasulye.jpg
 tekke-pilavi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/tekke-pilavi.jpg
 tel-kadayif.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/tel-kadayif.jpg
