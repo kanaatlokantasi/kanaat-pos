@@ -80,6 +80,7 @@ kiloluk-keskul.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91
 krem-sokola.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/krem-sokola.jpg
 kuru-fasulye.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuru-fasulye.jpg
 kuzu-ciger-sarma.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-ciger-sarma.jpg
+kuzu-etli-talas-boregi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-etli-talas-boregi.jpg
 kuzu-firin.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-f%C4%B1r%C4%B1n.jpeg
 kuzu-haslama.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-haslama.jpg
 kuzu-kaburga-dolma-icpilavli.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-kaburga-dolma-i%C3%A7pilavl%C4%B1.jpg
