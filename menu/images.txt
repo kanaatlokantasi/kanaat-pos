@@ -127,6 +127,7 @@ tulumba-tatlisi.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-
 turlu.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/turlu.jpg
 turunc-receli.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/turunc-receli.jpeg
 visne-komposto.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/visne-komposto.jpg
+visneli-ekmek-kadayifi-kaymakli.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/visneli-ekmek-kadayifi-kaymakli.jpg
 yassi-kadayif.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/yassi-kadayif.jpg
 yayla-corbasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/yayla-corbasi.jpg
 yogurtlu-kebap.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/yogurtlu-kebap.jpeg
