@@ -56,6 +56,7 @@
 4977482169	Kazandibi
 4a6c424407	Zeytinyağlı Pırasa
 4b27c8b99d	Armut Komposto
+4d0de3d7ba	Domates Çorbası
 4ff798e8e7	İrmik Helvası
 5013b14467	Nohut
 5034584f1d	Sakızlı Muhallebi
