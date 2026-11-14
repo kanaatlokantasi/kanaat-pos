@@ -22,6 +22,7 @@ comlek-kebabi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a
 dalyan-kofte-edit-kare.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/dalyan-k%C3%B6fte-edit-kare.jpeg
 deva-300-ml-ayran-1-1959.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/deva-300-ml-ayran-1-1959.jpg
 domates-corbasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/domates-corbasi.jpg
+dondurma-kiloluk.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/dondurma-kiloluk.jpg
 ekmek-kadayifi-kaymakli.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/ekmek-kadayifi-kaymakli.jpg
 ekmek-kadayifi-sade.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/ekmek-kadayifi-sade.jpg
 eksilikofte-kare.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/eksilikofte-kare.jpeg
