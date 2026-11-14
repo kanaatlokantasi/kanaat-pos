@@ -158,6 +158,7 @@ b9befc6312	Dörtlü kazandibi.
 ba664a238d	İki yüz elli gram rulo kaymak.
 bc2cd3e7ae	Yoğurtlu Pazı Salatası
 bd02bc5e8e	Ankara Köfte
+bd3b251d9c	İç Bakla
 bdaf2dae82	Bir kiloluk kemalpaşa.
 bfe7a7573f	Fırın Makarna
 c198b9ee19	Fırın Bonfile
