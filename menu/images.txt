@@ -10,6 +10,7 @@ ayva-tatlisi-kaymakli.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-
 ayva-tatlisi-sade.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/ayva-tatlisi-sade.jpg
 bakla.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/bakla.jpg
 bamya.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/bamya.jpg
+begendi-etsiz.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/begendi-etsiz.jpg
 biber-dolma.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/biber-dolma.jpeg
 bulgur-pilavi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/bulgur-pilavi.jpg
 cacik.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/cacik.jpeg
@@ -82,6 +83,7 @@ kiloluk-asure.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a
 kiloluk-keskul.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kiloluk-keskul.jpg
 krem-sokola.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/krem-sokola.jpg
 kuru-fasulye.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuru-fasulye.jpg
+kuzu-buryan.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-buryan.jpg
 kuzu-ciger-sarma.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-ciger-sarma.jpg
 kuzu-etli-talas-boregi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-etli-talas-boregi.jpg
 kuzu-firin.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/kuzu-f%C4%B1r%C4%B1n.jpeg
@@ -97,6 +99,7 @@ mizrak-kofte.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6
 nohut.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/nohut.jpg
 ozbek-pilavi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/ozbek-pilavi.jpg
 paca-corbasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/paca-corbasi.jpg
+palamut-pilaki.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/palamut-pilaki.jpg
 pancar-tursu.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/pancar-tursu.jpg
 parmak-kebap.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/parmak-kebap.jpeg
 patlican-kebabi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/patlican-kebabi.jpg
@@ -106,6 +109,7 @@ pilav.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a5
 porsiyon-kaymak.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/porsiyon-kaymak.jpg
 porsiyon-yogurt.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/porsiyon-yogurt.jpg
 portakal-receli.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/portakal-receli.jpeg
+pure.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/pure.jpg
 revani.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/revani.jpg
 rulo-kaymak.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/rulo-kaymak.jpg
 sac-kavurma.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/sac-kavurma.jpg
@@ -147,6 +151,7 @@ zeytinyagli-domates-dolma.jpg https://public.takeaseat.io/restaurants/7abc0ee3-b
 zeytinyagli-enginar-dolma.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-enginar-dolma.jpeg
 zeytinyagli-enginar.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-enginar.jpg
 zeytinyagli-fasulye-pilaki-edit.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-fasulye-pilaki-edit.jpeg
+zeytinyagli-ic-bakla.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-ic-bakla.jpg
 zeytinyagli-lahana-sarmasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-lahana-sarmasi.jpg
 zeytinyagli-patlican-dolma.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-patlican-dolma.jpeg
 zeytinyagli-patlican-kizartmasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-patlican-kizartmasi.jpg
