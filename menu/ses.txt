@@ -44,6 +44,7 @@
 3a7244b62b	Zeytinyağlı Lahana Sarma
 3bf28d7e13	İmambayıldı
 3e1102fa53	Kereviz Dolma
+407bc79fd3	Güllaç
 41215fa5e1	Karışık Komposto
 42384365a0	Orman Kebabı
 4322fdb272	Şehriyeli Tavuk
@@ -135,6 +136,7 @@ a69f18f7e2	Kalburabastı
 a7a657d016	Mercimek Çorbası
 a8b0f2fd18	Döner Kebap
 a9811314c9	Zeytinyağlı Patlıcan Dolma
+a99aa4fb97	Bir kiloluk güllaç.
 aaab9127b9	Karnıyarık
 ab6fc1c9ac	Cevizli Kabak Tatlısı
 ac0a89dde9	Pancar Turşu
