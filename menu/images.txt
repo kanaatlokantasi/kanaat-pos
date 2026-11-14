@@ -149,6 +149,7 @@ zeytinyagli-patlican-dolma.jpeg https://public.takeaseat.io/restaurants/7abc0ee3
 zeytinyagli-patlican-kizartmasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-patlican-kizartmasi.jpg
 zeytinyagli-patlican-salatasi.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-patlican-salatasi.jpeg
 zeytinyagli-patlicanli-pilav.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinya%C4%9Fl%C4%B1-patlicanli-pilav.jpeg
+zeytinyagli-pazi-kavurmasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-pazi-kavurmasi.jpg
 zeytinyagli-pirasa.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-pirasa.jpg
 zeytinyagli-sogan-dolma.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-sogan-dolma.jpg
 zeytinyagli-yaprak-sarmasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-yaprak-sarmasi.jpg
