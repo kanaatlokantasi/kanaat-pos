@@ -139,6 +139,7 @@ zerde-kiloluk.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a
 zerde.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zerde.jpg
 zeytinyagli-barbunya-pilaki.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-barbunya-pilaki.jpg
 zeytinyagli-bruksel-lahanasi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-br%C3%BCksel-lahanasi.jpg
+zeytinyagli-cali-fasulye.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-cali-fasulye.jpg
 zeytinyagli-domates-dolma.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-domates-dolma.jpg
 zeytinyagli-enginar-dolma.jpeg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-enginar-dolma.jpeg
 zeytinyagli-enginar.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/zeytinyagli-enginar.jpg
