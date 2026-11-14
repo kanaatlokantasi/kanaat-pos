@@ -36,6 +36,7 @@ firin-kofte.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-
 firin-makarna.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/firin-makarna.jpg
 firinda-tavuk-sis.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/f%C4%B1r%C4%B1nda-tavuk-sis.jpg
 gul-tatlisi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/gul-tatlisi.jpg
+gullac.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/gullac.jpg
 haydari.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/haydari.jpg
 hindi-icpilavli-kestaneli.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/hindi-i%C3%A7pilavl%C4%B1-kestaneli.jpg
 hunkarbegendi.jpg https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/images/hunkarbegendi.jpg
