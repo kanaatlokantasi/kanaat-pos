@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="googlebot" content="noindex,nofollow">
+<title>QR Menü İstatistik</title>
+<link rel="icon" href="../img/favicon-32.png">
+<style>
+:root{--bg:#f6f3ee;--card:#fff;--ink:#1d2433;--mute:#6b7280;--line:#e7e1d7;--acc:#E8731F;--acc2:#f6c49b;--navy:#1f2f4d}
+@media (prefers-color-scheme:dark){:root{--bg:#14161b;--card:#1e2128;--ink:#eceef2;--mute:#9aa1ad;--line:#2d313a;--acc:#f08a3c;--acc2:#6b3d1c;--navy:#9fb4dc}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{background:var(--navy);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+@media (prefers-color-scheme:dark){header{background:#1f2f4d}}
+header h1{font-size:17px;margin:0;flex:1}
+header button{background:transparent;color:#fff;border:1px solid #ffffff55;border-radius:8px;padding:5px 10px;font:inherit;font-size:13px}
+main{max-width:980px;margin:0 auto;padding:14px 16px 40px}
+.login{max-width:360px;margin:40px auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.login h2{margin:0 0 12px;font-size:18px}
+input,select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);margin-bottom:10px}
+.btn{width:100%;background:var(--acc);color:#fff;border:0;border-radius:10px;padding:11px;font:inherit;font-weight:600}
+.err{color:#c0392b;font-size:13px;min-height:18px}
+.range{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.range button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px}
+.range button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.dates{display:flex;gap:8px;align-items:center;margin-bottom:14px;font-size:13px;color:var(--mute)}
+.dates input{margin:0;width:auto;flex:1;padding:7px 9px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.card h3{margin:0 0 4px;font-size:15px}
+.card p.d{margin:0 0 10px;font-size:12px;color:var(--mute)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 46px;gap:8px;align-items:center;margin:5px 0;font-size:13px}
+.row .l{min-width:0}
+.row .l div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .bar{height:6px;background:var(--acc2);border-radius:3px;margin-top:3px;overflow:hidden}
+.row .bar i{display:block;height:100%;background:var(--acc);border-radius:3px}
+.row b{text-align:right;font-variant-numeric:tabular-nums}
+.empty{font-size:13px;color:var(--mute)}
+.hours{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;align-items:end;height:120px;margin-top:8px}
+.hours div{background:var(--acc);border-radius:2px 2px 0 0;min-height:1px}
+.hl{display:grid;grid-template-columns:repeat(24,1fr);font-size:9px;color:var(--mute);text-align:center;margin-top:3px}
+.days{display:flex;gap:2px;align-items:end;height:110px;margin-top:8px}
+.days div{flex:1;background:var(--navy);border-radius:2px 2px 0 0;min-height:1px}
+.kv{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border:0}
+.kv b{font-variant-numeric:tabular-nums}
+.more{background:none;border:0;color:var(--acc);font:inherit;font-size:13px;padding:6px 0;cursor:pointer}
+.ver{font-size:11px;color:var(--mute);text-align:center;margin-top:20px}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<header><a href="../" style="color:#fff;text-decoration:none;font-size:20px" aria-label="Menüye dön">←</a><h1>Kanaat QR Menü · İstatistik</h1><button id="out" class="hide" type="button">Çıkış</button></header>
+<main>
+  <form class="login hide" id="login">
+    <h2>Giriş</h2>
+    <input id="em" type="email" autocomplete="username" placeholder="E-posta" value="bahadirkargili@gmail.com">
+    <input id="pw" type="password" autocomplete="current-password" placeholder="Şifre">
+    <div class="err" id="lerr"></div>
+    <button class="btn" type="submit">Giriş yap</button>
+  </form>
+  <section id="app" class="hide">
+    <div class="range" id="range">
+      <button data-r="0" type="button">Bugün</button><button data-r="1" type="button">Dün</button><button data-r="7" type="button" class="on">Son 7 gün</button><button data-r="30" type="button">Son 30 gün</button><button data-r="m" type="button">Bu ay</button><button data-r="all" type="button">Tümü</button>
+    </div>
+    <div class="dates"><input type="date" id="from"> – <input type="date" id="to"></div>
+    <div id="out2"><p class="empty">Yükleniyor…</p></div>
+  </section>
+  <p class="ver">Kişisel veri tutulmaz: isim, telefon, IP, konum, cihaz bilgisi yok. Sayaçlar günlük toplamdır; görüşlerde sadece puan, yorum ve dil saklanır. · __VER__</p>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+const NAMES=__NAMES__;
+const NOPHOTO=__NOPHOTO__;
+const LN={tr:"Türkçe",en:"İngilizce",ar:"Arapça",ru:"Rusça",es:"İspanyolca",fr:"Fransızca",zh:"Çince",de:"Almanca",ja:"Japonca",ko:"Korece",lv:"Letonca",fi:"Fince",pt:"Portekizce",it:"İtalyanca",nl:"Felemenkçe",pl:"Lehçe",sv:"İsveççe",no:"Norveççe",nb:"Norveççe",da:"Danca",el:"Rumca (Yunanca)",he:"İbranice",fa:"Farsça",hi:"Hintçe",id:"Endonezce",ms:"Malayca",th:"Tayca",vi:"Vietnamca",uk:"Ukraynaca",ro:"Romence",hu:"Macarca",cs:"Çekçe",sk:"Slovakça",bg:"Bulgarca",sr:"Sırpça",hr:"Hırvatça",ka:"Gürcüce",az:"Azerice",kk:"Kazakça",uz:"Özbekçe",et:"Estonca",lt:"Litvanca",sq:"Arnavutça",bs:"Boşnakça",ur:"Urduca",bn:"Bengalce",ta:"Tamilce",tl:"Filipince",ca:"Katalanca",eu:"Baskça",is:"İzlandaca",mk:"Makedonca",sl:"Slovence",hy:"Ermenice",mn:"Moğolca"};
+const FL={l:"🐑 Kuzu",b:"🐄 Dana",c:"🐔 Tavuk",v:"🥕 Vejetaryen",V:"🌱 Vegan",xG:"Glutensiz",xN:"Kuruyemişsiz",xM:"Sütsüz"};
+const QN={today:"Bugün ne önerirsiniz?",first:"İlk kez geliyorum",story:"Hikâyeniz",veg:"Vejetaryen",olive:"Zeytinyağlılar",dessert:"Tatlı",allergy:"Alerji",togo:"Paket / yanıma alma",cater:"Toplu sipariş / catering",calc:"Hesabımı hesapla",hours:"Çalışma saatleri"};
+firebase.initializeApp({apiKey:"AIzaSyA86Pe-CM-mkAWzJKtNikJFAM-z3LTgtx0",authDomain:"kanaat-qr-menu.firebaseapp.com",projectId:"kanaat-qr-menu",storageBucket:"kanaat-qr-menu.firebasestorage.app",messagingSenderId:"767859552454",appId:"1:767859552454:web:25c3325f1967fc693fe7c7"});
+const auth=firebase.auth(),db=firebase.firestore();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nf=n=>Math.round(n).toLocaleString("tr-TR");
+const tl=k=>(k/100).toLocaleString("tr-TR",{minimumFractionDigits:0,maximumFractionDigits:2})+" ₺";
+function ist(d){const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Istanbul",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);const g=k=>p.find(x=>x.type===k).value;return g("year")+"-"+g("month")+"-"+g("day")}
+function shift(s,n){const d=new Date(s+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}
+function setRange(r){const t=ist(new Date());let f=t,e=t;
+  if(r==="1"){f=e=shift(t,-1)}else if(r==="7")f=shift(t,-6);else if(r==="30")f=shift(t,-29);else if(r==="m")f=t.slice(0,8)+"01";else if(r==="all")f="2026-01-01";
+  $("from").value=f;$("to").value=e;document.querySelectorAll("#range button").forEach(b=>b.classList.toggle("on",b.dataset.r===r));load()}
+$("range").onclick=e=>{const b=e.target.closest("button");if(b)setRange(b.dataset.r)};
+$("from").onchange=$("to").onchange=()=>{document.querySelectorAll("#range button").forEach(b=>b.classList.remove("on"));load()};
+
+let seq=0;
+async function load(){const my=++seq;const f=$("from").value,t=$("to").value;if(!f||!t)return;
+  $("out2").innerHTML='<p class="empty">Yükleniyor…</p>';
+  try{const id=firebase.firestore.FieldPath.documentId();
+    const snap=await db.collection("menuStats").where(id,">=",f).where(id,"<=",t).get();
+    if(my!==seq)return;const days=[];const S={};
+    snap.forEach(d=>{const x=d.data();days.push([d.id,x.open||0]);for(const k in x)if(typeof x[k]==="number")S[k]=(S[k]||0)+x[k]});
+    let FBK=[];try{const fs=await db.collection("feedback").where("at",">=",new Date(f+"T00:00:00+03:00")).where("at","<",new Date(shift(t,1)+"T00:00:00+03:00")).orderBy("at","desc").get();fs.forEach(d=>FBK.push(d.data()))}catch(e){FBK=null}
+    if(my!==seq)return;draw(S,days,f,t);drawFb(FBK)}catch(e){$("out2").innerHTML='<p class="err">'+(e.code==="permission-denied"?"Bu hesabın raporu görme izni yok. Firebase kurallarındaki e-posta ile giriş yapın.":"Veri okunamadı: "+esc(e.message))+'</p>'}}
+
+function pre(S,p){const o=[];for(const k in S)if(k.startsWith(p)&&S[k]>0)o.push([k.slice(p.length),S[k]]);return o.sort((a,b)=>b[1]-a[1])}
+function list(rows,label,limit){if(!rows.length)return '<p class="empty">Henüz veri yok.</p>';const mx=rows[0][1]||1;limit=limit||10;
+  const h=rows.map((r,i)=>`<div class="row${i>=limit?" x hide":""}"><div class="l"><div>${esc(label?label(r[0]):r[0])}</div><div class="bar"><i style="width:${Math.max(2,r[1]/mx*100)}%"></i></div></div><b>${nf(r[1])}</b></div>`).join("");
+  return h+(rows.length>limit?`<button class="more" type="button" onclick="this.parentNode.querySelectorAll('.x').forEach(e=>e.classList.toggle('hide'));this.textContent=this.textContent.startsWith('Tümünü')?'Daha az göster':'Tümünü göster (${rows.length})'">Tümünü göster (${rows.length})</button>`:"")}
+const card=(t,d,b)=>`<div class="card"><h3>${t}</h3>${d?`<p class="d">${d}</p>`:""}${b}</div>`;
+const kv=rows=>rows.map(([a,b])=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`).join("");
+const dish=c=>NAMES[c]||("? "+c);
+const pct=(a,b)=>b?"%"+Math.round(a/b*100):"–";
+
+function draw(S,days,f,t){window._S=S;const g=k=>S[k]||0;
+  const open=g("open"),qr=g("qrShow");
+  // languages: auto + saved + url
+  const L={};for(const p of ["auto_","saved_","url_"])for(const [k,v] of pre(S,p))L[k]=(L[k]||0)+v;
+  const langs=Object.entries(L).sort((a,b)=>b[1]-a[1]);
+  // dishes added: merge variants
+  const add=pre(S,"add_").map(([k,v])=>{const c=k.slice(0,4),vr=k.slice(4);return [c,vr,v]});
+  const A={};for(const [c,vr,v] of add){A[c]=A[c]||{n:0,a:0,t:0};A[c][vr||"n"]+=v}
+  const addRows=Object.entries(A).map(([c,o])=>[c,o.n+o.a+o.t,o]).sort((a,b)=>b[1]-a[1]);
+  const addHtml=addRows.length?(()=>{const mx=addRows[0][1];return addRows.map((r,i)=>`<div class="row${i>=12?" x hide":""}"><div class="l"><div>${esc(dish(r[0]))}${r[2].a||r[2].t?` <small style="color:var(--mute)">(${[r[2].n?r[2].n+" tam":"",r[2].a?r[2].a+" az":"",r[2].t?r[2].t+" tek":""].filter(Boolean).join(", ")})</small>`:""}</div><div class="bar"><i style="width:${Math.max(2,r[1]/mx*100)}%"></i></div></div><b>${nf(r[1])}</b></div>`).join("")+(addRows.length>12?`<button class="more" type="button" onclick="this.parentNode.querySelectorAll('.x').forEach(e=>e.classList.toggle('hide'))">Tümünü göster / gizle (${addRows.length})</button>`:"")})():'<p class="empty">Henüz veri yok.</p>';
+  // hours
+  const H=[...Array(24)].map((_,h)=>g("h"+String(h).padStart(2,"0")));const hm=Math.max(1,...H);
+  // days series (fill gaps)
+  const DM=Object.fromEntries(days);const ser=[];if(f!==t&&f>="2026-01-01"){let d=days.length&&f<days[0][0]&&$("range").querySelector(".on")?.dataset.r==="all"?days[0][0]:f;let n=0;while(d<=t&&n<400){ser.push([d,DM[d]||0]);d=shift(d,1);n++}}
+  const dm=Math.max(1,...ser.map(x=>x[1]));
+  const tipN=["p5","p10","p15","m"].reduce((a,k)=>a+g("tip_"+k),0);
+  const html=`
+  <div class="kpis">
+    <div class="kpi"><b>${nf(open)}</b><span>Menü açılışı</span></div>
+    <div class="kpi"><b>${nf(qr)}</b><span>Garsona gösterilen hesap</span></div>
+    <div class="kpi"><b>${qr?tl(g("qrSum")/qr):"–"}</b><span>Ortalama hesap (bahşiş dahil)</span></div>
+    <div class="kpi"><b>${nf(g("wOk"))}</b><span>Garson onayı</span></div>
+    <div class="kpi"><b>${tl(g("tipSum"))}</b><span>Bahşiş toplamı (${nf(tipN)} hesapta)</span></div>
+    <div class="kpi"><b>${pct(qr,open)}</b><span>Açılıştan hesaba dönüşüm</span></div>
+  </div>
+  <div class="grid">
+  ${ser.length>1?card("Günlük açılış",`${esc(ser[0][0])} – ${esc(ser[ser.length-1][0])}`,`<div class="days">${ser.map(([d,v])=>`<div title="${d}: ${v}" style="height:${v/dm*100}%"></div>`).join("")}</div>`):""}
+  ${card("Saatlere göre açılış","İstanbul saati",`<div class="hours">${H.map((v,h)=>`<div title="${h}:00 · ${v}" style="height:${v/hm*100}%"></div>`).join("")}</div><div class="hl">${H.map((_,h)=>`<span>${h%3===0?h:""}</span>`).join("")}</div>`)}
+  ${card("Menünün açıldığı dil","Telefon dili, kayıtlı seçim ve bağlantı birlikte",list(langs,k=>(LN[k]||k)))}
+  ${card("Menüde olmayan telefon dilleri","Bu misafirler İngilizce gördü; yeni dil adayları",list(pre(S,"other_"),k=>(LN[k]||k)+" ("+k+")"))}
+  ${card("Elle seçilen dil","Dil listesinden değiştirilen",list(pre(S,"pick_"),k=>LN[k]||k))}
+  ${card("Hesaba en çok eklenen yemekler","Hesabımı hesapla bölümünden",addHtml)}
+  ${card("En çok bakılan fotoğraflar","",list(pre(S,"photo_"),dish,12))}
+  ${card("Filtreler","",list(pre(S,"filter_"),k=>FL[k]||k))}
+  ${card("Arama",`${nf(g("search"))} arama · bulunamayanlar aşağıda`,list(pre(S,"miss_"),null,12))}
+  ${card("Şefin önerisi","",kv([["Gösterildi",nf(g("chefShow"))],["“Menüde göster” tıklandı",nf(g("chefGo"))+" · "+pct(g("chefGo"),g("chefShow"))],["🔊 Dinlendi",nf(g("chefSay"))]]))}
+  ${card("Şefe sor",`${nf(g("chat"))} kez açıldı`,list(pre(S,"q_"),k=>QN[k]||k,12))}
+  ${card("Hesap akışı","",kv([["Hesabımı hesapla açıldı",nf(g("calc"))],["İçecek hatırlatması",nf(g("drinkStep"))],["Hatırlatmadan sonra eklenen içecek",nf(g("drinkAdd"))],["Garsona gösterilen hesap",nf(qr)],["Garson onayladı",nf(g("wOk"))],["Onaylı hesap misafirde açıldı",nf(g("okOpen"))],["Taslak kaydedildi",nf(g("saveDraft"))],["Onaylı hesap kaydedildi",nf(g("saveOk"))]]))}
+  ${card("Bahşiş ve bölüşme","",kv([["Bahşişsiz",nf(g("tip_none"))],["%5",nf(g("tip_p5"))],["%10",nf(g("tip_p10"))],["%15",nf(g("tip_p15"))],["Tutar girilen",nf(g("tip_m"))],["Ortalama bahşiş",tipN?tl(g("tipSum")/tipN):"–"],["Hesabı bölen",nf(g("split"))],["Ortalama kişi",g("split")?(g("splitPeople")/g("split")).toLocaleString("tr-TR",{maximumFractionDigits:1}):"–"]]))}
+  ${card("Fotoğrafı olmayan yemekler",`${NOPHOTO.length} yemek · çekip gönderdikçe eklenir`,NOPHOTO.length?(()=>{const g={};NOPHOTO.forEach(([c,n])=>(g[c]=g[c]||[]).push(n));return Object.entries(g).map(([c,ns])=>`<div class="kv" style="display:block"><b style="font-size:12px;color:var(--mute)">${esc(c)}</b><div>${ns.map(esc).join(" · ")}</div></div>`).join("")})():'<p class="empty">Bütün yemeklerin fotoğrafı var.</p>')}
+  ${card("Telaffuz (🔊)","Türkçe adını dinleme",kv([["Dinlenme",nf(g("say"))]]))}
+  ${card("Şefin eşleşme önerileri","Fotoğrafı açılan yemeğin altındaki “yanına öneriyor” düğmelerine tıklama",(()=>{const rows=pre(S,"pr_").map(([k,v])=>[k.slice(0,4),k.slice(4,8),v]).sort((a,b)=>b[2]-a[2]);if(!rows.length)return '<p class="empty">Henüz tıklama yok.</p>';const mx=rows[0][2];return rows.map((r,i)=>`<div class="row${i>=12?" x hide":""}"><div class="l"><div>${esc(dish(r[0]))} → <b>${esc(dish(r[1]))}</b> <small style="color:var(--mute)">(${nf(g("pairShow_"+r[0]))} gösterim)</small></div><div class="bar"><i style="width:${Math.max(2,r[2]/mx*100)}%"></i></div></div><b>${nf(r[2])}</b></div>`).join("")+(rows.length>12?`<button class="more" type="button" onclick="this.parentNode.querySelectorAll('.x').forEach(e=>e.classList.toggle('hide'))">Tümünü göster / gizle (${rows.length})</button>`:"")})())}
+  ${card("Instagram","Instagram bağlantısına tıklama",kv([["Tıklama",nf(g("ig"))]]))}
+  </div>`;
+  $("out2").innerHTML=open||qr||Object.keys(S).length?html:'<p class="empty">Bu tarih aralığında veri yok.</p>';
+}
+function drawFb(F){const box=document.createElement("div");box.className="grid";box.style.marginTop="12px";
+  if(F===null){box.innerHTML=card("Misafir görüşleri","",'<p class="err">Görüşler okunamadı. Firestore kurallarına feedback bölümü eklenmeli.</p>');$("out2").appendChild(box);return}
+  const av=k=>{const v=F.filter(x=>x[k]).map(x=>x[k]);return v.length?(v.reduce((a,b)=>a+b,0)/v.length):0};
+  const st=v=>v?"★".repeat(Math.round(v))+"☆".repeat(5-Math.round(v)):"–";
+  const lowOf=x=>{const v=["y","s","t"].filter(k=>x[k]).map(k=>x[k]);const a=v.reduce((p,q)=>p+q,0)/v.length;return a<=3||Math.min(...v)<=2};
+  const L=[...F].sort((a,b)=>(lowOf(b)-lowOf(a))||0);
+  const fmt=x=>x.at&&x.at.toDate?x.at.toDate().toLocaleString("tr-TR",{timeZone:"Europe/Istanbul",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+  const one=x=>`<div style="border-top:1px solid var(--line);padding:8px 0;${lowOf(x)?"border-left:3px solid #c0392b;padding-left:8px;":""}"><div style="font-size:12px;color:var(--mute)">${esc(fmt(x))} · ${esc(LN[x.l]||x.l||"")}${lowOf(x)?' · <b style="color:#c0392b">düşük puan</b>':""}</div><div style="font-size:13px">Yemek ${x.y||"–"} · Servis ${x.s||"–"} · Temizlik ${x.t||"–"}</div>${x.c?`<div style="margin-top:3px">${esc(x.c)}</div>`:""}</div>`;
+  box.innerHTML=card("Misafir görüşleri",`${F.length} görüş · ${F.filter(lowOf).length} düşük puan · Google düğmesine ${nf(window._S&&_S.fbG||0)} tıklama`,
+    F.length?kv([["Yemek",`<span style="color:#E8A317">${st(av("y"))}</span> ${av("y").toLocaleString("tr-TR",{maximumFractionDigits:1})}`],["Servis",`<span style="color:#E8A317">${st(av("s"))}</span> ${av("s").toLocaleString("tr-TR",{maximumFractionDigits:1})}`],["Temizlik ve ortam",`<span style="color:#E8A317">${st(av("t"))}</span> ${av("t").toLocaleString("tr-TR",{maximumFractionDigits:1})}`]])+L.map(one).join(""):'<p class="empty">Bu tarih aralığında görüş yok.</p>');
+  box.firstElementChild.style.gridColumn="1/-1";
+  if(!$("out2").querySelector(".kpis"))$("out2").innerHTML="";const k=$("out2").querySelector(".kpis");k?k.after(box):$("out2").appendChild(box);box.style.marginBottom="12px"}
+auth.onAuthStateChanged(u=>{try{u?localStorage.setItem("kanaat-rapor","1"):localStorage.removeItem("kanaat-rapor")}catch(_){}$("login").classList.toggle("hide",!!u);$("app").classList.toggle("hide",!u);$("out").classList.toggle("hide",!u);if(u)setRange("7")});
+$("login").onsubmit=async e=>{e.preventDefault();$("lerr").textContent="";try{await auth.signInWithEmailAndPassword($("em").value.trim(),$("pw").value)}catch(err){$("lerr").textContent="Giriş başarısız: "+(err.code||err.message)}};
+$("out").onclick=()=>auth.signOut();
+</script>
+</body>
+</html>

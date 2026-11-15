@@ -1,0 +1,341 @@
+{
+ "Mercimek Çorbası": {
+  "az": 90
+ },
+ "Ezogelin Çorbası": {
+  "az": 90
+ },
+ "Terbiyeli İşkembe Çorbası": {
+  "az": 140
+ },
+ "Yayla Çorbası": {
+  "az": 90
+ },
+ "Domatesli Pirinç Çorbası": {
+  "az": 90
+ },
+ "Tavuk Suyu Şehriye Çorbası": {
+  "az": 90
+ },
+ "Kadınbudu Köfte": {
+  "az": 260
+ },
+ "İzmir Köfte": {
+  "az": 345
+ },
+ "Ankara Köfte": {
+  "az": 345
+ },
+ "Ekşili Köfte": {
+  "az": 345
+ },
+ "Sebzeli Köfte": {
+  "az": 345
+ },
+ "Izgara Köfte": {
+  "az": 360
+ },
+ "Mızrak Köfte": {
+  "az": 345
+ },
+ "Fırın Köfte": {
+  "az": 345
+ },
+ "Kayseri Köfte": {
+  "az": 345
+ },
+ "Pilav": {
+  "az": 90
+ },
+ "Bulgur Pilavı": {
+  "az": 90
+ },
+ "İç Pilav": {
+  "az": 125
+ },
+ "Zeytinyağlı Patlıcanlı Pilav": {
+  "az": 125
+ },
+ "Tekke Pilavı (Kuzu Etli)": {
+  "az": 275
+ },
+ "Patates Püresi": {
+  "az": 160
+ },
+ "Kuru Fasulye": {
+  "az": 160
+ },
+ "Nohut": {
+  "az": 160
+ },
+ "Etli Yaprak Sarma": {
+  "az": 260
+ },
+ "Patlıcan Musakka": {
+  "az": 230
+ },
+ "Ispanak": {
+  "az": 160
+ },
+ "Etli Lahana Sarma": {
+  "az": 260
+ },
+ "Kapuska": {
+  "az": 160
+ },
+ "Taze Fasulye": {
+  "az": 160
+ },
+ "Türlü": {
+  "az": 160
+ },
+ "Terbiyeli Kereviz": {
+  "az": 160
+ },
+ "Etli Biber Dolması": {
+  "az": 260
+ },
+ "Beğendi (etsiz)": {
+  "az": 190
+ },
+ "Püre": {
+  "az": 160
+ },
+ "Sac Kavurma": {
+  "az": 340
+ },
+ "Tas Kebabı": {
+  "az": 340
+ },
+ "Patlıcan Kebabı": {
+  "az": 340
+ },
+ "Soğanlı Kebap": {
+  "az": 340
+ },
+ "Hünkar Beğendi": {
+  "az": 365
+ },
+ "Mantarlı Tavuk": {
+  "az": 225
+ },
+ "Döner Kebap": {
+  "az": 290
+ },
+ "Yoğurtlu Kebap": {
+  "az": 340
+ },
+ "Fırında Tavuk Şiş": {
+  "az": 225
+ },
+ "Kuzu Tandır": {
+  "az": 450
+ },
+ "Çoban Kavurma": {
+  "az": 340
+ },
+ "Izgara Kuzu Pirzola (2 kalem)": {
+  "az": 450
+ },
+ "Izgara Kuzu Şiş": {
+  "az": 450
+ },
+ "Zeytinyağlı Lahana Sarma": {
+  "tek": 110
+ },
+ "Barbunya Pilaki": {
+  "az": 160
+ },
+ "Ispanak Kökü": {
+  "az": 160
+ },
+ "Arnavut Ciğeri": {
+  "az": 265
+ },
+ "Bakla": {
+  "az": 160
+ },
+ "Bamya": {
+  "az": 190
+ },
+ "Çerkez Tavuğu": {
+  "az": 160
+ },
+ "Semizotu": {
+  "az": 160
+ },
+ "Zeytinyağlı Yaprak Sarma": {
+  "tek": 110
+ },
+ "Zeytinyağlı Patlıcan Dolma": {
+  "az": 160
+ },
+ "Zeytinyağlı Biber Dolma": {
+  "az": 160
+ },
+ "Zeytinyağlı Brüksel Lahanası": {
+  "az": 160
+ },
+ "Kabak Kızartma": {
+  "az": 160
+ },
+ "Patlıcan Kızartma": {
+  "az": 160
+ },
+ "Zeytinyağlı Pırasa": {
+  "az": 160
+ },
+ "Patlıcan Paça": {
+  "az": 160
+ },
+ "Yoğurtlu Pazı Salatası": {
+  "az": 160
+ },
+ "Fasulye Pilaki": {
+  "az": 160
+ },
+ "Fava": {
+  "az": 160
+ },
+ "Haydari": {
+  "az": 160
+ },
+ "Nohut Pilaki": {
+  "az": 160
+ },
+ "Sultani Bezelye": {
+  "az": 160
+ },
+ "Mevsim Salata": {
+  "az": 95
+ },
+ "Karışık Turşu": {
+  "az": 95
+ },
+ "Çoban Salata": {
+  "az": 95
+ },
+ "Pancar Turşu": {
+  "az": 95
+ },
+ "Söğüş Salata": {
+  "az": 95
+ },
+ "Piyaz": {
+  "az": 135
+ },
+ "Samsa Tatlısı": {
+  "az": 135
+ },
+ "Ekmek Kadayıfı (Kaymaklı)": {
+  "az": 175
+ },
+ "Ekmek Kadayıfı (Sade)": {
+  "az": 135
+ },
+ "Kaymaklı Cevizli İncir Tatlısı": {
+  "az": 210
+ },
+ "İncir Tatlısı (Kaymaksız)": {
+  "az": 160
+ },
+ "İrmik Helvası": {
+  "az": 135
+ },
+ "Gül Tatlısı (Cevizli)": {
+  "az": 135
+ },
+ "Cevizli Kabak Tatlısı": {
+  "az": 135
+ },
+ "Kadayıf Dolma": {
+  "az": 135
+ },
+ "Kalburabastı": {
+  "az": 135
+ },
+ "Kaymaçina": {
+  "az": 135
+ },
+ "Kemalpaşa": {
+  "az": 135
+ },
+ "Revani": {
+  "az": 135
+ },
+ "Tulumba": {
+  "az": 135
+ },
+ "İlave Kaymak": {
+  "az": 60
+ },
+ "İlave Dondurma": {
+  "az": 85
+ },
+ "Su Muhallebisi": {
+  "az": 135
+ },
+ "Vişneli Ekmek Kadayıfı (Kaymaklı)": {
+  "az": 175
+ },
+ "Porsiyon Dondurma": {
+  "az": 170
+ },
+ "Reçel - Kaymak": {
+  "az": 100
+ },
+ "Pırasalı Kereviz": {
+  "az": 160
+ },
+ "Hindi İç Pilavlı Kestaneli": {
+  "az": 340
+ },
+ "Zeytinyağlı Yer Elması": {
+  "az": 160
+ },
+ "Patlıcan Salatası": {
+  "az": 160
+ },
+ "Zeytinyağlı Soğan Dolması": {
+  "az": 160
+ },
+ "Zeytinyağlı Domates Dolması": {
+  "az": 160
+ },
+ "Çılbır": {
+  "az": 160
+ },
+ "Zeytinyağlı Karnıbahar": {
+  "az": 160
+ },
+ "Çömlek Kebabı": {
+  "az": 340
+ },
+ "Şehriyeli Tavuk": {
+  "az": 225
+ },
+ "Sebzeli Kebap": {
+  "az": 340
+ },
+ "Orman Kebabı": {
+  "az": 340
+ },
+ "Zeytinyağlı Bezelye": {
+  "az": 160
+ },
+ "Pazı Kavurma": {
+  "az": 160
+ },
+ "Çalı Fasulye": {
+  "az": 160
+ },
+ "Zeytinyağlı Baklalı Pilav": {
+  "az": 125
+ },
+ "Domates Çorbası": {
+  "az": 90
+ },
+ "İç Bakla": {
+  "az": 160
+ }
+}
