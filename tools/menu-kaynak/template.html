@@ -661,7 +661,7 @@ $("langbtn").addEventListener("click",()=>$("langov").classList.add("open"));
 $("langov").addEventListener("click",e=>{
   const b=e.target.closest("button[data-lang]");
   if(b){lang=b.dataset.lang;ST.add("pick_"+lang);try{localStorage.setItem("kanaat-menu-lang",lang)}catch(_){ }
-    const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render();chefClose();availBlink();clearTimeout(window._chefT);window._chefT=setTimeout(()=>{if(chefItem()&&!document.querySelector(".chat.open,.calc.open,.cart.open"))chefOpen()},7000)}
+    const u=new URL(location.href);u.searchParams.delete("lang");history.replaceState(null,"",u);render();chefClose();availBlink();clearTimeout(window._chefT);window._chefT=setTimeout(()=>{if(chefItem()&&!document.querySelector(".chat.open,.calc.open,.cart.open"))chefOpen()},14000)}
   if(b||e.target===e.currentTarget)$("langov").classList.remove("open");
 });
 $("menu").addEventListener("click",e=>{
@@ -1266,7 +1266,7 @@ try{if(sessionStorage.getItem("kanaat-open")!=="1"){sessionStorage.setItem("kana
   if(ST.src==="auto")ST.add("auto_"+lang);else if(ST.src==="other")ST.add("other_"+ST.other);else if(ST.src==="saved")ST.add("saved_"+lang);else ST.add("url_"+lang)}}catch(_){ST.add("open")}
 $("cfab").setAttribute("aria-label",CL(CHAT.title));
 let seen=false;try{seen=sessionStorage.getItem("kanaat-chef")==="1"}catch(_){}
-availBlink();if(!seen&&chefItem()){window._chefT=setTimeout(()=>{if(document.querySelector(".chat.open,.calc.open,.cart.open"))return;chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},7000)}
+availBlink();if(!seen&&chefItem()){window._chefT=setTimeout(()=>{if(document.querySelector(".chat.open,.calc.open,.cart.open"))return;chefOpen();try{sessionStorage.setItem("kanaat-chef","1")}catch(_){}},14000)}
 }
 </script>
 </body>
