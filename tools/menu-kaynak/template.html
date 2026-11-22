@@ -290,6 +290,8 @@ body.searching #menu{min-height:100vh}
 .crow .cic{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
 .halft{position:fixed;left:12px;right:12px;bottom:84px;z-index:9999;background:#7C2D12;color:#fff;border-radius:14px;padding:13px 15px;font-size:15px;line-height:1.4;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s}
 .halft.on{opacity:1;transform:none;pointer-events:auto}
+.trlist div.hz{background:#FFEDD5;border-radius:8px;padding:4px 8px;margin:2px -8px}
+.wl.hz{padding:10px 8px 10px 12px;background:#FFEDD5;box-shadow:inset 4px 0 0 #C2410C;border-radius:8px}
 </style>
 </head>
 <body>
@@ -1059,7 +1061,7 @@ function cartQR(){
   const svg=qrSvg(url);const s=subOf(L),t=tipOf(s,TIP);
   $("cartbody").innerHTML=`<h3 class="ctitle">${esc(CL(CART_UI.show))}</h3>
    ${svg?`<p class="cnote">${esc(CL(CART_UI.scan))}</p><div class="qrbig">${svg}</div>`:`<p class="cnote">${esc(CL(CART_UI.long))}</p>`}
-   <div class="trlist" lang="tr" dir="ltr">${L.map(l=>`<div><span class="tl2"><b>${l.q} × ${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</b>${lang!=="tr"?`<small dir="auto">${esc(nameIn(l.it))}${l.v?" ("+vLabel(l.v)+")":""}</small>`:""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
+   <div class="trlist" lang="tr" dir="ltr">${L.map(l=>`<div${l.v==="a"?' class="hz"':""}><span class="tl2"><b>${l.q} × ${esc(l.it.tr)}${l.v?` <span class="vtag${l.v==="a"?" half":""}">${vLabel(l.v,1)}</span>`:""}</b>${lang!=="tr"?`<small dir="auto">${esc(nameIn(l.it))}${l.v?" ("+esc(vLabel(l.v))+")":""}</small>`:""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
      ${t?`<div class="trt"><span class="tl2"><b>Ara toplam</b>${bi(TIP_UI.sub)}</span><b>${price(s)}</b></div><div><span class="tl2"><b>Gönüllü bahşiş</b>${bi(TIP_UI.line)}</span><b>${price(t)}</b></div>`:""}
      <div class="trt"><span class="tl2"><b>Toplam</b>${bi(CART_UI.total)}</span><b>${price(s+t)}</b></div>${SPLIT>1?`<div><span class="tl2"><b>Kişi başı (${SPLIT} kişi)</b>${bi(SPLIT_UI.each,` (${SPLIT})`)}</span><b>${price(Math.round((s+t)*100/SPLIT)/100)}</b></div>`:""}</div>
    <button class="clink" type="button" id="cback">${esc(CL(CART_UI.back))}</button>`;
@@ -1134,7 +1136,7 @@ function waiterView(payload){
     box.innerHTML=`<div class="wrap"><h2>Misafir Adisyonu</h2>
      <p class="wsub">Misafirin kendi seçtiği yemekler · ${tm}${LN[glang]?" · Misafirin dili: "+esc(LN[glang]):""}</p>
      <div class="wnote">Bu liste misafirin kendi seçimidir. Bitmiş yemekleri silin, adetleri düzeltin. Değişiklikler yalnızca bu telefonda görünür.</div>
-     <div class="wlines">${W.map((l,i)=>`<div class="wl${l.q?"":" off"}"><div class="cn"><b>${esc(l.it.tr)}${l.v?` <span class="vtag">${vLabel(l.v,1)}</span>`:""}</b>${glang!=="tr"&&LI[glang]?`<small class="gl" dir="auto" lang="${glang}">${esc(l.it.t[LI[glang]-1])}</small>`:""}<small>${price(lp(l))}</small></div>
+     <div class="wlines">${W.map((l,i)=>`<div class="wl${l.q?"":" off"}${l.v==="a"?" hz":""}"><div class="cn"><b>${esc(l.it.tr)}${l.v?` <span class="vtag${l.v==="a"?" half":""}">${vLabel(l.v,1)}</span>`:""}</b>${glang!=="tr"&&LI[glang]?`<small class="gl" dir="auto" lang="${glang}">${esc(l.it.t[LI[glang]-1])}</small>`:""}<small>${price(lp(l))}</small></div>
        <span class="step"><button type="button" data-wd="${i}">−</button><b>${l.q}</b><button type="button" data-wi="${i}">+</button></span><em>${price(l.q*lp(l))}</em></div>`).join("")||"<p>Liste boş.</p>"}</div>
      ${(()=>{const sb=subOf(live),tt=tipOf(sb,tip);return (tt?`<div class="csub"><span>Ara toplam</span><b>${price(sb)}</b></div><div class="csub"><span>Gönüllü bahşiş${tip.k==="p"?" (%"+tip.v+")":""} · misafirin isteği</span><b>${price(tt)}</b></div>`:"")+`<div class="ctot"><span>Toplam (${live.reduce((a,l)=>a+l.q,0)} adet)</span><b>${price(sb+tt)}</b></div>`+(split>1?`<div class="pp"><span>Kişi başı (${split} kişi)</span><b>${price(Math.round((sb+tt)*100/split)/100)}</b></div>`:"")})()}
      ${live.length?`<button class="cbtn" type="button" id="wok">Onayla ve misafire göster</button>`:""}
@@ -1146,7 +1148,7 @@ function waiterView(payload){
     box.innerHTML=`<div class="wrap"><h2>Onaylanan Adisyon</h2>
      <p class="wsub">Misafir bu kodu kendi telefonunun kamerasıyla okutsun. Hesap ${LN[glang]?"<b>"+esc(LN[glang])+"</b> ":""}açılır ve misafir kaydedebilir.</p>
      ${svg?`<div class="qrbig">${svg}</div>`:`<div class="wnote">Liste QR'a sığmadı. Misafire ekranı gösterin.</div>`}
-     <div class="trlist">${live.map(l=>`<div><span>${l.q} × ${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
+     <div class="trlist">${live.map(l=>`<div${l.v==="a"?' class="hz"':""}><span>${l.q} × ${esc(l.it.tr)}${l.v?` <span class="vtag${l.v==="a"?" half":""}">${vLabel(l.v,1)}</span>`:""}</span><b>${price(l.q*lp(l))}</b></div>`).join("")}
        ${tt?`<div class="trt"><span>Ara toplam</span><b>${price(sb)}</b></div><div><span>Gönüllü bahşiş</span><b>${price(tt)}</b></div>`:""}<div class="trt"><span>Toplam</span><b>${price(sb+tt)}</b></div></div>
      <button class="clink" type="button" id="wedit">Düzenlemeye dön</button></div>`;
   };
