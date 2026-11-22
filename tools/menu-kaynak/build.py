@@ -2,7 +2,7 @@
 # (15.11.2026'da yeniden yazıldı; çıktısı v103 ile birebir doğrulandı)
 import json, zlib, hashlib, os, re, sys
 
-VERSION = "107 · 22.11.2026"
+VERSION = "108 · 22.11.2026"
 REMOTE = "https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/"
 B = os.path.dirname(os.path.abspath(__file__))
 ITEMS = os.environ.get("ITEMS", os.path.join(B, "items.txt"))
