@@ -281,6 +281,8 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
 .calc .addb.sm{padding:6px 9px;font-size:12px}
 .cartbar{z-index:26}
 .t svg.ses{width:1.3em;height:1.3em;vertical-align:-.3em}
+body.searching #menu .avail,#calclist.searching .avail{display:none}
+body.searching #menu{min-height:100vh}
 </style>
 </head>
 <body>
@@ -619,6 +621,7 @@ const BYID={};
 for(const c of MENU)for(const it of c.items)BYID[it.id]=it;
 function filter(){
   const q=norm($("q").value.trim());
+  document.body.classList.toggle("searching",!!q);
   $("fwarn").classList.toggle("hide",!(fsel&&fsel[0]==="x"));
   let any=false;
   for(const sec of document.querySelectorAll("section.cat")){
@@ -650,7 +653,9 @@ function spy(){
   });
 }
 let raf=0;addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;spy()})},{passive:true});
-let qT=0;$("q").addEventListener("input",()=>{filter();clearTimeout(qT);qT=setTimeout(()=>{const v=$("q").value.trim().toLocaleLowerCase("tr");if(v.length<3)return;ST.add("search");
+function qLift(){const q=$("q"),on=!!q.value.trim();document.body.classList.toggle("searching",on);
+  if(on){const y=Math.max(0,q.getBoundingClientRect().top+scrollY-8);const go=()=>{if(Math.abs(scrollY-y)>4)scrollTo(0,y)};go();setTimeout(go,60);setTimeout(go,300)}}
+let qT=0;$("q").addEventListener("input",()=>{filter();qLift();clearTimeout(qT);qT=setTimeout(()=>{const v=$("q").value.trim().toLocaleLowerCase("tr");if(v.length<3)return;ST.add("search");
   if(!document.querySelector(".item:not(.hide)"))ST.add("miss_"+v.replace(/[^\p{L}\p{N} ]/gu,"").slice(0,30))},1500)});
 document.querySelectorAll(".fbtn").forEach(b=>b.addEventListener("click",()=>{
   fsel=fsel===b.dataset.f?null:b.dataset.f;if(fsel)ST.add("filter_"+fsel);
@@ -1088,7 +1093,7 @@ function calcOpen(){ST.add("calc");chatClose();chefClose();cartClose();calcRende
 function calcClose(){$("calc").classList.remove("open");document.body.classList.remove("calcopen")}
 $("calcbtn").addEventListener("click",calcOpen);
 $("calcback").addEventListener("click",calcClose);
-$("cq").addEventListener("input",calcFilter);
+$("cq").addEventListener("input",()=>{calcFilter();const on=!!$("cq").value.trim();$("calclist").classList.toggle("searching",on);if(on)$("calc").scrollTop=0});
 $("calc").addEventListener("click",e=>{
   const i=e.target.closest("[data-inc]"),d=e.target.closest("[data-dec]");if(i)return cartInc(i.dataset.inc,1);if(d)return cartInc(d.dataset.dec,-1);
   const a=e.target.closest("[data-k]");if(a){e.preventDefault();const t=document.getElementById("k-"+a.dataset.k);$("calc").scrollTo({top:t.offsetTop-$("calc").querySelector(".calctop").offsetHeight+4})}
