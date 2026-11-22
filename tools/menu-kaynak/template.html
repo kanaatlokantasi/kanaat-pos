@@ -283,6 +283,13 @@ html[lang=ar] .ccat,html[lang=zh] .ccat,html[lang=ja] .ccat,html[lang=ko] .ccat{
 .t svg.ses{width:1.3em;height:1.3em;vertical-align:-.3em}
 body.searching #menu .avail,#calclist.searching .avail{display:none}
 body.searching #menu{min-height:100vh}
+.addb.full{background:var(--green);color:#fff;border-color:var(--green);font-size:14px;padding:10px 14px}
+.addb.vsm{border:0;background:transparent;text-decoration:underline;text-underline-offset:3px;font-size:12.5px;font-weight:500;padding:4px 2px;color:var(--muted)}
+.stepw.half small,.vtag.half{color:#fff;background:#C2410C;border-radius:5px;padding:1px 6px}
+.cth{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none;background:var(--line)}
+.crow .cic{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.halft{position:fixed;left:12px;right:12px;bottom:84px;z-index:9999;background:#7C2D12;color:#fff;border-radius:14px;padding:13px 15px;font-size:15px;line-height:1.4;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s}
+.halft.on{opacity:1;transform:none;pointer-events:auto}
 </style>
 </head>
 <body>
@@ -947,6 +954,8 @@ let CART={};
 const VAR={"":"p",a:"az",t:"tek"};
 const vPrice=(it,v)=>v==="a"?it.az:v==="t"?it.tek:it.p;
 const vOk=(it,v)=>vPrice(it,v)!=null;
+const PORT_UI={full:["Tam porsiyon", "Full portion", "حصة كاملة", "Полная порция", "Ración completa", "Portion entière", "整份", "Ganze Portion", "1人前", "1인분", "Pilna porcija", "Täysi annos", "Dose inteira", "Porzione intera", "Ολόκληρη μερίδα", "Ració sencera", "پرس کامل", "Volle portie", "Porție întreagă"],half:["Yarım porsiyon eklediniz ({h}). Tam porsiyon {f}.", "You added a HALF portion ({h}). A full portion is {f}.", "أضفت نصف حصة ({h}). الحصة الكاملة {f}.", "Вы добавили ПОЛОВИНУ порции ({h}). Полная порция — {f}.", "Ha añadido MEDIA ración ({h}). La ración completa cuesta {f}.", "Vous avez ajouté une DEMI-portion ({h}). La portion entière coûte {f}.", "您添加的是半份（{h}）。整份为 {f}。", "Sie haben eine HALBE Portion hinzugefügt ({h}). Eine ganze Portion kostet {f}.", "ハーフサイズ（{h}）を追加しました。1人前は {f} です。", "반 인분({h})을 추가했습니다. 1인분은 {f}입니다.", "Jūs pievienojāt PUSI porcijas ({h}). Pilna porcija maksā {f}.", "Lisäsit PUOLIKKAAN annoksen ({h}). Täysi annos maksaa {f}.", "Adicionou MEIA dose ({h}). A dose inteira custa {f}.", "Avete aggiunto una MEZZA porzione ({h}). La porzione intera costa {f}.", "Προσθέσατε ΜΙΣΗ μερίδα ({h}). Η ολόκληρη μερίδα κοστίζει {f}.", "Heu afegit MITJA ració ({h}). La ració sencera costa {f}.", "نیم‌پرس اضافه کردید ({h}). پرس کامل {f} است.", "U hebt een HALVE portie toegevoegd ({h}). Een volle portie kost {f}.", "Ați adăugat o JUMĂTATE de porție ({h}). Porția întreagă costă {f}."]};
+const hasVar=it=>vOk(it,"a")||vOk(it,"t");
 const keyOf=(c,v)=>v?c+"~"+v:c;
 const splitKey=k=>{const [c,v]=k.split("~");return [c,v||""]};
 let TIP=null; // {k:"p",v:10} yüzde | {k:"m",v:kuruş}
@@ -969,9 +978,13 @@ const nameIn=it=>lang==="tr"?it.tr:it.t[LI[lang]-1];
 const hasDrink=L=>L.some(l=>MENU.find(c=>c.id==="drink").items.includes(l.it));
 let drinkAsked=false,cartView="sheet",tipCustom=false,tipGlow=false;
 function ctl1(it,v){
-  const k=keyOf(it.c,v),q=CART[k]||0,lbl=v?vLabel(v)+" · "+price(vPrice(it,v)):CL(CART_UI.add);
-  if(!q)return v?`<button class="addb sm" type="button" data-inc="${k}">+ ${esc(lbl)}</button>`:`<button class="addr" type="button" data-inc="${k}" aria-label="${esc(lbl)}">+</button>`;
-  return `<span class="stepw">${v?`<small>${esc(vLabel(v))}</small>`:""}<span class="step"><button type="button" data-dec="${k}" aria-label="−">−</button><b>${q}</b><button type="button" data-inc="${k}" aria-label="+">+</button></span></span>`;
+  const k=keyOf(it.c,v),q=CART[k]||0,hv=hasVar(it),lbl=v?vLabel(v)+" · "+price(vPrice(it,v)):CL(CART_UI.add);
+  if(!q){
+    if(v)return `<button class="addb vsm" type="button" data-inc="${k}">+ ${esc(lbl)}</button>`;
+    if(hv)return `<button class="addb full" type="button" data-inc="${k}">+ ${esc(CL(PORT_UI.full))} · <span dir="ltr">${price(it.p)}</span></button>`;
+    return `<button class="addr" type="button" data-inc="${k}" aria-label="${esc(lbl)}">+</button>`;
+  }
+  return `<span class="stepw${v==="a"?" half":""}">${v?`<small>${esc(vLabel(v))}</small>`:hv?`<small>${esc(CL(PORT_UI.full))}</small>`:""}<span class="step"><button type="button" data-dec="${k}" aria-label="−">−</button><b>${q}</b><button type="button" data-inc="${k}" aria-label="+">+</button></span></span>`;
 }
 function ctl(it){
   if(it.p==null)return "";
@@ -984,7 +997,12 @@ function cartPaint(){
   $("cartbar").innerHTML=`<span>🧾 ${esc(CL(CART_UI.my))} · ${n}</span><b dir="ltr">${price(cartTotal())}</b>`;
   if($("cart").classList.contains("open")){if(cartView==="drinks")drinkStep(drinkNext);else if(cartView==="sheet")cartSheet()}
 }
-function cartInc(c,d){if(d>0){ST.add("add_"+c);if(cartView==="drinks"&&$("cart").classList.contains("open"))ST.add("drinkAdd")}const q=Math.max(0,Math.min(99,(CART[c]||0)+d));if(q)CART[c]=q;else delete CART[c];cartSave();cartPaint()}
+let halfShown=false;
+function halfNote(k){const [c,v]=splitKey(k);if(v!=="a"||halfShown||(CART[k]||0)>0)return;const it=BYCODE[c];if(!it)return;halfShown=true;
+  let t=$("halft");if(!t){t=document.createElement("div");t.id="halft";t.className="halft";t.setAttribute("role","status");document.body.appendChild(t);t.onclick=()=>t.classList.remove("on")}
+  t.innerHTML="⚠️ "+esc(CL(PORT_UI.half)).replace("{h}",`<b dir="ltr">${price(it.az)}</b>`).replace("{f}",`<b dir="ltr">${price(it.p)}</b>`);
+  t.dir=RTL(lang)?"rtl":"ltr";t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),6000)}
+function cartInc(c,d){if(d>0){halfNote(c);ST.add("add_"+c);if(cartView==="drinks"&&$("cart").classList.contains("open"))ST.add("drinkAdd")}const q=Math.max(0,Math.min(99,(CART[c]||0)+d));if(q)CART[c]=q;else delete CART[c];cartSave();cartPaint()}
 function tipBox(sub){
   const opts=[["0",CL(TIP_UI.none)],["p5","%5"],["p10","%10"],["p15","%15"],["m",CL(TIP_UI.custom)]].map(([k,t])=>[k,lang==="tr"?t:t.replace(/^%(\d+)$/,"$1%")]);
   const cur=!TIP?"0":TIP.k==="p"?"p"+TIP.v:"m";
@@ -1009,7 +1027,7 @@ function cartSheet(){
   const L=cartLines();
   if(!L.length){cartClose();return}
   $("cartbody").innerHTML=`<h3 class="ctitle">${esc(CL(CART_UI.my))}</h3>
-   <div class="clines">${L.map(l=>`<div class="cl"><div class="cn"><b>${esc(nameIn(l.it))}${l.v?` <span class="vtag">${esc(vLabel(l.v))}</span>`:""}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</small>`:""}<small dir="ltr">${price(lp(l))}</small></div>
+   <div class="clines">${L.map(l=>`<div class="cl"><div class="cn"><b>${esc(nameIn(l.it))}${l.v?` <span class="vtag${l.v==="a"?" half":""}">${esc(vLabel(l.v))}</span>`:""}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(l.it.tr)}${l.v?" ("+vLabel(l.v,1)+")":""}</small>`:""}<small dir="ltr">${price(lp(l))}</small></div>
      <span class="step"><button type="button" data-dec="${l.k}">−</button><b>${l.q}</b><button type="button" data-inc="${l.k}">+</button></span><em dir="ltr">${price(l.q*lp(l))}</em></div>`).join("")}</div>
    ${tipBox(subOf(L))}
    <div id="ctots">${totalsHTML(L)}</div>
@@ -1076,6 +1094,10 @@ addEventListener("keydown",e=>{if(e.key==="Escape"){if($("cart").classList.conta
 
 
 // ---- "Hesabımı hesapla" bölümü ----
+function crowIcons(it,cat){let h=it.meat.map(m=>MEAT[m][0]).join("");
+  if(!it.meat.length&&(it.diet.includes("v")||it.diet.includes("V")))h+="🌱";
+  if(cat==="olive")h+=(h?" ":"")+"❄️ "+esc(L(CNOTE.olive));
+  return h?`<small class="cic">${h}</small>`:""}
 function calcRender(){
   $("calctitle").textContent="🧾 "+CL(CHAT.calc);
   $("calcback").textContent=(RTL(lang)?"→ ":"← ")+CL(OK_UI.menu);
@@ -1083,7 +1105,7 @@ function calcRender(){
   let nav="",html="";
   for(const c of MENU){const its=c.items.filter(it=>it.p!=null);if(!its.length)continue;
     nav+=`<a href="#k-${c.id}" data-k="${c.id}">${esc(L(CAT[c.id]))}</a>`;
-    html+=`<div class="cgrp" id="k-${c.id}"><h3 class="ccat">${esc(L(CAT[c.id]))}</h3>`+its.map(it=>`<div class="crow" data-id="${it.id}"><div class="cn"><b>${esc(nameIn(it))}</b>${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox"></div></div>`).join("")+`</div>`}
+    html+=`<div class="cgrp" id="k-${c.id}"><h3 class="ccat">${esc(L(CAT[c.id]))}</h3>`+its.map(it=>`<div class="crow" data-id="${it.id}">${it.loc?`<img class="cth" src="img/${esc(it.loc)}" alt="" loading="lazy" onerror="this.remove()">`:""}<div class="cn"><b>${esc(nameIn(it))}</b>${crowIcons(it,c.id)}${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox"></div></div>`).join("")+`</div>`}
   $("ccats").innerHTML=nav;$("calclist").innerHTML=`<p class="avail blink">ℹ️ ${esc(CL(AVAIL_UI.menu))}</p>`+html;$("cq").value="";
   cartPaint();
 }
