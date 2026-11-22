@@ -2,7 +2,7 @@
 # (15.11.2026'da yeniden yazıldı; çıktısı v103 ile birebir doğrulandı)
 import json, zlib, hashlib, os, re, sys
 
-VERSION = "109 · 22.11.2026"
+VERSION = "110 · 22.11.2026"
 REMOTE = "https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/"
 B = os.path.dirname(os.path.abspath(__file__))
 ITEMS = os.environ.get("ITEMS", os.path.join(B, "items.txt"))
@@ -52,6 +52,7 @@ SAY_OVR = {
     "Ayva Tatlısı (1 kg)": ("Bir kiloluk ayva tatlısı.", "eleven_multilingual_v2"),
     "Rulo Kaymak (250 gr)": ("İki yüz elli gram rulo kaymak.", ""),
     "Reçel - Kaymak": ("Reçel ve Kaymak", ""),
+    "Vişneli Ekmek Kadayıfı (Kaymaklı)": ("Kaymaklı vişneli ekmek kadayıfı.", ""),
 }
 
 def spoken(name):

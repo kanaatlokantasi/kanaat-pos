@@ -97,7 +97,6 @@
 794fade408	Reçel ve Kaymak
 795c7977bb	Tavukgöğsü
 7b0a0c4731	Püre
-7b0b63eaad	Vişneli Ekmek Kadayıfı, Kaymaklı
 7c260bf825	Bir kiloluk irmik helvası.
 7ef890f87a	Bir kiloluk büyük aşure.
 7f47ac2249	Barbunya Pilaki
@@ -204,5 +203,6 @@ f5ba404fb7	Izgara Bonfile
 f8bde1eebe	Sütlaç
 f960f33c86	Kuzu Etli Talaş Böreği
 fb1a7b54ba	Yassı Kadayıf
+fc9a6f4fa6	Kaymaklı vişneli ekmek kadayıfı.
 fe493fd671	Bir kiloluk revani.
 fe4e61d5a4	Kayseri Köfte
