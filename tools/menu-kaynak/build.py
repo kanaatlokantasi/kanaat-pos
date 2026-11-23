@@ -2,7 +2,7 @@
 # (15.11.2026'da yeniden yazıldı; çıktısı v103 ile birebir doğrulandı)
 import json, zlib, hashlib, os, re, sys
 
-VERSION = "113 · 22.11.2026"
+VERSION = "114 · 23.11.2026"
 REMOTE = "https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/"
 B = os.path.dirname(os.path.abspath(__file__))
 ITEMS = os.environ.get("ITEMS", os.path.join(B, "items.txt"))
@@ -71,6 +71,19 @@ def say_hash(name, text, model):
     key = name if text == name and not model else text + "|" + model
     return hashlib.sha1(key.encode()).hexdigest()[:10]
 
+THUMB = 240
+def make_thumb(loc):
+    """Liste için küçük kopya: img/k/<loc> (240 px). Kaynak yoksa False."""
+    src = os.path.join(IMGDIR, loc); dst = os.path.join(IMGDIR, "k", loc)
+    if not os.path.exists(src): return False
+    if os.path.exists(dst) and os.path.getmtime(dst) >= os.path.getmtime(src): return True
+    from PIL import Image
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    im = Image.open(src).convert("RGB"); w, h = im.size; s = min(w, h)
+    im = im.crop(((w - s) // 2, (h - s) // 2, (w - s) // 2 + s, (h - s) // 2 + s)).resize((THUMB, THUMB), Image.LANCZOS)
+    im.save(dst, "JPEG", quality=80, optimize=True, progressive=True)
+    return True
+
 def main():
     az = json.load(open(os.path.join(B, "azrules.json"), encoding="utf-8"))
     cats = {c: [] for c in CATS}
@@ -83,6 +96,7 @@ def main():
             diet_l.insert(diet_l.index("V") + 1, "v")
         it = {"id": f"i{n}", "c": code(cat, tr), "tr": tr, "p": int(price), "img": img}
         if img: it["loc"] = slug(img)
+        if img and make_thumb(it["loc"]): it["th"] = 1
         it.update({"kcal": int(kcal) if kcal else None, "meat": list(meat),
                    "alg": alg.split(",") if alg else [], "diet": diet_l,
                    "notes": notes.split(",") if notes else [], "trn": trn, "t": f[10:28]})

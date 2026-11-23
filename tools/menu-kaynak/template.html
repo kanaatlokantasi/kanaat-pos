@@ -14,7 +14,12 @@
 <meta name="application-name" content="Kanaat Menü">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&family=Noto+Sans+Arabic:wght@400;600&family=Noto+Serif:wght@600;700&family=Noto+Sans+SC:wght@400;600&family=Noto+Sans+JP:wght@400;600&family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
+<script>
+// Yazı tipleri ekranı bekletmesin: arka planda yüklenir, sadece gereken dilinki iner
+function loadFont(f){var h="https://fonts.googleapis.com/css2?family="+f+"&display=swap";if(document.querySelector('link[href="'+h+'"]'))return;var l=document.createElement("link");l.rel="stylesheet";l.href=h;l.media="print";l.onload=function(){l.media="all"};document.head.appendChild(l)}
+var FONT_X={ar:"Noto+Sans+Arabic:wght@400;600",fa:"Noto+Sans+Arabic:wght@400;600",zh:"Noto+Sans+SC:wght@400;600",ja:"Noto+Sans+JP:wght@400;600",ko:"Noto+Sans+KR:wght@400;600"};
+loadFont("Noto+Sans:wght@400;600&family=Noto+Serif:wght@600;700");
+</script>
 <style>
 :root{
   --bg:#F7F2E8; --card:#FFFDF8; --ink:#2A2620; --muted:#6F675B; --line:#E6DDCC;
@@ -548,7 +553,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","
 function norm(s){return String(s).toLocaleLowerCase("tr").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/ı/g,"i")}
 function imgTag(it){
   if(!it.img)return "";
-  return `<button class="ph" type="button" data-zoom="${it.id}" aria-label="${esc(it.tr)}"><img loading="lazy" src="img/${esc(it.loc)}" data-r="${esc(REMOTE+"images/"+encodeURIComponent(it.img))}" onerror="if(this.dataset.r){this.src=this.dataset.r;this.dataset.r=''}else{this.parentNode.classList.add('hide')}" alt=""></button>`;
+  return `<button class="ph" type="button" data-zoom="${it.id}" aria-label="${esc(it.tr)}"><img loading="lazy" decoding="async" src="img/${it.th?"k/":""}${esc(it.loc)}" data-r="${esc(REMOTE+"images/"+encodeURIComponent(it.img))}" onerror="if(this.dataset.r){this.src=this.dataset.r;this.dataset.r=''}else{this.parentNode.classList.add('hide')}" alt=""></button>`;
 }
 function tags(it){
   let h="";
@@ -588,6 +593,7 @@ function itemDesc(it){
   return parts;
 }
 function render(){
+  if(FONT_X[lang])loadFont(FONT_X[lang]);
   document.documentElement.lang=lang;
   document.documentElement.dir=RTL(lang)?"rtl":"ltr";
   $("langname").textContent=FLAG[lang]+" "+LANGS[LI[lang]][1];
@@ -797,7 +803,7 @@ function goItem(it){
   document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",false));filter();
   jumpTo(document.querySelector(`.item[data-id="${it.id}"]`));
 }
-function thumb(it){return it.img?`<img src="img/${esc(it.loc)}" data-r="${esc(REMOTE+"images/"+encodeURIComponent(it.img))}" onerror="if(this.dataset.r){this.src=this.dataset.r;this.dataset.r=''}else{this.remove()}" alt="">`:""}
+function thumb(it){return it.img?`<img src="img/${it.th?"k/":""}${esc(it.loc)}" data-r="${esc(REMOTE+"images/"+encodeURIComponent(it.img))}" onerror="if(this.dataset.r){this.src=this.dataset.r;this.dataset.r=''}else{this.remove()}" alt="">`:""}
 let asked=new Set();
 function chatMsg(html,me){
   const d=document.createElement("div");d.className="msg "+(me?"me":"bot");d.innerHTML=html;
@@ -1108,7 +1114,7 @@ function calcRender(){
   let nav="",html="";
   for(const c of MENU){const its=c.items.filter(it=>it.p!=null);if(!its.length)continue;
     nav+=`<a href="#k-${c.id}" data-k="${c.id}">${esc(L(CAT[c.id]))}</a>`;
-    html+=`<div class="cgrp" id="k-${c.id}"><h3 class="ccat">${esc(L(CAT[c.id]))}</h3>`+its.map(it=>`<div class="crow" data-id="${it.id}">${it.loc?`<img class="cth" src="img/${esc(it.loc)}" alt="" loading="lazy" onerror="this.remove()">`:""}<div class="cn"><b>${esc(nameIn(it))}</b>${crowIcons(it,c.id)}${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox"></div></div>`).join("")+`</div>`}
+    html+=`<div class="cgrp" id="k-${c.id}"><h3 class="ccat">${esc(L(CAT[c.id]))}</h3>`+its.map(it=>`<div class="crow" data-id="${it.id}">${it.loc?`<img class="cth" decoding="async" src="img/${it.th?"k/":""}${esc(it.loc)}" alt="" loading="lazy" onerror="this.remove()">`:""}<div class="cn"><b>${esc(nameIn(it))}</b>${crowIcons(it,c.id)}${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox"></div></div>`).join("")+`</div>`}
   $("ccats").innerHTML=nav;$("calclist").innerHTML=`<p class="avail blink">ℹ️ ${esc(CL(AVAIL_UI.menu))}</p>`+html;$("cq").value="";
   cartPaint();
 }
