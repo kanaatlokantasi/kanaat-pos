@@ -297,6 +297,26 @@ body.searching #menu{min-height:100vh}
 .halft.on{opacity:1;transform:none;pointer-events:auto}
 .trlist div.hz{background:rgba(234,88,12,.18);border-radius:8px;padding:4px 8px;margin:2px -8px}
 .wl.hz{padding:10px 8px 10px 12px;background:rgba(234,88,12,.18);box-shadow:inset 4px 0 0 #C2410C;border-radius:8px}
+.algb{border-style:dashed}
+#t-allergy,#fwarn{cursor:pointer}
+.algs{padding:0 18px calc(18px + env(safe-area-inset-bottom))}
+.algh{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);padding:14px 0 6px;z-index:1}
+.algh h3{margin:0;font-size:20px;flex:1;color:var(--ink)}
+.algh .cx{position:static;background:var(--chip);color:var(--ink);flex:none;width:36px!important;height:36px;padding:0;margin:0;justify-content:center}
+.algi{color:var(--muted);font-size:13.5px;margin:4px 0 10px}
+.algs h4{margin:16px 0 8px;font-size:15px;color:var(--green)}
+.algc{border:1px solid var(--line);border-radius:12px;margin:0 0 8px;padding:0 12px}
+.algc summary{display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer;list-style:none}
+.algc summary::-webkit-details-marker{display:none}
+.algc summary b{flex:1;font-size:15.5px}
+.algc summary small{color:var(--muted);font-size:12.5px}
+.algc ul{margin:0 0 10px;padding-inline-start:20px;font-size:14px;line-height:1.5}
+.algs .algc .addb{display:inline-flex;width:auto;margin:0 0 12px;border:1px solid var(--green);color:var(--green);padding:9px 14px;border-radius:999px;font-weight:600;font-size:13.5px}
+.ai{font-size:22px;line-height:1;width:28px;text-align:center;flex:none;display:inline-block}
+.ai svg.ses{width:24px;height:24px;vertical-align:middle}
+.algnote{list-style:none;margin-inline-start:-20px;color:var(--muted);font-size:13px}
+.algn{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.algn>span{display:flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:10px;padding:8px 10px;font-size:13.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -322,6 +342,7 @@ body.searching #menu{min-height:100vh}
       <input id="q" type="search" autocomplete="off" enterkeyhint="search">
     </label>
     <div class="filters">
+      <button class="fbtn algb" id="algbtn" type="button"></button>
       <button class="fbtn" data-f="l" type="button" aria-pressed="false"></button>
       <button class="fbtn" data-f="b" type="button" aria-pressed="false"></button>
       <button class="fbtn" data-f="c" type="button" aria-pressed="false"></button>
@@ -349,10 +370,11 @@ body.searching #menu{min-height:100vh}
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 116 · 23.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 117 · 23.11.2026</p>
   </div>
 </footer>
 
+<div class="ov" id="algov" role="dialog" aria-modal="true"><div class="sheet algs" id="algsheet"></div></div>
 <div class="ov" id="langov" role="dialog" aria-modal="true">
   <div class="sheet" id="langsheet"></div>
 </div>
@@ -602,12 +624,13 @@ function render(){
   if(typeof calcRender==="function"&&$("calc").classList.contains("open"))calcRender();
   $("q").placeholder=L(UI.search);
   $("empty").textContent=L(UI.empty);
-  $("t-allergy").textContent="⚠️ "+L(UI.allergy)+" "+L(NOSEA);
+  $("t-allergy").innerHTML="⚠️ "+esc(L(UI.allergy)+" "+L(NOSEA))+` <u>${esc(L(ALGI.title))} ›</u>`;
+  $("algbtn").textContent="ⓘ "+L(ALGI.title);
   $("t-legend").textContent=L(UI.legend);
   $("t-prices").textContent=L(UI.prices);
   $("t-hours").textContent=L(UI.hours);
   const XF={xG:["🌾",DIET.GF],xN:["🌰",DIET.NF],xM:["🥛",DIET.DF]};
-  document.querySelectorAll(".fbtn").forEach(b=>{const k=b.dataset.f;if(XF[k]){b.textContent=XF[k][0]+" "+Lt(XF[k][1]);return}const src=MEAT[k]||DIET[k];b.textContent=src[0]+" "+Lt(src)});
+  document.querySelectorAll(".fbtn[data-f]").forEach(b=>{const k=b.dataset.f;if(XF[k]){b.textContent=XF[k][0]+" "+Lt(XF[k][1]);return}const src=MEAT[k]||DIET[k];b.textContent=src[0]+" "+Lt(src)});
   $("fwarn").textContent="⚠️ "+L(UI.allergy);
   $("legend").innerHTML=LEGEND_ALG.map(a=>`<span class="t a">${ALG[a][0]} ${esc(Lt(ALG[a]))}</span>`).join("")+
     ["V","v"].map(d=>`<span class="t d">${DIET[d][0]} ${esc(Lt(DIET[d]))}</span>`).join("");
@@ -672,12 +695,17 @@ function qLift(){const q=$("q"),on=!!q.value.trim();document.body.classList.togg
   if(on){const y=Math.max(0,q.getBoundingClientRect().top+scrollY-8);const go=()=>{if(Math.abs(scrollY-y)>4)scrollTo(0,y)};go();setTimeout(go,60);setTimeout(go,300)}}
 let qT=0;$("q").addEventListener("input",()=>{filter();qLift();clearTimeout(qT);qT=setTimeout(()=>{const v=$("q").value.trim().toLocaleLowerCase("tr");if(v.length<3)return;ST.add("search");
   if(!document.querySelector(".item:not(.hide)"))ST.add("miss_"+v.replace(/[^\p{L}\p{N} ]/gu,"").slice(0,30))},1500)});
-document.querySelectorAll(".fbtn").forEach(b=>b.addEventListener("click",()=>{
+document.querySelectorAll(".fbtn[data-f]").forEach(b=>b.addEventListener("click",()=>{
   fsel=fsel===b.dataset.f?null:b.dataset.f;if(fsel)ST.add("filter_"+fsel);
   document.querySelectorAll(".fbtn").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===fsel));
   filter(); if(fsel){const f=document.querySelector("section.cat:not(.hide)");if(f&&scrollY>f.offsetTop)scrollTo({top:f.offsetTop-170})}
 }));
 $("langbtn").addEventListener("click",()=>$("langov").classList.add("open"));
+["algbtn","t-allergy","fwarn"].forEach(id=>$(id).addEventListener("click",algOpen));
+$("algov").addEventListener("click",e=>{
+  const f=e.target.closest("[data-algf]");
+  if(f){fsel="x"+f.dataset.algf;document.querySelectorAll(".fbtn[data-f]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===fsel));$("algov").classList.remove("open");filter();const m=$("menu");scrollTo({top:Math.max(0,m.getBoundingClientRect().top+scrollY-170)});return}
+  if(e.target.closest("[data-algx]")||e.target===e.currentTarget)$("algov").classList.remove("open")});
 $("langov").addEventListener("click",e=>{
   const b=e.target.closest("button[data-lang]");
   if(b){lang=b.dataset.lang;ST.add("pick_"+lang);try{localStorage.setItem("kanaat-menu-lang",lang)}catch(_){ }
@@ -962,7 +990,21 @@ let CART={};
 const VAR={"":"p",a:"az",t:"tek"};
 const vPrice=(it,v)=>v==="a"?it.az:v==="t"?it.tek:it.p;
 const vOk=(it,v)=>vPrice(it,v)!=null;
-const NOSEA=["Menümüzde kabuklu deniz ürünü, yumuşakça ve acı bakla bulunmaz.", "Our menu contains no crustaceans, molluscs or lupin.", "لا تحتوي قائمتنا على القشريات أو الرخويات أو الترمس.", "В нашем меню нет ракообразных, моллюсков и люпина.", "Nuestro menú no contiene crustáceos, moluscos ni altramuces.", "Notre carte ne contient ni crustacés, ni mollusques, ni lupin.", "本菜单不含甲壳类、软体动物及羽扇豆。", "Unsere Speisekarte enthält keine Krebstiere, Weichtiere oder Lupinen.", "当店のメニューには甲殻類・軟体動物・ルピナスは含まれません。", "저희 메뉴에는 갑각류, 연체동물, 루핀이 들어가지 않습니다.", "Mūsu ēdienkartē nav vēžveidīgo, gliemju un lupīnas.", "Ruokalistallamme ei ole äyriäisiä, nilviäisiä eikä lupiinia.", "O nosso menu não contém crustáceos, moluscos nem tremoço.", "Il nostro menù non contiene crostacei, molluschi né lupini.", "Το μενού μας δεν περιέχει οστρακοειδή, μαλάκια ή λούπινα.", "La nostra carta no conté crustacis, mol·luscs ni tramussos.", "در منوی ما سخت‌پوستان، نرم‌تنان و لوپن وجود ندارد.", "Onze menukaart bevat geen schaaldieren, weekdieren of lupine.", "Meniul nostru nu conține crustacee, moluște sau lupin."];
+const NOSEA=["Menümüzde kabuklu deniz ürünü, yumuşakça, acı bakla, yer fıstığı, soya, hardal ve sülfit bulunmaz.", "Our dishes contain no crustaceans, molluscs, lupin, peanuts, soy, mustard or sulphites.", "لا تحتوي أطباقنا على القشريات أو الرخويات أو الترمس أو الفول السوداني أو الصويا أو الخردل أو الكبريتيت.", "В наших блюдах нет ракообразных, моллюсков, люпина, арахиса, сои, горчицы и сульфитов.", "Nuestros platos no contienen crustáceos, moluscos, altramuces, cacahuetes, soja, mostaza ni sulfitos.", "Nos plats ne contiennent ni crustacés, ni mollusques, ni lupin, ni arachides, ni soja, ni moutarde, ni sulfites.", "本店菜品不含甲壳类、软体动物、羽扇豆、花生、大豆、芥末及亚硫酸盐。", "Unsere Gerichte enthalten keine Krebstiere, Weichtiere, Lupinen, Erdnüsse, Soja, Senf oder Sulfite.", "当店の料理には甲殻類・軟体動物・ルピナス・落花生・大豆・からし・亜硫酸塩は含まれません。", "저희 요리에는 갑각류, 연체동물, 루핀, 땅콩, 대두, 겨자, 아황산염이 들어가지 않습니다.", "Mūsu ēdienos nav vēžveidīgo, gliemju, lupīnas, zemesriekstu, sojas, sinepju un sulfītu.", "Ruoissamme ei ole äyriäisiä, nilviäisiä, lupiinia, maapähkinää, soijaa, sinappia eikä sulfiitteja.", "Os nossos pratos não contêm crustáceos, moluscos, tremoço, amendoim, soja, mostarda nem sulfitos.", "I nostri piatti non contengono crostacei, molluschi, lupini, arachidi, soia, senape né solfiti.", "Τα πιάτα μας δεν περιέχουν οστρακοειδή, μαλάκια, λούπινα, φιστίκια αράπικα, σόγια, μουστάρδα ή θειώδη.", "Els nostres plats no contenen crustacis, mol·luscs, tramussos, cacauets, soja, mostassa ni sulfits.", "غذاهای ما حاوی سخت‌پوستان، نرم‌تنان، لوپن، بادام‌زمینی، سویا، خردل و سولفیت نیستند.", "Onze gerechten bevatten geen schaaldieren, weekdieren, lupine, pinda's, soja, mosterd of sulfieten.", "Preparatele noastre nu conțin crustacee, moluște, lupin, arahide, soia, muștar sau sulfiți."];
+const ALGI={title:["Alerjen bilgisi", "Allergen information", "معلومات مسببات الحساسية", "Информация об аллергенах", "Información sobre alérgenos", "Informations sur les allergènes", "过敏原信息", "Allergeninformationen", "アレルゲン情報", "알레르기 유발 성분 정보", "Informācija par alergēniem", "Allergeenitiedot", "Informação sobre alergénios", "Informazioni sugli allergeni", "Πληροφορίες για αλλεργιογόνα", "Informació sobre al·lèrgens", "اطلاعات آلرژن‌ها", "Allergeneninformatie", "Informații despre alergeni"],intro:["T.C. Tarım ve Orman Bakanlığı'nın belirlediği 14 temel alerjen esas alınmıştır.", "Based on the 14 major allergens defined by the Turkish Ministry of Agriculture and Forestry.", "استنادًا إلى مسببات الحساسية الرئيسية الأربعة عشر التي حددتها وزارة الزراعة والغابات التركية.", "Указаны 14 основных аллергенов, определённых Министерством сельского и лесного хозяйства Турции.", "Basado en los 14 alérgenos principales definidos por el Ministerio de Agricultura y Silvicultura de Turquía.", "Sur la base des 14 allergènes majeurs définis par le ministère turc de l'Agriculture et des Forêts.", "依据土耳其农业和林业部规定的14种主要过敏原。", "Grundlage sind die 14 Hauptallergene, die das türkische Ministerium für Landwirtschaft und Forsten festgelegt hat.", "トルコ農林省が定める14の主要アレルゲンに基づいています。", "튀르키예 농림부가 정한 14가지 주요 알레르기 유발 성분을 기준으로 합니다.", "Pamatā ir 14 galvenie alergēni, ko noteikusi Turcijas Lauksaimniecības un mežsaimniecības ministrija.", "Perustuu Turkin maa- ja metsätalousministeriön määrittämiin 14 pääallergeeniin.", "Com base nos 14 principais alergénios definidos pelo Ministério da Agricultura e Florestas da Turquia.", "Sulla base dei 14 allergeni principali definiti dal Ministero turco dell'Agricoltura e delle Foreste.", "Με βάση τα 14 κύρια αλλεργιογόνα που ορίζει το Υπουργείο Γεωργίας και Δασοκομίας της Τουρκίας.", "Basat en els 14 al·lèrgens principals definits pel Ministeri d'Agricultura i Boscos de Turquia.", "بر اساس ۱۴ آلرژن اصلی تعیین‌شده توسط وزارت کشاورزی و جنگلداری ترکیه.", "Gebaseerd op de 14 belangrijkste allergenen zoals vastgesteld door het Turkse ministerie van Landbouw en Bosbouw.", "Pe baza celor 14 alergeni principali stabiliți de Ministerul Agriculturii și Pădurilor din Turcia."],inm:["Menümüzde bulunan alerjenler", "Allergens in our dishes", "مسببات الحساسية الموجودة في أطباقنا", "Аллергены в наших блюдах", "Alérgenos presentes en nuestros platos", "Allergènes présents dans nos plats", "我们菜品中含有的过敏原", "Allergene in unseren Gerichten", "当店の料理に含まれるアレルゲン", "저희 요리에 들어 있는 알레르기 유발 성분", "Alergēni mūsu ēdienos", "Ruokiemme sisältämät allergeenit", "Alergénios presentes nos nossos pratos", "Allergeni presenti nei nostri piatti", "Αλλεργιογόνα στα πιάτα μας", "Al·lèrgens presents als nostres plats", "آلرژن‌های موجود در غذاهای ما", "Allergenen in onze gerechten", "Alergeni prezenți în preparatele noastre"],out:["Menümüzde bulunmayan alerjenler", "Not used in our kitchen", "غير مستخدمة في مطبخنا", "Не используются на нашей кухне", "No se utilizan en nuestra cocina", "Non utilisés dans notre cuisine", "本店厨房不使用", "In unserer Küche nicht verwendet", "当店では使用していません", "저희 주방에서 사용하지 않음", "Mūsu virtuvē netiek izmantoti", "Ei käytössä keittiössämme", "Não utilizados na nossa cozinha", "Non utilizzati nella nostra cucina", "Δεν χρησιμοποιούνται στην κουζίνα μας", "No s'utilitzen a la nostra cuina", "در آشپزخانهٔ ما استفاده نمی‌شوند", "Niet gebruikt in onze keuken", "Nu sunt folosiți în bucătăria noastră"],show:["Bunu içermeyen yemekleri göster", "Show dishes without it", "عرض الأطباق الخالية منه", "Показать блюда без него", "Ver platos sin él", "Voir les plats sans", "显示不含此项的菜品", "Gerichte ohne anzeigen", "含まない料理を表示", "이 성분이 없는 요리 보기", "Rādīt ēdienus bez tā", "Näytä ruoat ilman tätä", "Ver pratos sem este", "Mostra piatti senza", "Εμφάνιση πιάτων χωρίς αυτό", "Mostra plats sense", "نمایش غذاهای بدون آن", "Gerechten zonder tonen", "Arată preparatele fără"],cnt:["Yemek sayısı: {n}", "Dishes: {n}", "عدد الأطباق: {n}", "Блюд: {n}", "Platos: {n}", "Plats : {n}", "菜品数：{n}", "Gerichte: {n}", "料理数：{n}", "요리 수: {n}", "Ēdieni: {n}", "Ruokia: {n}", "Pratos: {n}", "Piatti: {n}", "Πιάτα: {n}", "Plats: {n}", "تعداد غذاها: {n}", "Gerechten: {n}", "Preparate: {n}"],absent:[["🦐",["Kabuklular (karides, ıstakoz, yengeç)", "Crustaceans", "القشريات", "Ракообразные", "Crustáceos", "Crustacés", "甲壳类", "Krebstiere", "甲殻類", "갑각류", "Vēžveidīgie", "Äyriäiset", "Crustáceos", "Crostacei", "Οστρακοειδή", "Crustacis", "سخت‌پوستان", "Schaaldieren", "Crustacee"]],["🦪",["Yumuşakçalar (midye, ahtapot, kalamar)", "Molluscs", "الرخويات", "Моллюски", "Moluscos", "Mollusques", "软体动物", "Weichtiere", "軟体動物", "연체동물", "Gliemji", "Nilviäiset", "Moluscos", "Molluschi", "Μαλάκια", "Mol·luscs", "نرم‌تنان", "Weekdieren", "Moluște"]],["<svg class=\"ses\" viewBox=\"0 0 24 24\"><g fill=\"#F2D36B\" stroke=\"#A07B12\" stroke-width=\"1.2\"><ellipse cx=\"8\" cy=\"10\" rx=\"5\" ry=\"4.2\"/><ellipse cx=\"16\" cy=\"14\" rx=\"5\" ry=\"4.2\"/></g></svg>",["Acı bakla (lupin)", "Lupin", "الترمس", "Люпин", "Altramuces", "Lupin", "羽扇豆", "Lupinen", "ルピナス", "루핀", "Lupīna", "Lupiini", "Tremoço", "Lupini", "Λούπινα", "Tramussos", "لوپن", "Lupine", "Lupin"]],["🥜",["Yer fıstığı", "Peanuts", "الفول السوداني", "Арахис", "Cacahuetes", "Arachides", "花生", "Erdnüsse", "落花生", "땅콩", "Zemesrieksti", "Maapähkinä", "Amendoim", "Arachidi", "Φιστίκια αράπικα", "Cacauets", "بادام‌زمینی", "Pinda's", "Arahide"]],["🫘",["Soya", "Soy", "الصويا", "Соя", "Soja", "Soja", "大豆", "Soja", "大豆", "대두", "Soja", "Soija", "Soja", "Soia", "Σόγια", "Soja", "سویا", "Soja", "Soia"]],["<svg class=\"ses\" viewBox=\"0 0 24 24\"><g fill=\"#D9A400\" stroke=\"#8A6400\" stroke-width=\"1\"><circle cx=\"7\" cy=\"8\" r=\"3\"/><circle cx=\"15\" cy=\"7\" r=\"3\"/><circle cx=\"11\" cy=\"14\" r=\"3\"/><circle cx=\"18\" cy=\"15\" r=\"3\"/><circle cx=\"6\" cy=\"17\" r=\"2.6\"/></g></svg>",["Hardal", "Mustard", "الخردل", "Горчица", "Mostaza", "Moutarde", "芥末", "Senf", "からし（マスタード）", "겨자", "Sinepes", "Sinappi", "Mostarda", "Senape", "Μουστάρδα", "Mostassa", "خردل", "Mosterd", "Muștar"]],["🍷",["Kükürt dioksit ve sülfitler", "Sulphites", "الكبريتيت", "Сульфиты", "Sulfitos", "Sulfites", "亚硫酸盐", "Sulfite", "亜硫酸塩", "아황산염", "Sulfīti", "Sulfiitit", "Sulfitos", "Solfiti", "Θειώδη", "Sulfits", "سولفیت‌ها", "Sulfieten", "Sulfiți"]]]};
+function algSheet(){
+  const items=MENU.flatMap(c=>c.items);
+  const nm=it=>lang==="tr"?it.tr:it.t[LI[lang]-1];
+  let h=`<div class="algh"><h3>${esc(L(ALGI.title))}</h3><button class="cx" type="button" data-algx aria-label="×">×</button></div><p class="algi">${esc(L(ALGI.intro))}</p><h4>${esc(L(ALGI.inm))}</h4>`;
+  for(const a of ["G","M","E","N","C","F","S"]){
+    const ds=a==="S"?items.filter(it=>it.notes.includes("tahin")):items.filter(it=>it.alg.includes(a));
+    const list=ds.map(it=>`<li>${esc(nm(it))}</li>`).join("")+(a==="S"?`<li class="algnote">${esc(L(NOTE.tahin))}</li>`:"");
+    h+=`<details class="algc"><summary><span class="ai">${ALG[a][0]}</span><b>${esc(Lt(ALG[a]))}</b><small>${esc(L(ALGI.cnt).replace("{n}",ds.length))}</small></summary><ul>${list}</ul>${a!=="S"?`<button class="addb" type="button" data-algf="${a}">${esc(L(ALGI.show))}</button>`:""}</details>`;
+  }
+  h+=`<h4>${esc(L(ALGI.out))}</h4><div class="algn">`+ALGI.absent.map(([ic,n])=>`<span><span class="ai">${ic}</span>${esc(L(n))}</span>`).join("")+`</div><p class="algi">⚠️ ${esc(L(UI.allergy))}</p>`;
+  $("algsheet").innerHTML=h;$("algsheet").dir=RTL(lang)?"rtl":"ltr";
+}
+function algOpen(){ST.add("allergen");algSheet();$("algov").classList.add("open")}
 const PORT_UI={full:["Tam porsiyon", "Full portion", "حصة كاملة", "Полная порция", "Ración completa", "Portion entière", "整份", "Ganze Portion", "1人前", "1인분", "Pilna porcija", "Täysi annos", "Dose inteira", "Porzione intera", "Ολόκληρη μερίδα", "Ració sencera", "پرس کامل", "Volle portie", "Porție întreagă"],half:["Yarım porsiyon eklediniz ({h}). Tam porsiyon {f}.", "You added a HALF portion ({h}). A full portion is {f}.", "أضفت نصف حصة ({h}). الحصة الكاملة {f}.", "Вы добавили ПОЛОВИНУ порции ({h}). Полная порция — {f}.", "Ha añadido MEDIA ración ({h}). La ración completa cuesta {f}.", "Vous avez ajouté une DEMI-portion ({h}). La portion entière coûte {f}.", "您添加的是半份（{h}）。整份为 {f}。", "Sie haben eine HALBE Portion hinzugefügt ({h}). Eine ganze Portion kostet {f}.", "ハーフサイズ（{h}）を追加しました。1人前は {f} です。", "반 인분({h})을 추가했습니다. 1인분은 {f}입니다.", "Jūs pievienojāt PUSI porcijas ({h}). Pilna porcija maksā {f}.", "Lisäsit PUOLIKKAAN annoksen ({h}). Täysi annos maksaa {f}.", "Adicionou MEIA dose ({h}). A dose inteira custa {f}.", "Avete aggiunto una MEZZA porzione ({h}). La porzione intera costa {f}.", "Προσθέσατε ΜΙΣΗ μερίδα ({h}). Η ολόκληρη μερίδα κοστίζει {f}.", "Heu afegit MITJA ració ({h}). La ració sencera costa {f}.", "نیم‌پرس اضافه کردید ({h}). پرس کامل {f} است.", "U hebt een HALVE portie toegevoegd ({h}). Een volle portie kost {f}.", "Ați adăugat o JUMĂTATE de porție ({h}). Porția întreagă costă {f}."]};
 const hasVar=it=>vOk(it,"a")||vOk(it,"t");
 const keyOf=(c,v)=>v?c+"~"+v:c;
