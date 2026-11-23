@@ -370,7 +370,7 @@ body.searching #menu{min-height:100vh}
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 118 · 23.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 119 · 23.11.2026</p>
   </div>
 </footer>
 
@@ -649,7 +649,7 @@ function render(){
     html+=`</div></section>`;
   }
   $("cats").innerHTML=nav;
-  $("menu").innerHTML=`<p class="avail">ℹ️ ${esc(L(AVAIL_UI.menu))}</p>`+html;
+  $("menu").innerHTML=`<p class="avail">ℹ️ ${esc(availTxt())}</p>`+html;
   $("langsheet").innerHTML=`<h3>${esc(L(UI.lang))}</h3>`+LANGS.map(([c,n,e])=>`<button type="button" data-lang="${c}" aria-current="${c===lang}"><span><span class="flag" aria-hidden="true">${FLAG[c]}</span>${n}</span>${c===lang?"✓":`<span class="en">${e}</span>`}</button>`).join("");
   filter();
   spy();
@@ -738,6 +738,8 @@ function chefItem(){const t=ST.day(),wd=new Date(t.d+"T12:00:00Z").getUTCDay(),l
 const CHEF_REC=["Bu {d} şefin tavsiyesi", "This {d}, the chef recommends", "توصية الشيف ليوم {d}", "Рекомендация шефа на {d}", "Este {d}, el chef recomienda", "Ce {d}, le chef vous recommande", "本{d}主厨推荐", "Empfehlung des Küchenchefs für diesen {d}", "今週{d}のシェフのおすすめ", "이번 {d} 셰프 추천", "Šefpavāra ieteikums {d}", "Keittiömestarin suositus {d}", "Sugestão do chef para {d}", "Il consiglio dello chef per {d}"];
 const CHEF_WD={"ru": ["воскресенье", "понедельник", "вторник", "среду", "четверг", "пятницу", "субботу"], "lv": ["svētdienā", "pirmdienā", "otrdienā", "trešdienā", "ceturtdienā", "piektdienā", "sestdienā"], "fi": ["sunnuntaina", "maanantaina", "tiistaina", "keskiviikkona", "torstaina", "perjantaina", "lauantaina"]};
 const VOICE_LANG={tr:"tr-TR",en:"en-GB",ar:"ar-SA",ru:"ru-RU",es:"es-ES",fr:"fr-FR",zh:"zh-CN",de:"de-DE",ja:"ja-JP",ko:"ko-KR",lv:"lv-LV",fi:"fi-FI",pt:"pt-PT",it:"it-IT",el:"el-GR",ca:"ca-ES",fa:"fa-IR",nl:"nl-NL",ro:"ro-RO"};
+const TR_WD=["pazar","pazartesi","salı","çarşamba","perşembe","cuma","cumartesi"];
+function availTxt(){const t=L(AVAIL_UI.menu);if(lang!=="tr")return t;const wd=new Date(ST.day().d+"T12:00:00Z").getUTCDay();return t.replace("o gün","bu "+TR_WD[wd])}
 function chefLine(){const t=new Date(ST.day().d+"T12:00:00Z");let wd=CHEF_WD[lang]?CHEF_WD[lang][t.getUTCDay()]:t.toLocaleDateString(lang==="zh"?"zh-CN":lang,{weekday:"long",timeZone:"UTC"});return CL(CHEF_REC).replace("{d}",wd)}
 function sayChef(it,btn){try{const vs=speechSynthesis.getVoices(),q=[];
   const mk=(t,l)=>{const u=new SpeechSynthesisUtterance(t);u.lang=VOICE_LANG[l];u.rate=l==="tr"?.8:.9;const v=vs.find(v=>v.lang&&v.lang.toLowerCase().startsWith(l));if(v)u.voice=v;return u};
@@ -1158,7 +1160,7 @@ function calcRender(){
   for(const c of MENU){const its=c.items.filter(it=>it.p!=null);if(!its.length)continue;
     nav+=`<a href="#k-${c.id}" data-k="${c.id}">${esc(L(CAT[c.id]))}</a>`;
     html+=`<div class="cgrp" id="k-${c.id}"><h3 class="ccat">${esc(L(CAT[c.id]))}</h3>`+its.map(it=>`<div class="crow" data-id="${it.id}">${it.loc?`<img class="cth" decoding="async" src="img/${it.th?"k/":""}${esc(it.loc)}" alt="" loading="lazy" onerror="this.remove()">`:""}<div class="cn"><b>${esc(nameIn(it))}</b>${crowIcons(it,c.id)}${lang!=="tr"?`<small lang="tr" dir="ltr">${esc(it.tr)}</small>`:""}<small class="cp" dir="ltr">${price(it.p)}</small></div><div class="addbox"></div></div>`).join("")+`</div>`}
-  $("ccats").innerHTML=nav;$("calclist").innerHTML=`<p class="avail blink">ℹ️ ${esc(CL(AVAIL_UI.menu))}</p>`+html;$("cq").value="";
+  $("ccats").innerHTML=nav;$("calclist").innerHTML=`<p class="avail blink">ℹ️ ${esc(availTxt())}</p>`+html;$("cq").value="";
   cartPaint();
 }
 function calcFilter(){const q=norm($("cq").value.trim());
