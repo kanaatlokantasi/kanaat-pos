@@ -349,7 +349,7 @@ body.searching #menu{min-height:100vh}
     <p><a href="https://maps.google.com/?q=Kanaat+Lokantas%C4%B1+Selmanipak+Cad.+No:9+%C3%9Csk%C3%BCdar+%C4%B0stanbul" target="_blank" rel="noopener">Selmanipak Cad. No:9, Üsküdar, İstanbul</a></p>
     <p><a href="tel:+902163415444" dir="ltr">+90 216 341 54 44</a></p>
     <p><a class="igfoot" href="https://www.instagram.com/kanaatlokantasi1933/" target="_blank" rel="noopener" dir="ltr"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@kanaatlokantasi1933</a></p>
-    <p class="ver" dir="ltr">Sürüm 115 · 23.11.2026</p>
+    <p class="ver" dir="ltr">Sürüm 116 · 23.11.2026</p>
   </div>
 </footer>
 
@@ -602,7 +602,7 @@ function render(){
   if(typeof calcRender==="function"&&$("calc").classList.contains("open"))calcRender();
   $("q").placeholder=L(UI.search);
   $("empty").textContent=L(UI.empty);
-  $("t-allergy").textContent="⚠️ "+L(UI.allergy);
+  $("t-allergy").textContent="⚠️ "+L(UI.allergy)+" "+L(NOSEA);
   $("t-legend").textContent=L(UI.legend);
   $("t-prices").textContent=L(UI.prices);
   $("t-hours").textContent=L(UI.hours);
@@ -962,6 +962,7 @@ let CART={};
 const VAR={"":"p",a:"az",t:"tek"};
 const vPrice=(it,v)=>v==="a"?it.az:v==="t"?it.tek:it.p;
 const vOk=(it,v)=>vPrice(it,v)!=null;
+const NOSEA=["Menümüzde kabuklu deniz ürünü, yumuşakça ve acı bakla bulunmaz.", "Our menu contains no crustaceans, molluscs or lupin.", "لا تحتوي قائمتنا على القشريات أو الرخويات أو الترمس.", "В нашем меню нет ракообразных, моллюсков и люпина.", "Nuestro menú no contiene crustáceos, moluscos ni altramuces.", "Notre carte ne contient ni crustacés, ni mollusques, ni lupin.", "本菜单不含甲壳类、软体动物及羽扇豆。", "Unsere Speisekarte enthält keine Krebstiere, Weichtiere oder Lupinen.", "当店のメニューには甲殻類・軟体動物・ルピナスは含まれません。", "저희 메뉴에는 갑각류, 연체동물, 루핀이 들어가지 않습니다.", "Mūsu ēdienkartē nav vēžveidīgo, gliemju un lupīnas.", "Ruokalistallamme ei ole äyriäisiä, nilviäisiä eikä lupiinia.", "O nosso menu não contém crustáceos, moluscos nem tremoço.", "Il nostro menù non contiene crostacei, molluschi né lupini.", "Το μενού μας δεν περιέχει οστρακοειδή, μαλάκια ή λούπινα.", "La nostra carta no conté crustacis, mol·luscs ni tramussos.", "در منوی ما سخت‌پوستان، نرم‌تنان و لوپن وجود ندارد.", "Onze menukaart bevat geen schaaldieren, weekdieren of lupine.", "Meniul nostru nu conține crustacee, moluște sau lupin."];
 const PORT_UI={full:["Tam porsiyon", "Full portion", "حصة كاملة", "Полная порция", "Ración completa", "Portion entière", "整份", "Ganze Portion", "1人前", "1인분", "Pilna porcija", "Täysi annos", "Dose inteira", "Porzione intera", "Ολόκληρη μερίδα", "Ració sencera", "پرس کامل", "Volle portie", "Porție întreagă"],half:["Yarım porsiyon eklediniz ({h}). Tam porsiyon {f}.", "You added a HALF portion ({h}). A full portion is {f}.", "أضفت نصف حصة ({h}). الحصة الكاملة {f}.", "Вы добавили ПОЛОВИНУ порции ({h}). Полная порция — {f}.", "Ha añadido MEDIA ración ({h}). La ración completa cuesta {f}.", "Vous avez ajouté une DEMI-portion ({h}). La portion entière coûte {f}.", "您添加的是半份（{h}）。整份为 {f}。", "Sie haben eine HALBE Portion hinzugefügt ({h}). Eine ganze Portion kostet {f}.", "ハーフサイズ（{h}）を追加しました。1人前は {f} です。", "반 인분({h})을 추가했습니다. 1인분은 {f}입니다.", "Jūs pievienojāt PUSI porcijas ({h}). Pilna porcija maksā {f}.", "Lisäsit PUOLIKKAAN annoksen ({h}). Täysi annos maksaa {f}.", "Adicionou MEIA dose ({h}). A dose inteira custa {f}.", "Avete aggiunto una MEZZA porzione ({h}). La porzione intera costa {f}.", "Προσθέσατε ΜΙΣΗ μερίδα ({h}). Η ολόκληρη μερίδα κοστίζει {f}.", "Heu afegit MITJA ració ({h}). La ració sencera costa {f}.", "نیم‌پرس اضافه کردید ({h}). پرس کامل {f} است.", "U hebt een HALVE portie toegevoegd ({h}). Een volle portie kost {f}.", "Ați adăugat o JUMĂTATE de porție ({h}). Porția întreagă costă {f}."]};
 const hasVar=it=>vOk(it,"a")||vOk(it,"t");
 const keyOf=(c,v)=>v?c+"~"+v:c;
