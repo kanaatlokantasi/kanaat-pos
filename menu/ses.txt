@@ -37,7 +37,6 @@
 34c2db3f41	Piyaz
 34f373e61f	Türk Kahvesi
 3655e823db	Zeytinyağlı Patlıcanlı Pilav
-365e16b95d	Yoğurtlu Kebap
 376abb5634	Samsa Tatlısı
 37fd00ac1a	Çömlek Kebabı
 3a1d9e157f	Bir kiloluk şekerpare.
