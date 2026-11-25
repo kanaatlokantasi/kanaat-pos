@@ -1,1 +1,5 @@
 beetroot-f	XlDdozLmuTofIxK4BjPD	eleven_multilingual_v2	0.5	0.9	Beet root.
+lentils-f-A	XlDdozLmuTofIxK4BjPD	eleven_multilingual_v2	0.5	0.9	Lentils.
+lentils-f-B	XlDdozLmuTofIxK4BjPD	eleven_multilingual_v2	0.5	0.9	Len-tils.
+lentils-m-A	Aa6nEBJJMKJwJkCx8VU2	eleven_multilingual_v2	0.5	0.9	Lentils.
+lentils-m-B	Aa6nEBJJMKJwJkCx8VU2	eleven_multilingual_v2	0.5	0.9	Len-tils.
