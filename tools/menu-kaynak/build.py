@@ -2,7 +2,7 @@
 # (15.11.2026'da yeniden yazıldı; çıktısı v103 ile birebir doğrulandı)
 import json, zlib, hashlib, os, re, sys
 
-VERSION = "120 · 23.11.2026"
+VERSION = "121 · 27.11.2026"
 REMOTE = "https://public.takeaseat.io/restaurants/7abc0ee3-bfdc-497b-91a6-ef20a58bacec/"
 B = os.path.dirname(os.path.abspath(__file__))
 ITEMS = os.environ.get("ITEMS", os.path.join(B, "items.txt"))
@@ -99,8 +99,8 @@ def main():
         if img and make_thumb(it["loc"]): it["th"] = 1
         it.update({"kcal": int(kcal) if kcal else None, "meat": list(meat),
                    "alg": alg.split(",") if alg else [], "diet": diet_l,
-                   "notes": notes.split(",") if notes else [], "trn": trn, "t": f[10:28]})
-        assert len(it["t"]) == 18, (tr, len(it["t"]))
+                   "notes": notes.split(",") if notes else [], "trn": trn, "t": f[10:33]})
+        assert len(it["t"]) == 23, (tr, len(it["t"]))
         for k, v in az.get(tr, {}).items(): it[k] = v
         cats[cat].append(it)
     menu = [{"id": c, "items": cats[c]} for c in CATS if cats[c]]
