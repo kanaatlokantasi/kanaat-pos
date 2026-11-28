@@ -95,7 +95,6 @@
 78a5d2a63d	Bir kiloluk çömlekte koyun yoğurdu.
 794fade408	Reçel ve Kaymak
 795c7977bb	Tavukgöğsü
-7b0a0c4731	Püre
 7c260bf825	Bir kiloluk irmik helvası.
 7ef890f87a	Bir kiloluk büyük aşure.
 7f47ac2249	Barbunya Pilaki
